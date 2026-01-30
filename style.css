@@ -60,35 +60,33 @@ body {
 }
 
 .stat-box {
-    background: var(--glass);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--glass-border);
-    padding: 12px 24px;
-    border-radius: 16px;
+    /* Removed box styling - just text on background */
     display: flex;
     flex-direction: column;
     align-items: center;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 .label {
-    font-size: 0.6rem;
+    font-size: 0.8rem;
     font-weight: normal;
     letter-spacing: 0.1rem;
-    color: var(--primary);
+    color: white;
     margin-bottom: 4px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 #score,
 #world {
-    font-size: 1.2rem;
+    font-size: 0.8rem;
     font-weight: normal;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .center-box {
     max-width: 400px;
-    text-align: center;
+    text-align: left;
+    /* Left-align the labels */
 }
 
 #concept-labels {
@@ -96,7 +94,7 @@ body {
     flex-direction: column;
     gap: 4px;
     font-size: 0.8rem;
-    color: var(--text);
+    color: white;
 }
 
 #label-fi,
@@ -105,6 +103,8 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 #overlay {
