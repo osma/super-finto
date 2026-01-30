@@ -34,12 +34,13 @@ export class Game {
         try {
             const response = await fetch('/src/assets/data/yso.json');
             const concepts = await response.json();
-            const keys = Object.keys(concepts);
-            const randomKey = keys[Math.floor(Math.random() * keys.length)];
-            const conceptData = concepts[randomKey];
+            // const keys = Object.keys(concepts);
+            // const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            const conceptKey = 'http://www.yso.fi/onto/yso/p949';
+            const conceptData = concepts[conceptKey];
 
             this.concept = {
-                id: randomKey.split('/').pop(),
+                id: conceptKey.split('/').pop(),
                 label_fi: conceptData.label_fi,
                 label_sv: conceptData.label_sv,
                 label_en: conceptData.label_en,
