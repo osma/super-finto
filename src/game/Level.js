@@ -5,11 +5,11 @@ export class Level {
 
         // Define platforms as groups first
         const platformGroups = [
-            { tx: 5, ty: 11, tw: 4, th: 1 },
-            { tx: 11, ty: 8, tw: 5, th: 1 },
-            { tx: 4, ty: 6, tw: 3, th: 1 },
-            { tx: 12, ty: 4, tw: 5, th: 1 },
-            { tx: 20, ty: 10, tw: 5, th: 2 },
+            { tx: 5, ty: 10, tw: 4, th: 1 },
+            { tx: 11, ty: 7, tw: 5, th: 1 },
+            { tx: 4, ty: 5, tw: 3, th: 1 },
+            { tx: 12, ty: 3, tw: 5, th: 1 },
+            { tx: 20, ty: 9, tw: 5, th: 2 },
         ];
 
         // Convert to individual tiles for granular interaction (smashing)
@@ -52,19 +52,24 @@ export class Level {
     }
 
     drawPipe(ctx, x, y) {
-        const pipeWidth = 50;
-        const pipeHeight = 60;
+        const pipeWidth = 100;
         const capHeight = 15;
-        const capExtra = 5;
+        const capExtra = 8;
+        const totalHeight = this.game.height - y;
 
         // Main Body
         ctx.fillStyle = '#16a34a'; // Green
-        ctx.fillRect(x, y + capHeight, pipeWidth, pipeHeight - capHeight);
+        ctx.fillRect(x, y + capHeight, pipeWidth, totalHeight - capHeight);
 
-        // Borders
+        // Body Borders (Left and Right only, no bottom)
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 2;
-        ctx.strokeRect(x, y + capHeight, pipeWidth, pipeHeight - capHeight);
+        ctx.beginPath();
+        ctx.moveTo(x, y + capHeight);
+        ctx.lineTo(x, y + totalHeight);
+        ctx.moveTo(x + pipeWidth, y + capHeight);
+        ctx.lineTo(x + pipeWidth, y + totalHeight);
+        ctx.stroke();
 
         // Cap
         ctx.fillStyle = '#22c55e'; // Lighter Green
@@ -73,8 +78,8 @@ export class Level {
 
         // Highlights
         ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fillRect(x + 5, y + 2, 4, capHeight - 4);
-        ctx.fillRect(x + 5, y + capHeight + 5, 4, pipeHeight - capHeight - 10);
+        ctx.fillRect(x + 10, y + 2, 8, capHeight - 4);
+        ctx.fillRect(x + 10, y + capHeight + 5, 8, totalHeight - capHeight - 10);
     }
 
     drawBrickTile(ctx, x, y, w, h, baseColor, isGround = false) {
