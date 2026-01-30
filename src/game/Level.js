@@ -5,11 +5,9 @@ export class Level {
 
         // Define platforms as groups first
         const platformGroups = [
-            { tx: 5, ty: 10, tw: 4, th: 1 },
             { tx: 11, ty: 7, tw: 5, th: 1 },
             { tx: 4, ty: 5, tw: 3, th: 1 },
             { tx: 12, ty: 3, tw: 5, th: 1 },
-            { tx: 20, ty: 9, tw: 5, th: 2 },
         ];
 
         // Convert to individual tiles for granular interaction (smashing)
@@ -39,7 +37,7 @@ export class Level {
         if (this.game.concept && this.game.concept.related) {
             this.game.concept.related.forEach((rel, index) => {
                 const x = 300 + index * 300;
-                this.drawPipe(ctx, x, groundY - 60);
+                this.drawPipe(ctx, x, groundY - 60, rel.label_fi);
             });
         }
 
@@ -51,7 +49,7 @@ export class Level {
         });
     }
 
-    drawPipe(ctx, x, y) {
+    drawPipe(ctx, x, y, label) {
         const pipeWidth = 100;
         const capHeight = 15;
         const capExtra = 8;
@@ -80,6 +78,17 @@ export class Level {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.fillRect(x + 10, y + 2, 8, capHeight - 4);
         ctx.fillRect(x + 10, y + capHeight + 5, 8, totalHeight - capHeight - 10);
+
+        // Label
+        if (label) {
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 14px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'black'; // text shadow
+            ctx.fillText(label, x + pipeWidth / 2 + 1, y + 41);
+            ctx.fillStyle = 'white';
+            ctx.fillText(label, x + pipeWidth / 2, y + 40);
+        }
     }
 
     drawBrickTile(ctx, x, y, w, h, baseColor, isGround = false) {
@@ -140,9 +149,24 @@ export class Level {
                     const minOverlap = Math.min(overlapTop, overlapBottom, overlapLeft, overlapRight);
 
                     if (minOverlap === overlapTop && player.vy >= 0) {
+                        // Top Collision (Landing)
                         player.y = py - player.height;
                         player.vy = 0;
                         player.grounded = true;
+
+                        // Check for PIPE ENTRY (Teleport)
+                        // Must be kneeling, centered on pipe
+                        if (player.isKneeling) {
+                            const pipeCenter = px + pw / 2;
+                            const playerCenter = player.x + player.width / 2;
+                            if (Math.abs(pipeCenter - playerCenter) < 20) { // Tolerance (half width of player)
+                                // Teleport!
+                                console.log("Teleporting to:", rel.uri);
+                                this.game.loadConcept(rel.uri);
+                                return; // Stop collision check for this frame
+                            }
+                        }
+
                     } else if (minOverlap === overlapBottom && player.vy < 0) {
                         player.y = py + ph;
                         player.vy = 0;

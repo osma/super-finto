@@ -33,32 +33,60 @@ export class Game {
     async init() {
         try {
             const response = await fetch('/src/assets/data/yso.json');
-            const concepts = await response.json();
-            // const keys = Object.keys(concepts);
-            // const randomKey = keys[Math.floor(Math.random() * keys.length)];
-            const conceptKey = 'http://www.yso.fi/onto/yso/p949';
-            const conceptData = concepts[conceptKey];
+            this.allConcepts = await response.json();
 
-            this.concept = {
-                id: conceptKey.split('/').pop(),
-                label_fi: conceptData.label_fi,
-                label_sv: conceptData.label_sv,
-                label_en: conceptData.label_en,
-                related: conceptData.related || []
-            };
-
-            // Calculate level width based on related concepts
-            const relatedCount = this.concept.related.length;
-            if (relatedCount <= 3) {
-                this.levelWidth = 800;
-            } else {
-                this.levelWidth = Math.max(800, (relatedCount + 1) * 300);
-            }
-
-            this.updateHUD();
+            // Initial concept (hardcoded as per request, or random)
+            const startKey = 'http://www.yso.fi/onto/yso/p949';
+            this.loadConcept(startKey);
         } catch (error) {
             console.error("Failed to load YSO concepts:", error);
         }
+    }
+
+    loadConcept(conceptKey) {
+        if (!this.allConcepts || !this.allConcepts[conceptKey]) {
+            console.error("Concept not found:", conceptKey);
+            return;
+        }
+
+        const conceptData = this.allConcepts[conceptKey];
+
+        this.concept = {
+            id: conceptKey.split('/').pop(),
+            uri: conceptKey,
+            label_fi: conceptData.label_fi,
+            label_sv: conceptData.label_sv,
+            label_en: conceptData.label_en,
+            related: (conceptData.related || []).map(uri => {
+                const relatedConcept = this.allConcepts[uri];
+                return {
+                    id: uri.split('/').pop(),
+                    uri: uri, // Store full URI for lookup
+                    label_fi: relatedConcept ? relatedConcept.label_fi : uri,
+                    label_sv: relatedConcept ? relatedConcept.label_sv : '',
+                    label_en: relatedConcept ? relatedConcept.label_en : ''
+                };
+            })
+        };
+
+        // Calculate level width based on related concepts
+        const relatedCount = this.concept.related.length;
+        if (relatedCount <= 3) {
+            this.levelWidth = 800;
+        } else {
+            this.levelWidth = Math.max(800, (relatedCount + 1) * 300);
+        }
+
+        // Reset positions if moving to a new concept (not for initial load if handled elsewhere, but safe here)
+        if (this.player) {
+            this.player.x = 100;
+            this.player.y = this.height - this.player.height - 50;
+            this.player.vx = 0;
+            this.player.vy = 0;
+            this.camera.x = 0;
+        }
+
+        this.updateHUD();
     }
 
     updateHUD() {
