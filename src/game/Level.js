@@ -449,12 +449,20 @@ export class Level {
                     player.vy = 0;
                     player.grounded = true;
                 } else if (minOverlap === overlapBottom && player.vy <= 0) {
-                    // Bottom Collision (Head Hit)
-                    player.y = py + ph;
-                    headHit = true;
+                    // Bottom Collision (Head Hit) - use narrower collision box
+                    // Add 10px inset on each side to allow fitting through 1-tile gaps
+                    const headInset = 10;
+                    const headLeft = player.x + headInset;
+                    const headRight = player.x + player.width - headInset;
 
-                    if (tile.type === 'brick') {
-                        this.tiles.splice(i, 1);
+                    // Only register head hit if the narrower head box overlaps
+                    if (headRight > px && headLeft < px + pw) {
+                        player.y = py + ph;
+                        headHit = true;
+
+                        if (tile.type === 'brick') {
+                            this.tiles.splice(i, 1);
+                        }
                     }
                 } else if (minOverlap === overlapLeft) {
                     // Left Collision
