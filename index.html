@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Finto | Premium Platformer</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div id="game-container">
+        <div id="ui-layer">
+            <div class="stat-box">
+                <span class="label">SCORE</span>
+                <span id="score">00000</span>
+            </div>
+            <div class="stat-box">
+                <span class="label">WORLD</span>
+                <span id="world">1-1</span>
+            </div>
+        </div>
+        <canvas id="game-canvas"></canvas>
+        <div id="overlay" class="hidden">
+            <div class="overlay-content">
+                <h1 id="overlay-title">GAME OVER</h1>
+                <p>Press <span class="key">SPACE</span> to Restart</p>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
