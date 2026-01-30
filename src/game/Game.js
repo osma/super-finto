@@ -97,11 +97,16 @@ export class Game {
 
         // Calculate level width based on related concepts
         const relatedCount = this.concept.related.length;
-        if (relatedCount <= 2) {
-            this.levelWidth = 800;
+        if (relatedCount > 0) {
+            // Find the furthest pipe position
+            const lastPipeX = this.getPipeX(relatedCount - 1);
+            this.levelWidth = Math.max(800, lastPipeX + 400); // 400px buffer after last pipe
         } else {
-            this.levelWidth = Math.max(800, (relatedCount + 1) * 300);
+            this.levelWidth = 800;
         }
+
+        // Generate Level Tiles
+        this.level.generate(this.concept.uri);
 
         // Reset positions / Handle Pipe Spawn
         if (this.player) {
@@ -109,14 +114,14 @@ export class Game {
                 // Find index of the source concept to spawn on that pipe
                 const relatedIndex = this.concept.related.findIndex(r => r.uri === sourceUri);
                 if (relatedIndex !== -1) {
-                    const pipeX = 300 + relatedIndex * 300;
+                    const pipeX = this.getPipeX(relatedIndex);
                     const pipeWidth = 100;
                     const groundY = this.height - 50;
 
                     // Setup 'Pipe In' Animation
                     this.transition.state = 'pipe_in';
                     this.transition.pipeX = pipeX;
-                    this.transition.pipeY = groundY - 60; // Start of pipe
+                    this.transition.pipeY = groundY - 40; // Start of pipe
 
                     // Start DEEP inside pipe
                     this.player.x = pipeX + pipeWidth / 2 - this.player.width / 2;
@@ -166,6 +171,26 @@ export class Game {
         if (enEl) enEl.textContent = `EN: ${this.concept.label_en || '-'}`;
     }
 
+    getPipeX(index) {
+        if (!this.concept || !this.concept.uri) return 300 + index * 300;
+
+        // Deterministic hash based on concept URI and pipe index
+        const str = this.concept.uri + index;
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = ((hash << 5) - hash) + str.charCodeAt(i);
+            hash |= 0; // Convert to 32bit integer
+        }
+
+        const normalized = (Math.abs(hash) % 1000) / 1000; // 0 to 1
+
+        // Base pos: 300 + index * 300
+        // Variance: +/- 100px
+        const variance = (normalized - 0.5) * 200;
+
+        return 300 + index * 300 + variance;
+    }
+
     start() {
         this.lastTime = performance.now();
         requestAnimationFrame(this.animate);
@@ -194,7 +219,7 @@ export class Game {
             else if (this.transition.state === 'pipe_in') {
                 // Moving Up
                 const groundY = this.height - 50;
-                const targetY = (groundY - 60) - this.player.height; // Top of pipe
+                const targetY = (groundY - 40) - this.player.height; // Top of pipe
 
                 this.player.y -= speed;
 

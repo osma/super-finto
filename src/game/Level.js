@@ -2,27 +2,51 @@ export class Level {
     constructor(game) {
         this.game = game;
         this.tileSize = 40;
-
-        // Define platforms as groups first
-        const platformGroups = [
-            { tx: 11, ty: 7, tw: 5, th: 1 },
-            { tx: 4, ty: 5, tw: 3, th: 1 },
-            { tx: 12, ty: 3, tw: 5, th: 1 },
-        ];
-
-        // Convert to individual tiles for granular interaction (smashing)
         this.tiles = [];
-        platformGroups.forEach(group => {
-            for (let r = 0; r < group.th; r++) {
-                for (let c = 0; c < group.tw; c++) {
+    }
+
+    generate(seedUri) {
+        this.tiles = [];
+        if (!seedUri) return;
+
+        const rng = new SeededRNG(seedUri);
+        const levelWidthTiles = Math.ceil(this.game.levelWidth / this.tileSize);
+
+        // Start from x=5 to give some start space, end with padding
+        let x = 5;
+
+        while (x < levelWidthTiles - 5) {
+            // 60% chance to spawn a platform at this x
+            if (rng.next() < 0.6) {
+                const width = Math.floor(rng.next() * 6) + 1; // 1 to 6 width
+                // Rows: Ground is ~13. Sky is 0. 
+                // Platforms between row 3 (high) and 10 (low)
+                const row = Math.floor(rng.next() * 8) + 3;
+
+                // Don't spawn if too low (optional, user asked to remove low ones before but now asked for random distribution)
+                // Let's keep it generally open.
+
+                for (let i = 0; i < width; i++) {
+                    if (x + i >= levelWidthTiles - 5) break;
+
+                    // Simple logic to avoid exact overlap with pipes? 
+                    // Pipes are at game.getPipeX(). Since this is grid based and pipes are absolute, 
+                    // it's a bit hard to perfectly check. 
+                    // But random distribution usually works out okay for Mario.
+
                     this.tiles.push({
-                        tx: group.tx + c,
-                        ty: group.ty + r,
+                        tx: x + i,
+                        ty: row,
                         type: 'brick'
                     });
                 }
+
+                // Advance x by width + random gap (1-4 empty tiles)
+                x += width + Math.floor(rng.next() * 4) + 1;
+            } else {
+                x++;
             }
-        });
+        }
     }
 
     draw(ctx) {
@@ -36,8 +60,8 @@ export class Level {
         // Draw Related Concept Pipes
         if (this.game.concept && this.game.concept.related) {
             this.game.concept.related.forEach((rel, index) => {
-                const x = 300 + index * 300;
-                this.drawPipe(ctx, x, groundY - 60, rel.label_fi);
+                const x = this.game.getPipeX(index);
+                this.drawPipe(ctx, x, groundY - 40, rel.label_fi);
             });
         }
 
@@ -131,10 +155,10 @@ export class Level {
         // Check Related Concept Pipes
         if (this.game.concept && this.game.concept.related) {
             this.game.concept.related.forEach((rel, index) => {
-                const px = 300 + index * 300;
-                const py = groundY - 60;
+                const px = this.game.getPipeX(index);
+                const py = groundY - 40;
                 const pw = 100;
-                const ph = 60; // Just collision for the part above ground
+                const ph = 40; // Just collision for the part above ground
 
                 if (player.x + player.width > px &&
                     player.x < px + pw &&
@@ -232,5 +256,21 @@ export class Level {
         if (headHit) {
             player.vy = 2.5; // Decisive bounce back down
         }
+    }
+}
+
+class SeededRNG {
+    constructor(seedString) {
+        this.seed = 0;
+        for (let i = 0; i < seedString.length; i++) {
+            this.seed = ((this.seed << 5) - this.seed) + seedString.charCodeAt(i);
+            this.seed |= 0;
+        }
+    }
+
+    // Returns 0 to 1
+    next() {
+        this.seed = (this.seed * 9301 + 49297) % 233280;
+        return Math.abs(this.seed / 233280);
     }
 }
