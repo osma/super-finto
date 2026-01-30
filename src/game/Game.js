@@ -21,6 +21,7 @@ export class Game {
         this.score = 0;
         this.world = "yso:-";
         this.concept = null;
+        this.levelWidth = 800;
 
         // Game State
         this.isGameOver = false;
@@ -41,8 +42,17 @@ export class Game {
                 id: randomKey.split('/').pop(),
                 label_fi: conceptData.label_fi,
                 label_sv: conceptData.label_sv,
-                label_en: conceptData.label_en
+                label_en: conceptData.label_en,
+                related: conceptData.related || []
             };
+
+            // Calculate level width based on related concepts
+            const relatedCount = this.concept.related.length;
+            if (relatedCount <= 3) {
+                this.levelWidth = 800;
+            } else {
+                this.levelWidth = Math.max(800, (relatedCount + 1) * 300);
+            }
 
             this.updateHUD();
         } catch (error) {
@@ -73,9 +83,20 @@ export class Game {
         this.player.update(this.input);
         this.level.checkCollisions(this.player);
 
+        // Player boundary (X)
+        if (this.player.x < 0) this.player.x = 0;
+        if (this.player.x + this.player.width > this.levelWidth) {
+            this.player.x = this.levelWidth - this.player.width;
+        }
+
         // Camera follow player (center)
         this.camera.x = this.player.x - this.width / 2 + this.player.width / 2;
+
+        // Clamp camera
         if (this.camera.x < 0) this.camera.x = 0;
+        if (this.camera.x > this.levelWidth - this.width) {
+            this.camera.x = this.levelWidth - this.width;
+        }
     }
 
     draw() {

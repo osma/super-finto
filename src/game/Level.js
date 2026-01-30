@@ -30,9 +30,17 @@ export class Level {
     draw(ctx) {
         // Draw Ground Tiles
         const groundY = this.game.height - 50;
-        const groundTileCount = Math.ceil(5000 / this.tileSize);
+        const groundTileCount = Math.ceil(this.game.levelWidth / this.tileSize);
         for (let i = 0; i < groundTileCount; i++) {
             this.drawBrickTile(ctx, i * this.tileSize, groundY, this.tileSize, 50, '#92450e', true);
+        }
+
+        // Draw Related Concept Pipes
+        if (this.game.concept && this.game.concept.related) {
+            this.game.concept.related.forEach((rel, index) => {
+                const x = 300 + index * 300;
+                this.drawPipe(ctx, x, groundY - 60);
+            });
         }
 
         // Draw Individual Tiles
@@ -41,6 +49,32 @@ export class Level {
             const py = tile.ty * this.tileSize;
             this.drawBrickTile(ctx, px, py, this.tileSize, this.tileSize, '#f97316');
         });
+    }
+
+    drawPipe(ctx, x, y) {
+        const pipeWidth = 50;
+        const pipeHeight = 60;
+        const capHeight = 15;
+        const capExtra = 5;
+
+        // Main Body
+        ctx.fillStyle = '#16a34a'; // Green
+        ctx.fillRect(x, y + capHeight, pipeWidth, pipeHeight - capHeight);
+
+        // Borders
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y + capHeight, pipeWidth, pipeHeight - capHeight);
+
+        // Cap
+        ctx.fillStyle = '#22c55e'; // Lighter Green
+        ctx.fillRect(x - capExtra, y, pipeWidth + (capExtra * 2), capHeight);
+        ctx.strokeRect(x - capExtra, y, pipeWidth + (capExtra * 2), capHeight);
+
+        // Highlights
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(x + 5, y + 2, 4, capHeight - 4);
+        ctx.fillRect(x + 5, y + capHeight + 5, 4, pipeHeight - capHeight - 10);
     }
 
     drawBrickTile(ctx, x, y, w, h, baseColor, isGround = false) {
