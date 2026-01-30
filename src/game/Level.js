@@ -67,18 +67,35 @@ export class Level {
     }
 
     draw(ctx) {
-        // Draw Ground Tiles
         const groundY = this.game.height - 50;
-        const groundTileCount = Math.ceil(this.game.levelWidth / this.tileSize);
-        for (let i = 0; i < groundTileCount; i++) {
-            this.drawBrickTile(ctx, i * this.tileSize, groundY, this.tileSize, 50, '#92450e', true);
-        }
 
-        // Draw Related Concept Pipes
+        // Draw Related Concept Pipes (Vertical)
         if (this.game.concept && this.game.concept.related) {
             this.game.concept.related.forEach((rel, index) => {
                 const x = this.game.getPipeX(index);
                 this.drawPipe(ctx, x, groundY - 40, rel.label_fi);
+            });
+        }
+
+        // Draw Broader Concept Pipes (Left Wall, Horizontal)
+        if (this.game.concept && this.game.concept.broader) {
+            const pipeHeight = 80;
+            const gap = 20;
+            this.game.concept.broader.forEach((broader, index) => {
+                // Stack upwards from ground
+                const y = (groundY - 70) - (index * (pipeHeight + gap));
+                this.drawHorizontalPipe(ctx, 0, y, 'right', broader.label_fi);
+            });
+        }
+
+        // Draw Narrower Concept Pipes (Right Wall, Horizontal)
+        if (this.game.concept && this.game.concept.narrower) {
+            const pipeHeight = 80;
+            const gap = 20;
+            this.game.concept.narrower.forEach((narrower, index) => {
+                // Stack upwards from ground
+                const y = (groundY - 70) - (index * (pipeHeight + gap)); // 50 offset to align somewhat with ground
+                this.drawHorizontalPipe(ctx, this.game.levelWidth, y, 'left', narrower.label_fi);
             });
         }
 
@@ -89,6 +106,65 @@ export class Level {
             const color = tile.type === 'solid' ? '#57534e' : '#f97316';
             this.drawBrickTile(ctx, px, py, this.tileSize, this.tileSize, color, false, tile.type === 'solid');
         });
+    }
+
+    drawGround(ctx) {
+        const groundY = this.game.height - 50;
+        const groundTileCount = Math.ceil(this.game.levelWidth / this.tileSize);
+        for (let i = 0; i < groundTileCount; i++) {
+            this.drawBrickTile(ctx, i * this.tileSize, groundY, this.tileSize, 50, '#92450e', true);
+        }
+    }
+
+    drawHorizontalPipe(ctx, x, y, direction, label) {
+        // Pipe config
+        const pipeThickness = 80;
+        const length = 80; // How far it sticks out
+        const capWidth = 15;
+        const capExtra = 4; // Thickness of cap over body
+
+        const isRight = direction === 'right'; // Sticking out to right (from left wall)
+        // Adjust x origin if coming from right wall
+        const startX = isRight ? x : x - length;
+
+        // Draw Body
+        ctx.fillStyle = '#16a34a'; // Green
+        // Body is strictly inside the startX -> startX + length range, minus cap
+        const bodyX = isRight ? startX : startX + capWidth;
+        const bodyW = length - capWidth;
+
+        ctx.fillRect(bodyX, y, bodyW, pipeThickness);
+
+        // Borders
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(bodyX, y, bodyW, pipeThickness);
+
+        // Cap
+        const capX = isRight ? (startX + bodyW) : startX;
+        ctx.fillStyle = '#22c55e'; // Lighter green
+
+        // Cap rect
+        ctx.fillRect(capX, y - capExtra, capWidth, pipeThickness + (capExtra * 2));
+        ctx.strokeRect(capX, y - capExtra, capWidth, pipeThickness + (capExtra * 2));
+
+        // Highlights (Horizontal stripes)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        // Top highlight
+        ctx.fillRect(startX, y + 5, length, 8);
+
+        // Label (Floating near cap)
+        if (label) {
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 12px monospace';
+            ctx.textAlign = isRight ? 'left' : 'right';
+            const labelX = isRight ? (startX + length + 5) : (startX - 5);
+
+            ctx.fillStyle = 'black';
+            ctx.fillText(label, labelX + 1, y + pipeThickness / 2 + 1);
+            ctx.fillStyle = 'white';
+            ctx.fillText(label, labelX, y + pipeThickness / 2);
+        }
     }
 
     drawPipe(ctx, x, y, label) {

@@ -87,10 +87,30 @@ export class Game {
                 const relatedConcept = this.allConcepts[uri];
                 return {
                     id: uri.split('/').pop(),
-                    uri: uri, // Store full URI for lookup
+                    uri: uri,
                     label_fi: relatedConcept ? relatedConcept.label_fi : uri,
                     label_sv: relatedConcept ? relatedConcept.label_sv : '',
                     label_en: relatedConcept ? relatedConcept.label_en : ''
+                };
+            }),
+            broader: (conceptData.broader || []).map(uri => {
+                const c = this.allConcepts[uri];
+                return {
+                    id: uri.split('/').pop(),
+                    uri: uri,
+                    label_fi: c ? c.label_fi : uri,
+                    label_sv: c ? c.label_sv : '',
+                    label_en: c ? c.label_en : ''
+                };
+            }),
+            narrower: (conceptData.narrower || []).map(uri => {
+                const c = this.allConcepts[uri];
+                return {
+                    id: uri.split('/').pop(),
+                    uri: uri,
+                    label_fi: c ? c.label_fi : uri,
+                    label_sv: c ? c.label_sv : '',
+                    label_en: c ? c.label_en : ''
                 };
             })
         };
@@ -279,6 +299,9 @@ export class Game {
         if (this.transition.active) {
             this.drawPipeOverlay();
         }
+
+        // Draw Ground (FOREGROUND) to obscure player/pipes
+        this.level.drawGround(this.ctx);
 
         this.ctx.restore();
     }
