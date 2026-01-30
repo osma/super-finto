@@ -19,12 +19,48 @@ export class Game {
         this.camera = { x: 0, y: 0 };
         this.lastTime = 0;
         this.score = 0;
-        this.world = "1-1";
+        this.world = "yso:-";
+        this.concept = null;
 
         // Game State
         this.isGameOver = false;
 
         this.animate = this.animate.bind(this);
+        this.init();
+    }
+
+    async init() {
+        try {
+            const response = await fetch('/src/assets/data/yso.json');
+            const concepts = await response.json();
+            const keys = Object.keys(concepts);
+            const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            const conceptData = concepts[randomKey];
+
+            this.concept = {
+                id: randomKey.split('/').pop(),
+                label_fi: conceptData.label_fi,
+                label_sv: conceptData.label_sv,
+                label_en: conceptData.label_en
+            };
+
+            this.updateHUD();
+        } catch (error) {
+            console.error("Failed to load YSO concepts:", error);
+        }
+    }
+
+    updateHUD() {
+        if (!this.concept) return;
+        const worldEl = document.getElementById('world');
+        const fiEl = document.getElementById('label-fi');
+        const svEl = document.getElementById('label-sv');
+        const enEl = document.getElementById('label-en');
+
+        if (worldEl) worldEl.textContent = `yso:${this.concept.id}`;
+        if (fiEl) fiEl.textContent = `FI: ${this.concept.label_fi || '-'}`;
+        if (svEl) svEl.textContent = `SV: ${this.concept.label_sv || '-'}`;
+        if (enEl) enEl.textContent = `EN: ${this.concept.label_en || '-'}`;
     }
 
     start() {
