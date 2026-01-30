@@ -19,8 +19,22 @@ export class Player {
     }
 
     update(input) {
+        // Kneeling logic
+        const wasKneeling = this.isKneeling;
+        this.isKneeling = input.isKneeling() && this.grounded;
+
+        if (this.isKneeling && !wasKneeling) {
+            this.height = 30;
+            this.y += 30;
+        } else if (!this.isKneeling && wasKneeling) {
+            this.height = 60;
+            this.y -= 30;
+        }
+
         // Horizontal Movement
-        if (input.isMovingRight()) {
+        if (this.isKneeling) {
+            this.vx = 0;
+        } else if (input.isMovingRight()) {
             this.vx = this.speed;
         } else if (input.isMovingLeft()) {
             this.vx = -this.speed;
@@ -30,7 +44,7 @@ export class Player {
         this.x += this.vx;
 
         // Vertical Movement (Jump)
-        if (input.isJumping() && this.grounded) {
+        if (!this.isKneeling && input.isJumping() && this.grounded) {
             this.vy = -this.jumpForce;
             this.grounded = false;
         }
@@ -41,12 +55,12 @@ export class Player {
 
         // Screen Boundaries
         if (this.x < 0) this.x = 0;
-        // Removed width boundary for scrolling
     }
 
     draw(ctx) {
         const isFacingRight = this.vx >= 0;
         const pSize = 4; // Size of our "pixels"
+        const pSizeY = this.isKneeling ? 2 : 4;
 
         ctx.save();
 
@@ -88,7 +102,7 @@ export class Player {
                     ctx.fillStyle = colors[pixel];
                     // Flip horizontal if facing left
                     const xPos = isFacingRight ? (colIndex * pSize) : (this.width - (colIndex + 1) * pSize);
-                    ctx.fillRect(offsetX + xPos, offsetY + (rowIndex * pSize), pSize, pSize);
+                    ctx.fillRect(offsetX + xPos, offsetY + (rowIndex * pSizeY), pSize, pSizeY);
                 }
             });
         });

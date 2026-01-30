@@ -29,4 +29,8 @@ export class InputHandler {
     isJumping() {
         return this.isPressed('ArrowUp') || this.isPressed('w') || this.isPressed(' ') || this.isPressed('space');
     }
+
+    isKneeling() {
+        return this.isPressed('ArrowDown') || this.isPressed('s');
+    }
 }

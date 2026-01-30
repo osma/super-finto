@@ -110,13 +110,51 @@ export class Level {
         player.grounded = false;
 
         // Check ground
-        const groundLevel = this.game.height - 50;
-        if (player.y + player.height >= groundLevel) {
+        const groundY = this.game.height - 50;
+        if (player.y + player.height >= groundY) {
             if (player.vy >= 0) {
-                player.y = groundLevel - player.height;
+                player.y = groundY - player.height;
                 player.vy = 0;
                 player.grounded = true;
             }
+        }
+
+        // Check Related Concept Pipes
+        if (this.game.concept && this.game.concept.related) {
+            this.game.concept.related.forEach((rel, index) => {
+                const px = 300 + index * 300;
+                const py = groundY - 60;
+                const pw = 100;
+                const ph = 60; // Just collision for the part above ground
+
+                if (player.x + player.width > px &&
+                    player.x < px + pw &&
+                    player.y + player.height > py &&
+                    player.y < py + ph) {
+
+                    const overlapTop = (player.y + player.height) - py;
+                    const overlapBottom = (py + ph) - player.y;
+                    const overlapLeft = (player.x + player.width) - px;
+                    const overlapRight = (px + pw) - player.x;
+
+                    const minOverlap = Math.min(overlapTop, overlapBottom, overlapLeft, overlapRight);
+
+                    if (minOverlap === overlapTop && player.vy >= 0) {
+                        player.y = py - player.height;
+                        player.vy = 0;
+                        player.grounded = true;
+                    } else if (minOverlap === overlapBottom && player.vy < 0) {
+                        player.y = py + ph;
+                        player.vy = 0;
+                    } else if (minOverlap === overlapLeft) {
+                        player.x = px - player.width;
+                        player.vx = 0;
+                    } else if (minOverlap === overlapRight) {
+                        player.x = px + pw;
+                        player.vx = 0;
+                    }
+                }
+            });
         }
 
         // Check Individual Tiles
