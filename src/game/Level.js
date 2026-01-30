@@ -36,10 +36,13 @@ export class Level {
                     // it's a bit hard to perfectly check. 
                     // But random distribution usually works out okay for Mario.
 
+                    // But random distribution usually works out okay for Mario.
+
+                    const isSolid = rng.next() > 0.5;
                     this.tiles.push({
                         tx: x + i,
                         ty: row,
-                        type: 'brick'
+                        type: isSolid ? 'solid' : 'brick'
                     });
                 }
 
@@ -71,7 +74,8 @@ export class Level {
         this.tiles.forEach(tile => {
             const px = tile.tx * this.tileSize;
             const py = tile.ty * this.tileSize;
-            this.drawBrickTile(ctx, px, py, this.tileSize, this.tileSize, '#f97316');
+            const color = tile.type === 'solid' ? '#57534e' : '#f97316';
+            this.drawBrickTile(ctx, px, py, this.tileSize, this.tileSize, color, false, tile.type === 'solid');
         });
     }
 
@@ -117,7 +121,7 @@ export class Level {
         }
     }
 
-    drawBrickTile(ctx, x, y, w, h, baseColor, isGround = false) {
+    drawBrickTile(ctx, x, y, w, h, baseColor, isGround = false, isSolid = false) {
         ctx.fillStyle = baseColor;
         ctx.fillRect(x, y, w, h);
 
@@ -127,7 +131,20 @@ export class Level {
             ctx.fillStyle = 'rgba(0,0,0,0.1)';
             ctx.fillRect(x + 5, y + 20, 4, 4);
             ctx.fillRect(x + 25, y + 35, 4, 4);
+        } else if (isSolid) {
+            // Solid Block (Metal/Stone look with rivets)
+            ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
+
+            // Rivets
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(x + 4, y + 4, 4, 4);
+            ctx.fillRect(x + w - 8, y + 4, 4, 4);
+            ctx.fillRect(x + 4, y + h - 8, 4, 4);
+            ctx.fillRect(x + w - 8, y + h - 8, 4, 4);
         } else {
+            // Brick Pattern
             ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
             ctx.fillRect(x, y, w, 2);
             ctx.fillRect(x, y, 2, h);

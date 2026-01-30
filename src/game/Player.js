@@ -13,6 +13,7 @@ export class Player {
         this.jumpForce = 9; // Slower, lower jump
         this.friction = 0.9;
         this.grounded = false;
+        this.lastJumpPressed = false;
 
         // Visual properties
         this.color = '#f472b6'; // Pinkish accent
@@ -44,10 +45,12 @@ export class Player {
         this.x += this.vx;
 
         // Vertical Movement (Jump)
-        if (!this.isKneeling && input.isJumping() && this.grounded) {
+        const jumpPressed = input.isJumping();
+        if (!this.isKneeling && jumpPressed && !this.lastJumpPressed && this.grounded) {
             this.vy = -this.jumpForce;
             this.grounded = false;
         }
+        this.lastJumpPressed = jumpPressed;
 
         // Apply Gravity
         this.vy += this.weight;
