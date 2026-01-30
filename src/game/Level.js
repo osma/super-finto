@@ -21,7 +21,9 @@ export class Level {
                 const width = Math.floor(rng.next() * 6) + 1; // 1 to 6 width
                 // Rows: Ground is ~13. Sky is 0. 
                 // Platforms between row 3 (high) and 10 (low)
-                const row = Math.floor(rng.next() * 8) + 3;
+                // Bias towards lower platforms (higher row numbers) using max of two randoms
+                const bias = Math.max(rng.next(), rng.next());
+                const row = Math.floor(bias * 8) + 3;
 
                 // Don't spawn if too low (optional, user asked to remove low ones before but now asked for random distribution)
                 // Let's keep it generally open.
