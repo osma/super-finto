@@ -9,7 +9,8 @@ export class Player {
         this.vx = 0;
         this.vy = 0;
         this.weight = 0.28; // Reduced gravity for slower, more controlled jumps
-        this.speed = 2.5;    // Reduced for better control
+        this.speed = 2.5;    // Max horizontal speed
+        this.acceleration = 0.3; // Acceleration for gradual speed-up
         this.jumpForce = 9.2; // Adjusted for slower gravity to still reach 3 levels
         this.friction = 0.9;
         this.grounded = false;
@@ -32,13 +33,15 @@ export class Player {
             this.y -= 30;
         }
 
-        // Horizontal Movement
+        // Horizontal Movement with acceleration
         if (this.isKneeling) {
             this.vx = 0;
         } else if (input.isMovingRight()) {
-            this.vx = this.speed;
+            // Accelerate to the right
+            this.vx = Math.min(this.vx + this.acceleration, this.speed);
         } else if (input.isMovingLeft()) {
-            this.vx = -this.speed;
+            // Accelerate to the left
+            this.vx = Math.max(this.vx - this.acceleration, -this.speed);
         } else {
             this.vx *= this.friction;
         }
