@@ -10,7 +10,7 @@ export class Player {
         this.vy = 0;
         this.weight = 0.35; // Much slower gravity
         this.speed = 3;    // Slower horizontal movement
-        this.jumpForce = 9; // Slower, lower jump
+        this.jumpForce = 11; // Increased to reach 3 tile levels higher
         this.friction = 0.9;
         this.grounded = false;
         this.lastJumpPressed = false;

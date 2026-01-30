@@ -64,6 +64,56 @@ export class Level {
                 this.tiles.push({ tx: levelWidthTiles - 1, ty: y, type: 'solid' });
             }
         }
+
+        // Add Climbing Towers if there are more than 2 pipes on either side
+        const broaderCount = this.game.concept?.broader?.length || 0;
+        const narrowerCount = this.game.concept?.narrower?.length || 0;
+
+        // Left Tower (for broader concepts)
+        if (broaderCount > 2) {
+            const pipeHeight = 80;
+            const gap = 20;
+            const highestPipeY = (this.game.height - 50 - 70) - ((broaderCount - 1) * (pipeHeight + gap));
+            const highestRow = Math.floor(highestPipeY / this.tileSize);
+
+            // Alternating blocks in columns 3 and 4 (moved 2 positions away from wall)
+            // With 2 empty rows between blocks (every 3 rows)
+            // Start from groundRow - 1 (one row above ground)
+            for (let y = groundRow - 1; y >= highestRow; y--) {
+                const rowFromBottom = groundRow - y;
+                // Column 3: rows 1, 7, 13... (every 6, starting at 1)
+                if (rowFromBottom % 6 === 1) {
+                    this.tiles.push({ tx: 3, ty: y, type: 'solid' });
+                }
+                // Column 4: rows 4, 10, 16... (every 6, starting at 4)
+                if (rowFromBottom % 6 === 4) {
+                    this.tiles.push({ tx: 4, ty: y, type: 'solid' });
+                }
+            }
+        }
+
+        // Right Tower (for narrower concepts)
+        if (narrowerCount > 2) {
+            const pipeHeight = 80;
+            const gap = 20;
+            const highestPipeY = (this.game.height - 50 - 70) - ((narrowerCount - 1) * (pipeHeight + gap));
+            const highestRow = Math.floor(highestPipeY / this.tileSize);
+
+            // Alternating blocks in columns levelWidthTiles-5 and levelWidthTiles-4 (moved 2 positions away)
+            // With 2 empty rows between blocks (every 3 rows)
+            // Start from groundRow - 1 (one row above ground)
+            for (let y = groundRow - 1; y >= highestRow; y--) {
+                const rowFromBottom = groundRow - y;
+                // Right column 1: rows 1, 7, 13...
+                if (rowFromBottom % 6 === 1) {
+                    this.tiles.push({ tx: levelWidthTiles - 5, ty: y, type: 'solid' });
+                }
+                // Right column 2: rows 4, 10, 16...
+                if (rowFromBottom % 6 === 4) {
+                    this.tiles.push({ tx: levelWidthTiles - 4, ty: y, type: 'solid' });
+                }
+            }
+        }
     }
 
     draw(ctx) {
