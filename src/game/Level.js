@@ -85,9 +85,9 @@ export class Level {
             ctx.font = 'bold 14px monospace';
             ctx.textAlign = 'center';
             ctx.fillStyle = 'black'; // text shadow
-            ctx.fillText(label, x + pipeWidth / 2 + 1, y + 41);
+            ctx.fillText(label, x + pipeWidth / 2 + 1, y - 19);
             ctx.fillStyle = 'white';
-            ctx.fillText(label, x + pipeWidth / 2, y + 40);
+            ctx.fillText(label, x + pipeWidth / 2, y - 20);
         }
     }
 
