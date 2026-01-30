@@ -51,21 +51,30 @@ export class Game {
         }
     }
 
-    startPipeTransition(targetUri, pipeX, pipeY) {
+    startPipeTransition(targetUri, pipeX, pipeY, direction = 'down') {
         if (this.transition.active) return;
 
-        console.log("Starting pipe transition to:", targetUri);
+        console.log("Starting pipe transition to:", targetUri, direction);
         this.transition = {
             active: true,
             state: 'pipe_out',
             targetUri: targetUri,
+            direction: direction,
             timer: 0,
             pipeX: pipeX,
             pipeY: pipeY
         };
 
-        // Center player on pipe for the animation
-        this.player.x = pipeX + 100 / 2 - this.player.width / 2;
+        // Align player on pipe for the animation
+        if (direction === 'down') {
+            this.player.x = pipeX + 100 / 2 - this.player.width / 2;
+        } else if (direction === 'left') {
+            // Align Y center to pipe center (pipe height 80)
+            this.player.y = pipeY + 80 / 2 - this.player.height / 2;
+        } else if (direction === 'right') {
+            // Align Y center to pipe center
+            this.player.y = pipeY + 80 / 2 - this.player.height / 2;
+        }
     }
 
     loadConcept(conceptKey, sourceUri = null) {
@@ -130,31 +139,73 @@ export class Game {
         this.level.generate(this.concept.uri);
 
         // Reset positions / Handle Pipe Spawn
+        // Reset positions / Handle Pipe Spawn
         if (this.player) {
+            this.player.vx = 0;
+            this.player.vy = 0;
+            this.transition.direction = 'down'; // Default
+
             if (sourceUri) {
-                // Find index of the source concept to spawn on that pipe
+                // Check Ground Pipes (Related)
                 const relatedIndex = this.concept.related.findIndex(r => r.uri === sourceUri);
+                const broaderIndex = this.concept.broader.findIndex(b => b.uri === sourceUri);
+                const narrowerIndex = this.concept.narrower.findIndex(n => n.uri === sourceUri);
+
+                const groundY = this.height - 50;
+
                 if (relatedIndex !== -1) {
                     const pipeX = this.getPipeX(relatedIndex);
                     const pipeWidth = 100;
-                    const groundY = this.height - 50;
 
-                    // Setup 'Pipe In' Animation
+                    // Setup 'Pipe In' Animation (Upwards)
                     this.transition.state = 'pipe_in';
                     this.transition.pipeX = pipeX;
-                    this.transition.pipeY = groundY - 40; // Start of pipe
+                    this.transition.pipeY = groundY - 40;
+                    this.transition.direction = 'down';
 
                     // Start DEEP inside pipe
                     this.player.x = pipeX + pipeWidth / 2 - this.player.width / 2;
-                    this.player.y = groundY; // Bottom of pipe (ish)
-                    this.player.vx = 0;
-                    this.player.vy = 0;
+                    this.player.y = groundY;
 
-                    // Update camera immediately to show this pipe
                     this.camera.x = this.player.x - this.width / 2 + this.player.width / 2;
-                } else {
-                    // Fallback if source pipe not found
-                    this.resetPlayerDefault();
+
+                } else if (broaderIndex !== -1) {
+                    // Came from Broader concept (which is now on Left Wall)
+                    // Spawn Left Wall, Moving Right
+                    const pipeHeight = 80;
+                    const gap = 20;
+                    const y = (groundY - 70) - (broaderIndex * (pipeHeight + gap));
+
+                    this.transition.state = 'pipe_in';
+                    this.transition.pipeX = 0;
+                    this.transition.pipeY = y;
+                    this.transition.direction = 'right';
+
+                    // Start DEEP inside pipe (Left of 0)
+                    this.player.x = -this.player.width;
+                    this.player.y = y + pipeHeight / 2 - this.player.height / 2;
+
+                    this.camera.x = 0;
+
+                } else if (narrowerIndex !== -1) {
+                    // Came from Narrower concept (which is now on Right Wall)
+                    // Spawn Right Wall, Moving Left
+                    const pipeHeight = 80;
+                    const gap = 20;
+                    const y = (groundY - 70) - (narrowerIndex * (pipeHeight + gap));
+
+                    this.transition.state = 'pipe_in';
+                    this.transition.pipeX = this.levelWidth;
+                    this.transition.pipeY = y;
+                    this.transition.direction = 'left';
+
+                    // Start DEEP inside pipe (Right of Width)
+                    this.player.x = this.levelWidth;
+                    this.player.y = y + pipeHeight / 2 - this.player.height / 2;
+
+                    // Align camera to right edge
+                    this.camera.x = this.levelWidth - this.width;
+
                 }
             } else {
                 this.resetPlayerDefault();
@@ -225,31 +276,70 @@ export class Game {
             const speed = 2; // Pixel per frame movement for animation
 
             if (this.transition.state === 'pipe_out') {
-                // Moving Down
-                this.player.y += speed;
+                if (this.transition.direction === 'down') {
+                    // Moving Down
+                    this.player.y += speed;
 
-                // If we've gone down enough (e.g., player height)
-                const groundY = this.height - 50;
-                if (this.player.y > groundY) { // Fully submerged
-                    this.transition.state = 'loading'; // Wait a sec?
-                    // Verify logic: actually just load next concept
-                    this.loadConcept(this.transition.targetUri, this.concept.uri);
+                    const groundY = this.height - 50;
+                    if (this.player.y > groundY) {
+                        this.transition.state = 'loading';
+                        this.loadConcept(this.transition.targetUri, this.concept.uri);
+                    }
+                } else if (this.transition.direction === 'left') {
+                    // Moving Left
+                    this.player.x -= speed;
+                    if (this.player.x < 20) {
+                        this.transition.state = 'loading';
+                        this.loadConcept(this.transition.targetUri, this.concept.uri);
+                    }
+                } else if (this.transition.direction === 'right') {
+                    // Moving Right
+                    this.player.x += speed;
+                    const lw = this.levelWidth;
+                    if (this.player.x > lw - 60) {
+                        this.transition.state = 'loading';
+                        this.loadConcept(this.transition.targetUri, this.concept.uri);
+                    }
                 }
                 return; // SKIP normal update
             }
             else if (this.transition.state === 'pipe_in') {
-                // Moving Up
                 const groundY = this.height - 50;
-                const targetY = (groundY - 40) - this.player.height; // Top of pipe
 
-                this.player.y -= speed;
+                if (this.transition.direction === 'down') {
+                    // Moving Up
+                    const targetY = (groundY - 40) - this.player.height; // Top of pipe
+                    this.player.y -= speed;
+                    if (this.player.y <= targetY) {
+                        this.player.y = targetY;
+                        this.transition.active = false; // Done!
+                        this.transition.state = 'none';
+                        this.player.grounded = true;
+                    }
+                } else if (this.transition.direction === 'left') {
+                    // Moving Left out of Right Wall Pipe (Narrower -> Broader return)
+                    // Wait, direction 'left' means I entered moving LEFT.
+                    // So I should exit moving LEFT.
+                    // Meaning I spawn on Right Wall and move Left.
 
-                if (this.player.y <= targetY) {
-                    this.player.y = targetY;
-                    this.transition.active = false; // Done!
-                    this.transition.state = 'none';
-                    this.player.grounded = true;
+                    const targetX = this.levelWidth - 80 - this.player.width - 5;
+                    this.player.x -= speed;
+                    if (this.player.x <= targetX) {
+                        this.player.x = targetX;
+                        this.transition.active = false;
+                        this.transition.state = 'none';
+                    }
+                } else if (this.transition.direction === 'right') {
+                    // Moving Right out of Left Wall Pipe
+                    const targetX = 80 + 5;
+                    this.player.x += speed;
+                    if (this.player.x >= targetX) {
+                        this.player.x = targetX;
+                        this.transition.active = false;
+                        this.transition.state = 'none';
+                    }
                 }
+
                 return; // SKIP normal update
             }
         }
@@ -303,41 +393,47 @@ export class Game {
         // Draw Ground (FOREGROUND) to obscure player/pipes
         this.level.drawGround(this.ctx);
 
+        // Draw Boundary Walls (TOP FOREGROUND) to frame the pipes
+        this.level.drawBoundaryWalls(this.ctx);
+
         this.ctx.restore();
     }
 
     drawPipeOverlay() {
         const x = this.transition.pipeX;
         const y = this.transition.pipeY;
-        const pipeWidth = 100;
-        const totalHeight = this.height - y;
-        const capHeight = 15;
 
-        // Draw a green rect over the player's position matching the pipe body
-        // This makes the player look like they are "inside"
+        if (this.transition.direction === 'down') {
+            // Vertical Pipe Overlay
+            const pipeWidth = 100;
+            const totalHeight = this.height - y;
+            const capHeight = 15;
 
-        // We only obscure the Body, leaving the Cap usually
-        // Actually, to look like entering via Top, we need to draw the Front of the pipe
-        // over the player. 
+            this.ctx.fillStyle = '#16a34a'; // Green
+            this.ctx.fillRect(x, y + capHeight, pipeWidth, totalHeight - capHeight);
 
-        // Simple trick: Just draw the main pipe body AGAIN.
-        this.ctx.fillStyle = '#16a34a'; // Green
-        this.ctx.fillRect(x, y + capHeight, pipeWidth, totalHeight - capHeight);
+            // Borders
+            this.ctx.strokeStyle = '#000';
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.moveTo(x, y + capHeight);
+            this.ctx.lineTo(x, y + totalHeight);
+            this.ctx.moveTo(x + pipeWidth, y + capHeight);
+            this.ctx.lineTo(x + pipeWidth, y + totalHeight);
+            this.ctx.stroke();
 
-        // Borders
-        this.ctx.strokeStyle = '#000';
-        this.ctx.lineWidth = 2;
-        this.ctx.beginPath();
-        this.ctx.moveTo(x, y + capHeight);
-        this.ctx.lineTo(x, y + totalHeight);
-        this.ctx.moveTo(x + pipeWidth, y + capHeight);
-        this.ctx.lineTo(x + pipeWidth, y + totalHeight);
-        this.ctx.stroke();
+            // Re-draw highlights
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            this.ctx.fillRect(x + 10, y + capHeight + 5, 8, totalHeight - capHeight - 10);
+        } else {
+            // Horizontal Pipe Overlay
+            // Determine facing based on side of screen (roughly)
+            const isLeftWall = x < this.levelWidth / 2;
+            const dir = isLeftWall ? 'right' : 'left'; // Pipe sticks OUT to ...
 
-        // Re-draw highlights
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        // ctx.fillRect(x + 10, y + 2, 8, capHeight - 4); // Don't draw cap highligh, player is behind checks
-        this.ctx.fillRect(x + 10, y + capHeight + 5, 8, totalHeight - capHeight - 10);
+            // Just redraw the pipe on top of player
+            this.level.drawHorizontalPipe(this.ctx, x, y, dir, null);
+        }
     }
 
     drawBackgroundDetails() {

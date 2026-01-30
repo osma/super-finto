@@ -116,6 +116,24 @@ export class Level {
         }
     }
 
+    drawBoundaryWalls(ctx) {
+        const groundRow = Math.floor((this.game.height - 50) / this.tileSize);
+        const levelWidthTiles = Math.ceil(this.game.levelWidth / this.tileSize);
+
+        // Left Wall
+        for (let y = 0; y <= groundRow; y++) {
+            this.drawBrickTile(ctx, 0, y * this.tileSize, this.tileSize, this.tileSize, '#57534e', false, true);
+        }
+
+        // Right Wall
+        const rightX = (levelWidthTiles - 1) * this.tileSize;
+        if (rightX > 0) {
+            for (let y = 0; y <= groundRow; y++) {
+                this.drawBrickTile(ctx, rightX, y * this.tileSize, this.tileSize, this.tileSize, '#57534e', false, true);
+            }
+        }
+    }
+
     drawHorizontalPipe(ctx, x, y, direction, label) {
         // Pipe config
         const pipeThickness = 80;
@@ -308,6 +326,46 @@ export class Level {
                         player.x = px + pw;
                         player.vx = 0;
                     }
+                }
+            });
+        }
+
+        // Check Broader Pipes (Left Wall)
+        if (this.game.concept && this.game.concept.broader) {
+            const pipeHeight = 80;
+            const gap = 20;
+            this.game.concept.broader.forEach((broader, index) => {
+                const y = (groundY - 70) - (index * (pipeHeight + gap));
+                // Opening is roughly at x=80 (length of pipe)
+                // Hitbox: x=60 to 80, y=y to y+80
+                // Trigger if walking LEFT into it
+                if (player.vx < 0 &&
+                    player.x < 90 && player.x > 50 &&
+                    player.y + player.height > y + 10 &&
+                    player.y < y + pipeHeight - 10) {
+
+                    console.log("Teleporting Left to:", broader.uri);
+                    this.game.startPipeTransition(broader.uri, 0, y, 'left');
+                }
+            });
+        }
+
+        // Check Narrower Pipes (Right Wall)
+        if (this.game.concept && this.game.concept.narrower) {
+            const pipeHeight = 80;
+            const gap = 20;
+            const lw = this.game.levelWidth;
+            this.game.concept.narrower.forEach((narrower, index) => {
+                const y = (groundY - 70) - (index * (pipeHeight + gap));
+                // Opening is at lw - 80
+                // Trigger if walking RIGHT into it
+                if (player.vx > 0 &&
+                    player.x + player.width > lw - 90 && player.x + player.width < lw - 50 &&
+                    player.y + player.height > y + 10 &&
+                    player.y < y + pipeHeight - 10) {
+
+                    console.log("Teleporting Right to:", narrower.uri);
+                    this.game.startPipeTransition(narrower.uri, lw, y, 'right');
                 }
             });
         }
