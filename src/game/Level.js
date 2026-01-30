@@ -16,8 +16,8 @@ export class Level {
         let x = 5;
 
         while (x < levelWidthTiles - 5) {
-            // 60% chance to spawn a platform at this x
-            if (rng.next() < 0.6) {
+            // 90% chance to spawn a platform at this x
+            if (rng.next() < 0.9) {
                 const width = Math.floor(rng.next() * 6) + 1; // 1 to 6 width
                 // Rows: Ground is ~13. Sky is 0. 
                 // Platforms between row 3 (high) and 10 (low)
@@ -41,8 +41,8 @@ export class Level {
                     });
                 }
 
-                // Advance x by width + random gap (1-4 empty tiles)
-                x += width + Math.floor(rng.next() * 4) + 1;
+                // Advance x by width + random gap (1-2 empty tiles)
+                x += width + Math.floor(rng.next() * 2) + 1;
             } else {
                 x++;
             }
