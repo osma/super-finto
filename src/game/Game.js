@@ -100,7 +100,8 @@ export class Game {
         if (relatedCount > 0) {
             // Find the furthest pipe position
             const lastPipeX = this.getPipeX(relatedCount - 1);
-            this.levelWidth = Math.max(800, lastPipeX + 400); // 400px buffer after last pipe
+            const rawWidth = Math.max(800, lastPipeX + 400); // 400px buffer after last pipe
+            this.levelWidth = Math.ceil(rawWidth / 40) * 40;
         } else {
             this.levelWidth = 800;
         }

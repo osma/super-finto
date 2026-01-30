@@ -48,8 +48,20 @@ export class Level {
 
                 // Advance x by width + random gap (1-2 empty tiles)
                 x += width + Math.floor(rng.next() * 2) + 1;
-            } else {
                 x++;
+            }
+        }
+
+        // Add Solid Boundary Walls (Left and Right)
+        const groundRow = Math.floor((this.game.height - 50) / this.tileSize); // ~13
+        for (let y = 0; y <= groundRow; y++) {
+            // Left Wall
+            this.tiles.push({ tx: 0, ty: y, type: 'solid' });
+
+            // Right Wall
+            // Ensure we don't duplicate if level is very narrow, though unlikely
+            if (levelWidthTiles - 1 > 0) {
+                this.tiles.push({ tx: levelWidthTiles - 1, ty: y, type: 'solid' });
             }
         }
     }
