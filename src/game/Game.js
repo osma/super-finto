@@ -25,6 +25,14 @@ export class Game {
 
         // Game State
         this.isGameOver = false;
+        this.transition = {
+            active: false,
+            state: 'none', // 'pipe_out', 'loading', 'pipe_in'
+            targetUri: null,
+            timer: 0,
+            pipeX: 0,
+            pipeY: 0
+        };
 
         this.animate = this.animate.bind(this);
         this.init();
@@ -35,7 +43,7 @@ export class Game {
             const response = await fetch('/src/assets/data/yso.json');
             this.allConcepts = await response.json();
 
-            // Initial concept (hardcoded as per request, or random)
+            // Initial concept
             const startKey = 'http://www.yso.fi/onto/yso/p949';
             this.loadConcept(startKey);
         } catch (error) {
@@ -43,9 +51,27 @@ export class Game {
         }
     }
 
-    loadConcept(conceptKey) {
+    startPipeTransition(targetUri, pipeX, pipeY) {
+        if (this.transition.active) return;
+
+        console.log("Starting pipe transition to:", targetUri);
+        this.transition = {
+            active: true,
+            state: 'pipe_out',
+            targetUri: targetUri,
+            timer: 0,
+            pipeX: pipeX,
+            pipeY: pipeY
+        };
+
+        // Center player on pipe for the animation
+        this.player.x = pipeX + 100 / 2 - this.player.width / 2;
+    }
+
+    loadConcept(conceptKey, sourceUri = null) {
         if (!this.allConcepts || !this.allConcepts[conceptKey]) {
             console.error("Concept not found:", conceptKey);
+            this.transition.active = false; // Reset if failed
             return;
         }
 
@@ -71,22 +97,60 @@ export class Game {
 
         // Calculate level width based on related concepts
         const relatedCount = this.concept.related.length;
-        if (relatedCount <= 3) {
+        if (relatedCount <= 2) {
             this.levelWidth = 800;
         } else {
             this.levelWidth = Math.max(800, (relatedCount + 1) * 300);
         }
 
-        // Reset positions if moving to a new concept (not for initial load if handled elsewhere, but safe here)
+        // Reset positions / Handle Pipe Spawn
         if (this.player) {
-            this.player.x = 100;
-            this.player.y = this.height - this.player.height - 50;
-            this.player.vx = 0;
-            this.player.vy = 0;
-            this.camera.x = 0;
+            if (sourceUri) {
+                // Find index of the source concept to spawn on that pipe
+                const relatedIndex = this.concept.related.findIndex(r => r.uri === sourceUri);
+                if (relatedIndex !== -1) {
+                    const pipeX = 300 + relatedIndex * 300;
+                    const pipeWidth = 100;
+                    const groundY = this.height - 50;
+
+                    // Setup 'Pipe In' Animation
+                    this.transition.state = 'pipe_in';
+                    this.transition.pipeX = pipeX;
+                    this.transition.pipeY = groundY - 60; // Start of pipe
+
+                    // Start DEEP inside pipe
+                    this.player.x = pipeX + pipeWidth / 2 - this.player.width / 2;
+                    this.player.y = groundY; // Bottom of pipe (ish)
+                    this.player.vx = 0;
+                    this.player.vy = 0;
+
+                    // Update camera immediately to show this pipe
+                    this.camera.x = this.player.x - this.width / 2 + this.player.width / 2;
+                } else {
+                    // Fallback if source pipe not found
+                    this.resetPlayerDefault();
+                }
+            } else {
+                this.resetPlayerDefault();
+            }
+
+            // Clamp camera immediately
+            if (this.camera.x < 0) this.camera.x = 0;
+            if (this.camera.x > this.levelWidth - this.width) {
+                this.camera.x = this.levelWidth - this.width;
+            }
         }
 
         this.updateHUD();
+    }
+
+    resetPlayerDefault() {
+        this.player.x = 100;
+        this.player.y = this.height - this.player.height - 50;
+        this.player.vx = 0;
+        this.player.vy = 0;
+        this.camera.x = 0;
+        this.transition.active = false; // No animation for default spawn
     }
 
     updateHUD() {
@@ -109,6 +173,42 @@ export class Game {
 
     update(deltaTime) {
         if (this.isGameOver) return;
+
+        // --- TRANSITION LOGIC ---
+        if (this.transition.active) {
+            const speed = 2; // Pixel per frame movement for animation
+
+            if (this.transition.state === 'pipe_out') {
+                // Moving Down
+                this.player.y += speed;
+
+                // If we've gone down enough (e.g., player height)
+                const groundY = this.height - 50;
+                if (this.player.y > groundY) { // Fully submerged
+                    this.transition.state = 'loading'; // Wait a sec?
+                    // Verify logic: actually just load next concept
+                    this.loadConcept(this.transition.targetUri, this.concept.uri);
+                }
+                return; // SKIP normal update
+            }
+            else if (this.transition.state === 'pipe_in') {
+                // Moving Up
+                const groundY = this.height - 50;
+                const targetY = (groundY - 60) - this.player.height; // Top of pipe
+
+                this.player.y -= speed;
+
+                if (this.player.y <= targetY) {
+                    this.player.y = targetY;
+                    this.transition.active = false; // Done!
+                    this.transition.state = 'none';
+                    this.player.grounded = true;
+                }
+                return; // SKIP normal update
+            }
+        }
+
+        // Normal Update
         this.player.update(this.input);
         this.level.checkCollisions(this.player);
 
@@ -149,7 +249,46 @@ export class Game {
         // Draw Player
         this.player.draw(this.ctx);
 
+        // Draw Pipe Overlay (Foreground) during transition to hide player
+        if (this.transition.active) {
+            this.drawPipeOverlay();
+        }
+
         this.ctx.restore();
+    }
+
+    drawPipeOverlay() {
+        const x = this.transition.pipeX;
+        const y = this.transition.pipeY;
+        const pipeWidth = 100;
+        const totalHeight = this.height - y;
+        const capHeight = 15;
+
+        // Draw a green rect over the player's position matching the pipe body
+        // This makes the player look like they are "inside"
+
+        // We only obscure the Body, leaving the Cap usually
+        // Actually, to look like entering via Top, we need to draw the Front of the pipe
+        // over the player. 
+
+        // Simple trick: Just draw the main pipe body AGAIN.
+        this.ctx.fillStyle = '#16a34a'; // Green
+        this.ctx.fillRect(x, y + capHeight, pipeWidth, totalHeight - capHeight);
+
+        // Borders
+        this.ctx.strokeStyle = '#000';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(x, y + capHeight);
+        this.ctx.lineTo(x, y + totalHeight);
+        this.ctx.moveTo(x + pipeWidth, y + capHeight);
+        this.ctx.lineTo(x + pipeWidth, y + totalHeight);
+        this.ctx.stroke();
+
+        // Re-draw highlights
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        // ctx.fillRect(x + 10, y + 2, 8, capHeight - 4); // Don't draw cap highligh, player is behind checks
+        this.ctx.fillRect(x + 10, y + capHeight + 5, 8, totalHeight - capHeight - 10);
     }
 
     drawBackgroundDetails() {

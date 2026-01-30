@@ -162,7 +162,7 @@ export class Level {
                             if (Math.abs(pipeCenter - playerCenter) < 20) { // Tolerance (half width of player)
                                 // Teleport!
                                 console.log("Teleporting to:", rel.uri);
-                                this.game.loadConcept(rel.uri);
+                                this.game.startPipeTransition(rel.uri, px, py);
                                 return; // Stop collision check for this frame
                             }
                         }
