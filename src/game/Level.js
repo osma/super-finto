@@ -81,6 +81,7 @@ export class Level {
         }
 
         // Check Individual Tiles
+        let headHit = false;
         for (let i = this.tiles.length - 1; i >= 0; i--) {
             const tile = this.tiles[i];
             const px = tile.tx * this.tileSize;
@@ -107,13 +108,12 @@ export class Level {
                     player.y = py - player.height;
                     player.vy = 0;
                     player.grounded = true;
-                } else if (minOverlap === overlapBottom && player.vy < 0) {
+                } else if (minOverlap === overlapBottom && player.vy <= 0) {
                     // Bottom Collision (Head Hit)
                     player.y = py + ph;
-                    player.vy = 1; // Small bounce down
+                    headHit = true;
 
                     if (tile.type === 'brick') {
-                        console.log("SMASH!");
                         this.tiles.splice(i, 1);
                     }
                 } else if (minOverlap === overlapLeft) {
@@ -126,6 +126,10 @@ export class Level {
                     player.vx = 0;
                 }
             }
+        }
+
+        if (headHit) {
+            player.vy = 2.5; // Decisive bounce back down
         }
     }
 }
