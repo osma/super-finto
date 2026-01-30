@@ -354,14 +354,19 @@ export class Game {
             this.player.x = this.levelWidth - this.player.width;
         }
 
-        // Camera follow player (center)
+        // Camera follow player (center both X and Y)
         this.camera.x = this.player.x - this.width / 2 + this.player.width / 2;
+        this.camera.y = this.player.y - this.height / 2 + this.player.height / 2;
 
-        // Clamp camera
+        // Clamp camera X
         if (this.camera.x < 0) this.camera.x = 0;
         if (this.camera.x > this.levelWidth - this.width) {
             this.camera.x = this.levelWidth - this.width;
         }
+
+        // Clamp camera Y (don't show below ground, but allow going up)
+        const groundY = this.height - 50;
+        if (this.camera.y > 0) this.camera.y = 0;
     }
 
     draw() {
