@@ -264,11 +264,16 @@ export class Game {
 
         const normalized = (Math.abs(hash) % 1000) / 1000; // 0 to 1
 
-        // Base pos: 300 + index * 300
-        // Variance: +/- 100px
-        const variance = (normalized - 0.5) * 200;
+        const tileSize = 40;
+        // Base pos: ~320 + index * 320
+        // Variance: +/- 120px
+        const varianceRaw = (normalized - 0.5) * 240;
+        // Snap variance to grid
+        const variance = Math.round(varianceRaw / tileSize) * tileSize;
 
-        return 300 + index * 300 + variance;
+        // Ensure base is also grid aligned
+        const limit = 320;
+        return limit + index * 320 + variance;
     }
 
     start() {

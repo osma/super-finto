@@ -6,6 +6,7 @@ export class Level {
         this.minRow = 0;
         this.particles = [];
         this.coins = [];
+        this.groundGaps = [];
     }
 
     generate(seedUri) {
@@ -172,6 +173,56 @@ export class Level {
                 }
             }
         }
+
+        // Pre-calculate bottom pipe positions (in tiles) to avoid overlapping them
+        const pipePositions = [];
+        if (this.game.concept && this.game.concept.related) {
+            this.game.concept.related.forEach((rel, index) => {
+                const px = this.game.getPipeX(index);
+                // Pipe width is 100px. Convert to tile coordinates.
+                // Include a buffer of 5 tiles on each side
+                const startTile = Math.floor(px / this.tileSize) - 5;
+                const endTile = Math.ceil((px + 100) / this.tileSize) + 5;
+                pipePositions.push({ start: startTile, end: endTile });
+            });
+        }
+
+        // Generate Ground Gaps (2-4 blocks wide, between pipes/structures)
+        this.groundGaps = [];
+        // Generate 1-4 gaps depending on width
+        const gapCount = Math.floor(rng.next() * 3) + 1;
+
+        let attempts = 0;
+        let createdGaps = 0;
+
+        while (createdGaps < gapCount && attempts < 20) {
+            attempts++;
+            // Dynamic strict buffer: 5 tiles from left, 5 tiles from right
+            const minX = 5;
+            const maxX = levelWidthTiles - 5;
+
+            // Random start position within safe bounds
+            // Gap takes up gapW tiles. So gapX must be <= maxX - gapW
+            const gapW = Math.floor(rng.next() * 2) + 2; // 2, 3
+
+            const range = (maxX - gapW) - minX;
+            if (range <= 0) break; // Level too small for gaps
+
+            const gapX = Math.floor(rng.next() * range) + minX;
+
+            // Check overlap with existing gaps (ensure min distance of 3 tiles)
+            const minDist = 3;
+            // Check if (newStart < oldEnd + minDist) AND (newEnd + minDist > oldStart)
+            const overlapGap = this.groundGaps.some(g => gapX < g.end + minDist && gapX + gapW + minDist > g.start);
+
+            // Check overlap with pipes
+            const overlapPipe = pipePositions.some(p => gapX < p.end && gapX + gapW > p.start);
+
+            if (!overlapGap && !overlapPipe) {
+                this.groundGaps.push({ start: gapX, end: gapX + gapW });
+                createdGaps++;
+            }
+        }
     }
 
     draw(ctx) {
@@ -226,7 +277,11 @@ export class Level {
         const groundY = this.game.height - 50;
         const groundTileCount = Math.ceil(this.game.levelWidth / this.tileSize);
         for (let i = 0; i < groundTileCount; i++) {
-            this.drawBrickTile(ctx, i * this.tileSize, groundY, this.tileSize, 50, '#92450e', true);
+            // Check if i is in any gap
+            const isGap = this.groundGaps.some(g => i >= g.start && i < g.end);
+            if (!isGap) {
+                this.drawBrickTile(ctx, i * this.tileSize, groundY, this.tileSize, 50, '#92450e', true);
+            }
         }
     }
     createExplosion(x, y) {
@@ -251,6 +306,15 @@ export class Level {
             if (this.particles[i].y > this.game.height + 100) {
                 this.particles.splice(i, 1);
             }
+        }
+
+        // Check for player death (falling in gap)
+        if (this.game.player.y > this.game.height + 100) {
+            // Respawn player
+            this.game.player.y = -100; // Drop from sky
+            this.game.player.x = 100; // Reset X
+            this.game.player.vy = 0;
+            // Maybe subtract score or life?
         }
     }
 
@@ -408,11 +472,26 @@ export class Level {
         // Check ground
         const groundY = this.game.height - 50;
         if (player.y + player.height >= groundY) {
-            if (player.vy >= 0) {
+            // Check for gaps
+            // Allow standing on edge: Check if either foot is on solid ground
+            // Use a small inset so we don't fall if we're just 1px over
+            const inset = 10;
+            const leftTile = Math.floor((player.x + inset) / this.tileSize);
+            const rightTile = Math.floor((player.x + player.width - inset) / this.tileSize);
+
+            const leftInGap = this.groundGaps.some(g => leftTile >= g.start && leftTile < g.end);
+            const rightInGap = this.groundGaps.some(g => rightTile >= g.start && rightTile < g.end);
+
+            // If BOTH points are in a gap (or unsupported), we fall.
+            // So if at least one is supported (!InGap), we land.
+            const isSupported = !leftInGap || !rightInGap;
+
+            if (isSupported && player.vy >= 0) {
                 player.y = groundY - player.height;
                 player.vy = 0;
                 player.grounded = true;
             }
+            // else: fall through!
         }
 
         // Check Related Concept Pipes
