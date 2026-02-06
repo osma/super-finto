@@ -216,6 +216,10 @@ export class Game {
             if (this.camera.x > this.levelWidth - this.width) {
                 this.camera.x = this.levelWidth - this.width;
             }
+
+            // Fix Camera Y initialization: Center on player immediately
+            this.camera.y = this.player.y - this.height / 2 + this.player.height / 2;
+            if (this.camera.y > 0) this.camera.y = 0;
         }
 
         this.updateHUD();
@@ -227,6 +231,7 @@ export class Game {
         this.player.vx = 0;
         this.player.vy = 0;
         this.camera.x = 0;
+        this.camera.y = 0; // Default ground level
         this.transition.active = false; // No animation for default spawn
     }
 
