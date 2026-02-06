@@ -23,6 +23,15 @@ export class Game {
         this.concept = null;
         this.levelWidth = 800;
 
+        // Pre-calculate background details for performance
+        this.backgroundDetails = [];
+        for (let i = 0; i < 30; i++) {
+            this.backgroundDetails.push({
+                x: (Math.sin(i * 123) * 0.5 + 0.5) * this.width,
+                y: (Math.cos(i * 234) * 0.5 + 0.5) * (this.height - 100)
+            });
+        }
+
         // Game State
         this.isGameOver = false;
         this.transition = {
@@ -462,11 +471,9 @@ export class Game {
 
     drawBackgroundDetails() {
         this.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-        for (let i = 0; i < 30; i++) {
-            const x = (Math.sin(i * 123) * 0.5 + 0.5) * this.width;
-            const y = (Math.cos(i * 234) * 0.5 + 0.5) * (this.height - 100);
-            this.ctx.fillRect(x, y, 4, 4); // Pixelated "stars" or clouds
-        }
+        this.backgroundDetails.forEach(detail => {
+            this.ctx.fillRect(detail.x, detail.y, 4, 4);
+        });
     }
 
     animate(timeStamp) {

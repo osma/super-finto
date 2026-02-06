@@ -2,15 +2,38 @@ export class Level {
     constructor(game) {
         this.game = game;
         this.tileSize = 40;
-        this.tiles = [];
+        this.tiles = new Map(); // Grid-based storage: "x,y" -> type
         this.minRow = 0;
         this.particles = [];
         this.coins = [];
         this.groundGaps = [];
+
+        // Pre-render tile cache for performance
+        this.tileCache = {};
+        this.initCache();
+    }
+
+    initCache() {
+        const types = [
+            { id: 'brick', color: '#f97316', solid: false },
+            { id: 'solid', color: '#57534e', solid: true },
+            { id: 'ground', color: '#92450e', ground: true }
+        ];
+
+        types.forEach(type => {
+            const canvas = document.createElement('canvas');
+            canvas.width = this.tileSize;
+            canvas.height = type.ground ? 50 : this.tileSize;
+            const ctx = canvas.getContext('2d');
+
+            // Re-use existing draw logic but only once per type
+            this.drawBrickTile(ctx, 0, 0, this.tileSize, canvas.height, type.color, type.ground, type.solid);
+            this.tileCache[type.id] = canvas;
+        });
     }
 
     generate(seedUri) {
-        this.tiles = [];
+        this.tiles.clear();
         if (!seedUri) return;
 
         const rng = new SeededRNG(seedUri);
@@ -45,11 +68,7 @@ export class Level {
                     for (let i = 0; i < width; i++) {
                         if (x + i >= levelWidthTiles - 5) break;
                         const isSolid = rng.next() > 0.5;
-                        this.tiles.push({
-                            tx: x + i,
-                            ty: currentY,
-                            type: isSolid ? 'solid' : 'brick'
-                        });
+                        this.tiles.set(`${x + i},${currentY}`, isSolid ? 'solid' : 'brick');
                     }
 
                     // Move up for next layer
@@ -68,12 +87,12 @@ export class Level {
 
         for (let y = this.minRow; y <= groundRow; y++) {
             // Left Wall
-            this.tiles.push({ tx: 0, ty: y, type: 'solid' });
+            this.tiles.set(`0,${y}`, 'solid');
 
             // Right Wall
             // Ensure we don't duplicate if level is very narrow, though unlikely
             if (levelWidthTiles - 1 > 0) {
-                this.tiles.push({ tx: levelWidthTiles - 1, ty: y, type: 'solid' });
+                this.tiles.set(`${levelWidthTiles - 1},${y}`, 'solid');
             }
         }
 
@@ -93,11 +112,11 @@ export class Level {
                 const rowFromBottom = groundRow - y;
                 // Column 3: rows 2, 8, 14...
                 if (rowFromBottom % 6 === 2) {
-                    this.tiles.push({ tx: 3, ty: y, type: 'solid' });
+                    this.tiles.set(`3,${y}`, 'solid');
                 }
                 // Column 4: rows 5, 11, 17...
                 if (rowFromBottom % 6 === 5) {
-                    this.tiles.push({ tx: 4, ty: y, type: 'solid' });
+                    this.tiles.set(`4,${y}`, 'solid');
                 }
             }
         }
@@ -116,11 +135,11 @@ export class Level {
                 const rowFromBottom = groundRow - y;
                 // Right column 1: rows 2, 8, 14...
                 if (rowFromBottom % 6 === 2) {
-                    this.tiles.push({ tx: levelWidthTiles - 5, ty: y, type: 'solid' });
+                    this.tiles.set(`${levelWidthTiles - 5},${y}`, 'solid');
                 }
                 // Right column 2: rows 5, 11, 17...
                 if (rowFromBottom % 6 === 5) {
-                    this.tiles.push({ tx: levelWidthTiles - 4, ty: y, type: 'solid' });
+                    this.tiles.set(`${levelWidthTiles - 4},${y}`, 'solid');
                 }
             }
         }
@@ -142,7 +161,15 @@ export class Level {
                 // 20% Chance: Try to place above existing destroyable brick
                 if (rng.next() < 0.2) {
                     // Find valid bricks (above minRow, below ground)
-                    const validBricks = this.tiles.filter(t => t.type === 'brick' && t.ty > this.minRow + 1 && t.ty < groundRow - 4);
+                    const validBricks = [];
+                    for (let [key, type] of this.tiles) {
+                        if (type === 'brick') {
+                            const [tx, ty] = key.split(',').map(Number);
+                            if (ty > this.minRow + 1 && ty < groundRow - 4) {
+                                validBricks.push({ tx, ty });
+                            }
+                        }
+                    }
                     if (validBricks.length > 0) {
                         const targetBrick = validBricks[Math.floor(rng.next() * validBricks.length)];
                         cx = targetBrick.tx;
@@ -159,7 +186,7 @@ export class Level {
                 }
 
                 // CHECK OVERLAP with Tiles
-                const overlap = this.tiles.some(t => t.tx === cx && t.ty === cy);
+                const overlap = this.tiles.has(`${cx},${cy}`);
 
                 // Check overlap with other coins
                 // Coin pos is tile*size + 10
@@ -227,44 +254,63 @@ export class Level {
 
     draw(ctx) {
         const groundY = this.game.height - 50;
+        const cameraX = this.game.camera.x;
+        const viewportWidth = this.game.width;
+        const buffer = 100; // 100px buffer on each side
 
         // Draw Related Concept Pipes (Vertical)
         if (this.game.concept && this.game.concept.related) {
             this.game.concept.related.forEach((rel, index) => {
                 const x = this.game.getPipeX(index);
-                this.drawPipe(ctx, x, groundY - 40, rel.label_fi);
+                // Pipe width is 100px
+                if (x + 100 > cameraX - buffer && x < cameraX + viewportWidth + buffer) {
+                    this.drawPipe(ctx, x, groundY - 40, rel.label_fi);
+                }
             });
         }
 
         // Draw Broader Concept Pipes (Left Wall, Horizontal)
         if (this.game.concept && this.game.concept.broader) {
-            const pipeHeight = 80;
-            const gap = 40;
-            this.game.concept.broader.forEach((broader, index) => {
-                // Stack upwards from ground
-                const y = (groundY - 70) - (index * (pipeHeight + gap));
-                this.drawHorizontalPipe(ctx, 0, y, 'right', broader.label_fi);
-            });
+            // Only draw if left wall is visible
+            if (cameraX < viewportWidth + buffer) {
+                const pipeHeight = 80;
+                const gap = 40;
+                this.game.concept.broader.forEach((broader, index) => {
+                    const y = (groundY - 70) - (index * (pipeHeight + gap));
+                    this.drawHorizontalPipe(ctx, 0, y, 'right', broader.label_fi);
+                });
+            }
         }
 
         // Draw Narrower Concept Pipes (Right Wall, Horizontal)
         if (this.game.concept && this.game.concept.narrower) {
-            const pipeHeight = 80;
-            const gap = 40;
-            this.game.concept.narrower.forEach((narrower, index) => {
-                // Stack upwards from ground
-                const y = (groundY - 70) - (index * (pipeHeight + gap)); // 50 offset to align somewhat with ground
-                this.drawHorizontalPipe(ctx, this.game.levelWidth, y, 'left', narrower.label_fi);
-            });
+            // Only draw if right wall is visible
+            if (cameraX + viewportWidth > this.game.levelWidth - buffer) {
+                const pipeHeight = 80;
+                const gap = 40;
+                this.game.concept.narrower.forEach((narrower, index) => {
+                    const y = (groundY - 70) - (index * (pipeHeight + gap));
+                    this.drawHorizontalPipe(ctx, this.game.levelWidth, y, 'left', narrower.label_fi);
+                });
+            }
         }
 
         // Draw Individual Tiles
-        this.tiles.forEach(tile => {
-            const px = tile.tx * this.tileSize;
-            const py = tile.ty * this.tileSize;
-            const color = tile.type === 'solid' ? '#57534e' : '#f97316';
-            this.drawBrickTile(ctx, px, py, this.tileSize, this.tileSize, color, false, tile.type === 'solid');
-        });
+        // Optimize: Iterate through visible grid coordinates instead of all tiles
+        const startX = Math.floor((cameraX - buffer) / this.tileSize);
+        const endX = Math.ceil((cameraX + viewportWidth + buffer) / this.tileSize);
+        const startY = this.minRow;
+        const endY = Math.ceil(this.game.height / this.tileSize);
+
+        for (let tx = startX; tx <= endX; tx++) {
+            for (let ty = startY; ty <= endY; ty++) {
+                const type = this.tiles.get(`${tx},${ty}`);
+                if (type) {
+                    const cacheId = type === 'solid' ? 'solid' : 'brick';
+                    ctx.drawImage(this.tileCache[cacheId], tx * this.tileSize, ty * this.tileSize);
+                }
+            }
+        }
 
         // Draw particles
         this.particles.forEach(p => p.draw(ctx));
@@ -275,12 +321,21 @@ export class Level {
 
     drawGround(ctx) {
         const groundY = this.game.height - 50;
-        const groundTileCount = Math.ceil(this.game.levelWidth / this.tileSize);
-        for (let i = 0; i < groundTileCount; i++) {
+        const cameraX = this.game.camera.x;
+        const viewportWidth = this.game.width;
+
+        // Calculate visible tile range
+        const startI = Math.max(0, Math.floor((cameraX - this.tileSize) / this.tileSize));
+        const endI = Math.min(
+            Math.ceil(this.game.levelWidth / this.tileSize),
+            Math.ceil((cameraX + viewportWidth + this.tileSize) / this.tileSize)
+        );
+
+        for (let i = startI; i < endI; i++) {
             // Check if i is in any gap
             const isGap = this.groundGaps.some(g => i >= g.start && i < g.end);
             if (!isGap) {
-                this.drawBrickTile(ctx, i * this.tileSize, groundY, this.tileSize, 50, '#92450e', true);
+                ctx.drawImage(this.tileCache['ground'], i * this.tileSize, groundY);
             }
         }
     }
@@ -321,17 +376,22 @@ export class Level {
     drawBoundaryWalls(ctx) {
         const groundRow = Math.floor((this.game.height - 50) / this.tileSize);
         const levelWidthTiles = Math.ceil(this.game.levelWidth / this.tileSize);
+        const cameraX = this.game.camera.x;
+        const viewportWidth = this.game.width;
+        const buffer = 50;
 
         // Left Wall
-        for (let y = this.minRow; y <= groundRow; y++) {
-            this.drawBrickTile(ctx, 0, y * this.tileSize, this.tileSize, this.tileSize, '#57534e', false, true);
+        if (cameraX < buffer) {
+            for (let y = this.minRow; y <= groundRow; y++) {
+                ctx.drawImage(this.tileCache['solid'], 0, y * this.tileSize);
+            }
         }
 
         // Right Wall
         const rightX = (levelWidthTiles - 1) * this.tileSize;
-        if (rightX > 0) {
+        if (rightX > 0 && cameraX + viewportWidth > rightX - buffer) {
             for (let y = this.minRow; y <= groundRow; y++) {
-                this.drawBrickTile(ctx, rightX, y * this.tileSize, this.tileSize, this.tileSize, '#57534e', false, true);
+                ctx.drawImage(this.tileCache['solid'], rightX, y * this.tileSize);
             }
         }
     }
@@ -496,8 +556,13 @@ export class Level {
 
         // Check Related Concept Pipes
         if (this.game.concept && this.game.concept.related) {
+            const buffer = 200; // Check pipes within 200px of player
             this.game.concept.related.forEach((rel, index) => {
                 const px = this.game.getPipeX(index);
+
+                // Culling: Only check if pipe is near player
+                if (px + 100 < player.x - buffer || px > player.x + player.width + buffer) return;
+
                 const py = groundY - 40;
                 const pw = 100;
                 const ph = 40; // Just collision for the part above ground
@@ -549,10 +614,15 @@ export class Level {
 
         // Check Broader Pipes (Left Wall)
         if (this.game.concept && this.game.concept.broader) {
+            const buffer = 200; // Check pipes within 200px of player
             const pipeHeight = 80;
             const gap = 40;
             this.game.concept.broader.forEach((broader, index) => {
                 const y = (groundY - 70) - (index * (pipeHeight + gap));
+
+                // Culling: Only check if wall is near player
+                if (80 < player.x - buffer) return;
+
                 // Opening is roughly at x=80 (length of pipe)
                 // Hitbox: x=60 to 80, y=y to y+80
                 // --- Teleport Trigger ---
@@ -598,11 +668,16 @@ export class Level {
 
         // Check Narrower Pipes (Right Wall)
         if (this.game.concept && this.game.concept.narrower) {
+            const buffer = 200; // Check pipes within 200px of player
             const pipeHeight = 80;
             const gap = 40;
             const lw = this.game.levelWidth;
             this.game.concept.narrower.forEach((narrower, index) => {
                 const y = (groundY - 70) - (index * (pipeHeight + gap));
+
+                // Culling: Only check if wall is near player
+                if (lw - 80 > player.x + player.width + buffer) return;
+
                 // Opening is at lw - 80
                 // --- Teleport Trigger ---
                 if (player.vx > 0 &&
@@ -647,84 +722,79 @@ export class Level {
 
         // Check Individual Tiles
         let headHit = false;
-        for (let i = this.tiles.length - 1; i >= 0; i--) {
-            const tile = this.tiles[i];
-            const px = tile.tx * this.tileSize;
-            const py = tile.ty * this.tileSize;
-            const pw = this.tileSize;
-            const ph = this.tileSize;
+        // Optimized: Only check tiles directly surrounding the player
+        const startX = Math.floor(player.x / this.tileSize) - 1;
+        const endX = Math.ceil((player.x + player.width) / this.tileSize) + 1;
+        const startY = Math.floor(player.y / this.tileSize) - 1;
+        const endY = Math.ceil((player.y + player.height) / this.tileSize) + 1;
 
-            // Simple AABB Collision
-            if (player.x + player.width > px &&
-                player.x < px + pw &&
-                player.y + player.height > py &&
-                player.y < py + ph) {
+        for (let ty = startY; ty <= endY; ty++) {
+            for (let tx = startX; tx <= endX; tx++) {
+                const type = this.tiles.get(`${tx},${ty}`);
+                if (!type) continue;
 
-                const overlapTop = (player.y + player.height) - py;
-                const overlapBottom = (py + ph) - player.y;
-                const overlapLeft = (player.x + player.width) - px;
-                const overlapRight = (px + pw) - player.x;
+                const px = tx * this.tileSize;
+                const py = ty * this.tileSize;
+                const pw = this.tileSize;
+                const ph = this.tileSize;
 
-                // Find the smallest overlap to determine collision direction
-                const minOverlap = Math.min(overlapTop, overlapBottom, overlapLeft, overlapRight);
+                // Simple AABB Collision
+                if (player.x + player.width > px &&
+                    player.x < px + pw &&
+                    player.y + player.height > py &&
+                    player.y < py + ph) {
 
-                if (minOverlap === overlapTop && player.vy >= 0) {
-                    // Top Collision (Landing)
-                    player.y = py - player.height;
-                    player.vy = 0;
-                    player.grounded = true;
-                } else if (minOverlap === overlapBottom && player.vy <= 0) {
-                    // Bottom Collision (Head Hit) - use narrower collision box
-                    // Add 10px inset on each side to allow fitting through 1-tile gaps
-                    const headInset = 10;
-                    const headLeft = player.x + headInset;
-                    const headRight = player.x + player.width - headInset;
+                    const overlapTop = (player.y + player.height) - py;
+                    const overlapBottom = (py + ph) - player.y;
+                    const overlapLeft = (player.x + player.width) - px;
+                    const overlapRight = (px + pw) - player.x;
 
-                    // Only register head hit if the narrower head box overlaps
-                    if (headRight > px && headLeft < px + pw) {
-                        player.y = py + ph;
-                        headHit = true;
+                    // Find the smallest overlap to determine collision direction
+                    const minOverlap = Math.min(overlapTop, overlapBottom, overlapLeft, overlapRight);
 
-                        if (tile.type === 'brick') {
-                            this.game.addScore(50);
-                            // Create explosion particles
-                            this.createExplosion(px, py);
+                    if (minOverlap === overlapTop && player.vy >= 0) {
+                        // Top Collision (Landing)
+                        player.y = py - player.height;
+                        player.vy = 0;
+                        player.grounded = true;
+                    } else if (minOverlap === overlapBottom && player.vy <= 0) {
+                        // Bottom Collision (Head Hit) - use narrower collision box
+                        const headInset = 10;
+                        const headLeft = player.x + headInset;
+                        const headRight = player.x + player.width - headInset;
 
-                            // Check for Coin ABOVE this brick
-                            for (let c = this.coins.length - 1; c >= 0; c--) {
-                                const coin = this.coins[c];
-                                // Coin center is x+size/2. Brick center is px+tileSize/2.
-                                // Coin Y is roughly py - tileSize (since coin is on top)
-                                // Coin collider is roughly 20x20 in the middle of 40x40.
+                        if (headRight > px && headLeft < px + pw) {
+                            player.y = py + ph;
+                            headHit = true;
 
-                                // Center-to-center check
-                                const coinCenterX = coin.x + coin.size / 2;
-                                const brickCenterX = px + this.tileSize / 2;
+                            if (type === 'brick') {
+                                this.game.addScore(50);
+                                this.createExplosion(px, py);
 
-                                // Check if coin is "on top" (y matches) and aligned horizontally
-                                // Allow some horizontal slop (e.g. 20px)
-                                if (Math.abs(coinCenterX - brickCenterX) < 20 &&
-                                    Math.abs(coin.y + coin.size - py) < 10) { // Coin bottom near brick top
-
-                                    // Collect Coin
-                                    this.game.addScore(200);
-                                    this.coins.splice(c, 1);
-
-                                    // Optional: Add a sparkle effect? For now just collect.
+                                // Check for Coin ABOVE this brick
+                                for (let c = this.coins.length - 1; c >= 0; c--) {
+                                    const coin = this.coins[c];
+                                    const coinCenterX = coin.x + coin.size / 2;
+                                    const brickCenterX = px + this.tileSize / 2;
+                                    if (Math.abs(coinCenterX - brickCenterX) < 20 &&
+                                        Math.abs(coin.y + coin.size - py) < 10) {
+                                        this.game.addScore(200);
+                                        this.coins.splice(c, 1);
+                                    }
                                 }
-                            }
 
-                            this.tiles.splice(i, 1);
+                                this.tiles.delete(`${tx},${ty}`);
+                            }
                         }
+                    } else if (minOverlap === overlapLeft) {
+                        // Left Collision
+                        player.x = px - player.width;
+                        player.vx = 0;
+                    } else if (minOverlap === overlapRight) {
+                        // Right Collision
+                        player.x = px + pw;
+                        player.vx = 0;
                     }
-                } else if (minOverlap === overlapLeft) {
-                    // Left Collision
-                    player.x = px - player.width;
-                    player.vx = 0;
-                } else if (minOverlap === overlapRight) {
-                    // Right Collision
-                    player.x = px + pw;
-                    player.vx = 0;
                 }
             }
         }
@@ -736,6 +806,12 @@ export class Level {
         // Check Coin Collisions
         for (let i = this.coins.length - 1; i >= 0; i--) {
             const coin = this.coins[i];
+
+            // Culling: Skip coins that are far away
+            if (coin.x + coin.size < player.x - 100 || coin.x > player.x + player.width + 100) {
+                continue;
+            }
+
             // Simple AABB (Coin is 20x20 centered in 40x40 tile, roughly)
             if (player.x < coin.x + coin.size &&
                 player.x + player.width > coin.x &&
