@@ -23,13 +23,22 @@ export class Game {
         this.concept = null;
         this.levelWidth = 800;
 
-        // Pre-calculate background details for performance
-        this.backgroundDetails = [];
+        // Pre-render static background for performance
+        this.backgroundCanvas = document.createElement('canvas');
+        this.backgroundCanvas.width = this.width;
+        this.backgroundCanvas.height = this.height;
+        const bgCtx = this.backgroundCanvas.getContext('2d');
+
+        // Draw sky
+        bgCtx.fillStyle = '#5c94fc'; // Classic NES Mario sky blue
+        bgCtx.fillRect(0, 0, this.width, this.height);
+
+        // Draw background details (stars/clouds)
+        bgCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
         for (let i = 0; i < 30; i++) {
-            this.backgroundDetails.push({
-                x: (Math.sin(i * 123) * 0.5 + 0.5) * this.width,
-                y: (Math.cos(i * 234) * 0.5 + 0.5) * (this.height - 100)
-            });
+            const x = (Math.sin(i * 123) * 0.5 + 0.5) * this.width;
+            const y = (Math.cos(i * 234) * 0.5 + 0.5) * (this.height - 100);
+            bgCtx.fillRect(x, y, 4, 4);
         }
 
         // Game State
@@ -398,19 +407,12 @@ export class Game {
     }
 
     draw() {
-        this.ctx.clearRect(0, 0, this.width, this.height);
-
-        // --- STATIC ELEMENTS (No camera translation) ---
-        // Draw background (8-bit Sky)
-        this.ctx.fillStyle = '#5c94fc'; // Classic NES Mario sky blue
-        this.ctx.fillRect(0, 0, this.width, this.height);
-
-        // Draw Ambient Pixels
-        this.drawBackgroundDetails();
+        // Draw pre-rendered background (single drawImage call)
+        this.ctx.drawImage(this.backgroundCanvas, 0, 0);
 
         // --- WORLD ELEMENTS (Camera translation) ---
         this.ctx.save();
-        this.ctx.translate(-this.camera.x, -this.camera.y);
+        this.ctx.translate(-Math.floor(this.camera.x), -Math.floor(this.camera.y));
 
         // Draw Level
         this.level.draw(this.ctx);
@@ -469,12 +471,7 @@ export class Game {
         }
     }
 
-    drawBackgroundDetails() {
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-        this.backgroundDetails.forEach(detail => {
-            this.ctx.fillRect(detail.x, detail.y, 4, 4);
-        });
-    }
+
 
     animate(timeStamp) {
         const deltaTime = timeStamp - this.lastTime;

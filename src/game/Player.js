@@ -108,7 +108,7 @@ export class Player {
                     ctx.fillStyle = colors[pixel];
                     // Flip horizontal if facing left
                     const xPos = isFacingRight ? (colIndex * pSize) : (this.width - (colIndex + 1) * pSize);
-                    ctx.fillRect(offsetX + xPos, offsetY + (rowIndex * pSizeY), pSize, pSizeY);
+                    ctx.fillRect(Math.floor(offsetX + xPos), Math.floor(offsetY + (rowIndex * pSizeY)), pSize, pSizeY);
                 }
             });
         });

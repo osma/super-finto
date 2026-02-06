@@ -11,6 +11,11 @@ export class Level {
         // Pre-render tile cache for performance
         this.tileCache = {};
         this.initCache();
+
+        // Layer caching for static geometry
+        this.tilesCanvas = null; // Background layer (tiles only)
+        this.foregroundCanvas = null; // Foreground layer (ground + walls)
+        this.geometryNeedsRedraw = true;
     }
 
     initCache() {
@@ -30,6 +35,93 @@ export class Level {
             this.drawBrickTile(ctx, 0, 0, this.tileSize, canvas.height, type.color, type.ground, type.solid);
             this.tileCache[type.id] = canvas;
         });
+
+        // Pre-render pipe components
+        this.initPipeCache();
+    }
+
+    initPipeCache() {
+        // Vertical Pipe Cap (116 x 15)
+        const capWidth = 116; // 100 + 8*2 capExtra
+        const capHeight = 15;
+        const capCanvas = document.createElement('canvas');
+        capCanvas.width = capWidth;
+        capCanvas.height = capHeight;
+        const capCtx = capCanvas.getContext('2d');
+        capCtx.fillStyle = '#22c55e';
+        capCtx.fillRect(0, 0, capWidth, capHeight);
+        capCtx.strokeStyle = '#000';
+        capCtx.lineWidth = 2;
+        capCtx.strokeRect(0, 0, capWidth, capHeight);
+        capCtx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        capCtx.fillRect(18, 2, 8, capHeight - 4); // Highlight
+        this.tileCache['pipeCapV'] = capCanvas;
+
+        // Vertical Pipe Body Segment (100 x 40)
+        const bodyWidth = 100;
+        const bodySegment = 40;
+        const bodyCanvas = document.createElement('canvas');
+        bodyCanvas.width = bodyWidth;
+        bodyCanvas.height = bodySegment;
+        const bodyCtx = bodyCanvas.getContext('2d');
+        bodyCtx.fillStyle = '#16a34a';
+        bodyCtx.fillRect(0, 0, bodyWidth, bodySegment);
+        bodyCtx.strokeStyle = '#000';
+        bodyCtx.lineWidth = 2;
+        bodyCtx.beginPath();
+        bodyCtx.moveTo(0, 0);
+        bodyCtx.lineTo(0, bodySegment);
+        bodyCtx.moveTo(bodyWidth, 0);
+        bodyCtx.lineTo(bodyWidth, bodySegment);
+        bodyCtx.stroke();
+        bodyCtx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        bodyCtx.fillRect(10, 5, 8, bodySegment - 10); // Highlight
+        this.tileCache['pipeBodyV'] = bodyCanvas;
+
+        // Horizontal Pipe - Right Facing (80 x 88)
+        const hLength = 80;
+        const hThickness = 80;
+        const hCapWidth = 15;
+        const hCapExtra = 4;
+        const hCanvasR = document.createElement('canvas');
+        hCanvasR.width = hLength;
+        hCanvasR.height = hThickness + hCapExtra * 2;
+        const hCtxR = hCanvasR.getContext('2d');
+        // Body
+        const bodyW = hLength - hCapWidth;
+        hCtxR.fillStyle = '#16a34a';
+        hCtxR.fillRect(0, hCapExtra, bodyW, hThickness);
+        hCtxR.strokeStyle = '#000';
+        hCtxR.lineWidth = 2;
+        hCtxR.strokeRect(0, hCapExtra, bodyW, hThickness);
+        // Cap
+        hCtxR.fillStyle = '#22c55e';
+        hCtxR.fillRect(bodyW, 0, hCapWidth, hThickness + hCapExtra * 2);
+        hCtxR.strokeRect(bodyW, 0, hCapWidth, hThickness + hCapExtra * 2);
+        // Highlight
+        hCtxR.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        hCtxR.fillRect(0, hCapExtra + 5, hLength, 8);
+        this.tileCache['pipeHorzR'] = hCanvasR;
+
+        // Horizontal Pipe - Left Facing (80 x 88)
+        const hCanvasL = document.createElement('canvas');
+        hCanvasL.width = hLength;
+        hCanvasL.height = hThickness + hCapExtra * 2;
+        const hCtxL = hCanvasL.getContext('2d');
+        // Body (offset by capWidth)
+        hCtxL.fillStyle = '#16a34a';
+        hCtxL.fillRect(hCapWidth, hCapExtra, bodyW, hThickness);
+        hCtxL.strokeStyle = '#000';
+        hCtxL.lineWidth = 2;
+        hCtxL.strokeRect(hCapWidth, hCapExtra, bodyW, hThickness);
+        // Cap (at start)
+        hCtxL.fillStyle = '#22c55e';
+        hCtxL.fillRect(0, 0, hCapWidth, hThickness + hCapExtra * 2);
+        hCtxL.strokeRect(0, 0, hCapWidth, hThickness + hCapExtra * 2);
+        // Highlight
+        hCtxL.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        hCtxL.fillRect(0, hCapExtra + 5, hLength, 8);
+        this.tileCache['pipeHorzL'] = hCanvasL;
     }
 
     generate(seedUri) {
@@ -250,6 +342,64 @@ export class Level {
                 createdGaps++;
             }
         }
+
+        // Render static geometry to cache
+        this.renderGeometryLayer();
+    }
+
+    renderGeometryLayer() {
+        // Create tiles canvas (background layer)
+        if (!this.tilesCanvas) {
+            this.tilesCanvas = document.createElement('canvas');
+        }
+        this.tilesCanvas.width = this.game.levelWidth;
+        this.tilesCanvas.height = this.game.height;
+        const tilesCtx = this.tilesCanvas.getContext('2d');
+        tilesCtx.clearRect(0, 0, this.tilesCanvas.width, this.tilesCanvas.height);
+
+        // Draw all individual tiles to tiles layer
+        for (let [key, type] of this.tiles) {
+            const [tx, ty] = key.split(',').map(Number);
+            const cacheId = type === 'solid' ? 'solid' : 'brick';
+            tilesCtx.drawImage(this.tileCache[cacheId], Math.floor(tx * this.tileSize), Math.floor(ty * this.tileSize));
+        }
+
+        // Create foreground canvas (ground + walls)
+        if (!this.foregroundCanvas) {
+            this.foregroundCanvas = document.createElement('canvas');
+        }
+        this.foregroundCanvas.width = this.game.levelWidth;
+        this.foregroundCanvas.height = this.game.height;
+        const fgCtx = this.foregroundCanvas.getContext('2d');
+        fgCtx.clearRect(0, 0, this.foregroundCanvas.width, this.foregroundCanvas.height);
+
+        const groundY = this.game.height - 50;
+        const groundRow = Math.floor(groundY / this.tileSize);
+        const levelWidthTiles = Math.ceil(this.game.levelWidth / this.tileSize);
+
+        // Draw ground to foreground layer
+        for (let i = 0; i < Math.ceil(this.game.levelWidth / this.tileSize); i++) {
+            const isGap = this.groundGaps.some(g => i >= g.start && i < g.end);
+            if (!isGap) {
+                fgCtx.drawImage(this.tileCache['ground'], Math.floor(i * this.tileSize), Math.floor(groundY));
+            }
+        }
+
+        // Draw boundary walls to foreground layer
+        // Left Wall
+        for (let y = this.minRow; y <= groundRow; y++) {
+            fgCtx.drawImage(this.tileCache['solid'], 0, Math.floor(y * this.tileSize));
+        }
+
+        // Right Wall
+        const rightX = (levelWidthTiles - 1) * this.tileSize;
+        if (rightX > 0) {
+            for (let y = this.minRow; y <= groundRow; y++) {
+                fgCtx.drawImage(this.tileCache['solid'], Math.floor(rightX), Math.floor(y * this.tileSize));
+            }
+        }
+
+        this.geometryNeedsRedraw = false;
     }
 
     draw(ctx) {
@@ -257,6 +407,11 @@ export class Level {
         const cameraX = this.game.camera.x;
         const viewportWidth = this.game.width;
         const buffer = 100; // 100px buffer on each side
+
+        // Draw cached tiles layer (background)
+        if (this.tilesCanvas) {
+            ctx.drawImage(this.tilesCanvas, 0, 0);
+        }
 
         // Draw Related Concept Pipes (Vertical)
         if (this.game.concept && this.game.concept.related) {
@@ -295,23 +450,6 @@ export class Level {
             }
         }
 
-        // Draw Individual Tiles
-        // Optimize: Iterate through visible grid coordinates instead of all tiles
-        const startX = Math.floor((cameraX - buffer) / this.tileSize);
-        const endX = Math.ceil((cameraX + viewportWidth + buffer) / this.tileSize);
-        const startY = this.minRow;
-        const endY = Math.ceil(this.game.height / this.tileSize);
-
-        for (let tx = startX; tx <= endX; tx++) {
-            for (let ty = startY; ty <= endY; ty++) {
-                const type = this.tiles.get(`${tx},${ty}`);
-                if (type) {
-                    const cacheId = type === 'solid' ? 'solid' : 'brick';
-                    ctx.drawImage(this.tileCache[cacheId], tx * this.tileSize, ty * this.tileSize);
-                }
-            }
-        }
-
         // Draw particles
         this.particles.forEach(p => p.draw(ctx));
 
@@ -320,23 +458,9 @@ export class Level {
     }
 
     drawGround(ctx) {
-        const groundY = this.game.height - 50;
-        const cameraX = this.game.camera.x;
-        const viewportWidth = this.game.width;
-
-        // Calculate visible tile range
-        const startI = Math.max(0, Math.floor((cameraX - this.tileSize) / this.tileSize));
-        const endI = Math.min(
-            Math.ceil(this.game.levelWidth / this.tileSize),
-            Math.ceil((cameraX + viewportWidth + this.tileSize) / this.tileSize)
-        );
-
-        for (let i = startI; i < endI; i++) {
-            // Check if i is in any gap
-            const isGap = this.groundGaps.some(g => i >= g.start && i < g.end);
-            if (!isGap) {
-                ctx.drawImage(this.tileCache['ground'], i * this.tileSize, groundY);
-            }
+        // Draw from cached foreground layer
+        if (this.foregroundCanvas) {
+            ctx.drawImage(this.foregroundCanvas, 0, 0);
         }
     }
     createExplosion(x, y) {
@@ -374,72 +498,27 @@ export class Level {
     }
 
     drawBoundaryWalls(ctx) {
-        const groundRow = Math.floor((this.game.height - 50) / this.tileSize);
-        const levelWidthTiles = Math.ceil(this.game.levelWidth / this.tileSize);
-        const cameraX = this.game.camera.x;
-        const viewportWidth = this.game.width;
-        const buffer = 50;
-
-        // Left Wall
-        if (cameraX < buffer) {
-            for (let y = this.minRow; y <= groundRow; y++) {
-                ctx.drawImage(this.tileCache['solid'], 0, y * this.tileSize);
-            }
-        }
-
-        // Right Wall
-        const rightX = (levelWidthTiles - 1) * this.tileSize;
-        if (rightX > 0 && cameraX + viewportWidth > rightX - buffer) {
-            for (let y = this.minRow; y <= groundRow; y++) {
-                ctx.drawImage(this.tileCache['solid'], rightX, y * this.tileSize);
-            }
-        }
+        // Walls are already in the foreground canvas, no need to redraw
+        // This method is kept for compatibility but does nothing
     }
 
     drawHorizontalPipe(ctx, x, y, direction, label) {
-        // Pipe config
         const pipeThickness = 80;
-        const length = 80; // How far it sticks out
-        const capWidth = 15;
-        const capExtra = 4; // Thickness of cap over body
+        const length = 80;
+        const capExtra = 4;
 
-        const isRight = direction === 'right'; // Sticking out to right (from left wall)
-        // Adjust x origin if coming from right wall
+        const isRight = direction === 'right';
         const startX = isRight ? x : x - length;
+        const cacheId = isRight ? 'pipeHorzR' : 'pipeHorzL';
 
-        // Draw Body
-        ctx.fillStyle = '#16a34a'; // Green
-        // Body is strictly inside the startX -> startX + length range, minus cap
-        const bodyX = isRight ? startX : startX + capWidth;
-        const bodyW = length - capWidth;
+        // Draw cached pipe sprite
+        ctx.drawImage(this.tileCache[cacheId], Math.floor(startX), Math.floor(y - capExtra));
 
-        ctx.fillRect(bodyX, y, bodyW, pipeThickness);
-
-        // Borders
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(bodyX, y, bodyW, pipeThickness);
-
-        // Cap
-        const capX = isRight ? (startX + bodyW) : startX;
-        ctx.fillStyle = '#22c55e'; // Lighter green
-
-        // Cap rect
-        ctx.fillRect(capX, y - capExtra, capWidth, pipeThickness + (capExtra * 2));
-        ctx.strokeRect(capX, y - capExtra, capWidth, pipeThickness + (capExtra * 2));
-
-        // Highlights (Horizontal stripes)
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        // Top highlight
-        ctx.fillRect(startX, y + 5, length, 8);
-
-        // Label (Floating near cap)
+        // Label (still procedural since it varies)
         if (label) {
-            ctx.fillStyle = 'white';
             ctx.font = 'bold 12px monospace';
             ctx.textAlign = isRight ? 'left' : 'right';
             const labelX = isRight ? (startX + length + 5) : (startX - 5);
-
             ctx.fillStyle = 'black';
             ctx.fillText(label, labelX + 1, y + pipeThickness / 2 + 1);
             ctx.fillStyle = 'white';
@@ -452,37 +531,24 @@ export class Level {
         const capHeight = 15;
         const capExtra = 8;
         const totalHeight = this.game.height - y;
+        const bodySegment = 40;
 
-        // Main Body
-        ctx.fillStyle = '#16a34a'; // Green
-        ctx.fillRect(x, y + capHeight, pipeWidth, totalHeight - capHeight);
+        // Draw cached cap
+        ctx.drawImage(this.tileCache['pipeCapV'], Math.floor(x - capExtra), Math.floor(y));
 
-        // Body Borders (Left and Right only, no bottom)
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(x, y + capHeight);
-        ctx.lineTo(x, y + totalHeight);
-        ctx.moveTo(x + pipeWidth, y + capHeight);
-        ctx.lineTo(x + pipeWidth, y + totalHeight);
-        ctx.stroke();
+        // Draw body segments (tiled for variable height)
+        const bodyStart = y + capHeight;
+        const bodyHeight = totalHeight - capHeight;
+        const segments = Math.ceil(bodyHeight / bodySegment);
+        for (let i = 0; i < segments; i++) {
+            ctx.drawImage(this.tileCache['pipeBodyV'], Math.floor(x), Math.floor(bodyStart + i * bodySegment));
+        }
 
-        // Cap
-        ctx.fillStyle = '#22c55e'; // Lighter Green
-        ctx.fillRect(x - capExtra, y, pipeWidth + (capExtra * 2), capHeight);
-        ctx.strokeRect(x - capExtra, y, pipeWidth + (capExtra * 2), capHeight);
-
-        // Highlights
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fillRect(x + 10, y + 2, 8, capHeight - 4);
-        ctx.fillRect(x + 10, y + capHeight + 5, 8, totalHeight - capHeight - 10);
-
-        // Label
+        // Label (still procedural since it varies)
         if (label) {
-            ctx.fillStyle = 'white';
             ctx.font = 'bold 14px monospace';
             ctx.textAlign = 'center';
-            ctx.fillStyle = 'black'; // text shadow
+            ctx.fillStyle = 'black';
             ctx.fillText(label, x + pipeWidth / 2 + 1, y - 19);
             ctx.fillStyle = 'white';
             ctx.fillText(label, x + pipeWidth / 2, y - 20);
@@ -847,7 +913,7 @@ class BrickParticle {
 
     draw(ctx) {
         ctx.save();
-        ctx.translate(this.x, this.y);
+        ctx.translate(Math.floor(this.x), Math.floor(this.y));
         ctx.rotate(this.angle);
 
         const color = '#f97316'; // Brick orange
@@ -876,7 +942,7 @@ class Coin {
         const scaleX = Math.abs(Math.sin(this.wobble));
 
         ctx.save();
-        ctx.translate(this.x + this.size / 2, this.y + this.size / 2);
+        ctx.translate(Math.floor(this.x + this.size / 2), Math.floor(this.y + this.size / 2));
         ctx.scale(scaleX, 1);
 
         ctx.fillStyle = '#fcd34d'; // Gold
