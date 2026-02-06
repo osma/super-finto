@@ -3,6 +3,7 @@ export class Level {
         this.game = game;
         this.tileSize = 40;
         this.tiles = [];
+        this.minRow = 0;
     }
 
     generate(seedUri) {
@@ -53,8 +54,21 @@ export class Level {
         }
 
         // Add Solid Boundary Walls (Left and Right)
+        const broaderCount = this.game.concept?.broader?.length || 0;
+        const narrowerCount = this.game.concept?.narrower?.length || 0;
+        const maxSidePipes = Math.max(broaderCount, narrowerCount);
+
         const groundRow = Math.floor((this.game.height - 50) / this.tileSize); // ~13
-        for (let y = 0; y <= groundRow; y++) {
+
+        // Calculate minRow based on pipes (pipeHeight 80 + gap 20 = 100 per pipe)
+        // Highest pipe Y is (groundRow * tileSize - 70) - ((maxSidePipes - 1) * 100)
+        // We want some buffer above that.
+        const pipeHeight = 80;
+        const gap = 20;
+        const highestPipeY = (this.game.height - 50 - 70) - ((maxSidePipes - 1) * (pipeHeight + gap));
+        this.minRow = Math.min(0, Math.floor(highestPipeY / this.tileSize) - 2);
+
+        for (let y = this.minRow; y <= groundRow; y++) {
             // Left Wall
             this.tiles.push({ tx: 0, ty: y, type: 'solid' });
 
@@ -66,8 +80,6 @@ export class Level {
         }
 
         // Add Climbing Towers if there are more than 2 pipes on either side
-        const broaderCount = this.game.concept?.broader?.length || 0;
-        const narrowerCount = this.game.concept?.narrower?.length || 0;
 
         // Left Tower (for broader concepts)
         if (broaderCount > 2) {
@@ -171,14 +183,14 @@ export class Level {
         const levelWidthTiles = Math.ceil(this.game.levelWidth / this.tileSize);
 
         // Left Wall
-        for (let y = 0; y <= groundRow; y++) {
+        for (let y = this.minRow; y <= groundRow; y++) {
             this.drawBrickTile(ctx, 0, y * this.tileSize, this.tileSize, this.tileSize, '#57534e', false, true);
         }
 
         // Right Wall
         const rightX = (levelWidthTiles - 1) * this.tileSize;
         if (rightX > 0) {
-            for (let y = 0; y <= groundRow; y++) {
+            for (let y = this.minRow; y <= groundRow; y++) {
                 this.drawBrickTile(ctx, rightX, y * this.tileSize, this.tileSize, this.tileSize, '#57534e', false, true);
             }
         }
