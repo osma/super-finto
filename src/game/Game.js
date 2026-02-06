@@ -139,7 +139,8 @@ export class Game {
                     label_sv: c ? c.label_sv : '',
                     label_en: c ? c.label_en : ''
                 };
-            })
+            }),
+            altLabels: conceptData.altlabel_en || []
         };
 
         // Calculate level width based on related concepts

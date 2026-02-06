@@ -1,3 +1,5 @@
+import { Enemy } from './Enemy.js';
+
 export class Level {
     constructor(game) {
         this.game = game;
@@ -6,6 +8,7 @@ export class Level {
         this.minRow = 0;
         this.particles = [];
         this.coins = [];
+        this.enemies = [];
         this.groundGaps = [];
 
         // Pre-render tile cache for performance
@@ -122,10 +125,46 @@ export class Level {
         hCtxL.fillStyle = 'rgba(255, 255, 255, 0.3)';
         hCtxL.fillRect(0, hCapExtra + 5, hLength, 8);
         this.tileCache['pipeHorzL'] = hCanvasL;
+
+        // Enemy Sprite (40x40)
+        const enemyCanvas = document.createElement('canvas');
+        enemyCanvas.width = 40;
+        enemyCanvas.height = 40;
+        const eCtx = enemyCanvas.getContext('2d');
+        const eColor = '#b91c1c'; // Burgundy/Red
+
+        eCtx.fillStyle = eColor;
+        // Body (Circle-ish)
+        eCtx.beginPath();
+        eCtx.arc(20, 25, 15, 0, Math.PI * 2);
+        eCtx.fill();
+        // Feet
+        eCtx.fillStyle = '#450a0a';
+        eCtx.fillRect(10, 35, 10, 5);
+        eCtx.fillRect(20, 35, 10, 5);
+        // Eyes
+        eCtx.fillStyle = 'white';
+        eCtx.fillRect(12, 20, 6, 6);
+        eCtx.fillRect(22, 20, 6, 6);
+        eCtx.fillStyle = 'black';
+        eCtx.fillRect(14, 22, 2, 2);
+        eCtx.fillRect(24, 22, 2, 2);
+        // Eyebrows (Angry)
+        eCtx.strokeStyle = 'black';
+        eCtx.lineWidth = 2;
+        eCtx.beginPath();
+        eCtx.moveTo(10, 18); eCtx.lineTo(18, 22);
+        eCtx.moveTo(30, 18); eCtx.lineTo(22, 22);
+        eCtx.stroke();
+
+        this.tileCache['enemy'] = enemyCanvas;
     }
 
     generate(seedUri) {
         this.tiles.clear();
+        this.coins = [];
+        this.enemies = [];
+        this.groundGaps = [];
         if (!seedUri) return;
 
         const rng = new SeededRNG(seedUri);
@@ -293,6 +332,34 @@ export class Level {
             }
         }
 
+        // --- ENEMY SPAWNING ---
+        const altLabels = this.game.concept ? this.game.concept.altLabels : [];
+        const numEnemies = Math.min(10, Math.max(5, Math.ceil(levelWidthTiles / 15)));
+
+        for (let i = 0; i < numEnemies; i++) {
+            let placed = false;
+            let attempts = 0;
+            while (!placed && attempts < 50) {
+                attempts++;
+                const tx = Math.floor(rng.next() * (levelWidthTiles - 10)) + 5;
+                const ty = Math.floor(rng.next() * (groundRow - 2 - this.minRow)) + this.minRow;
+
+                // Ensure not horizontally closer than 10 tiles to Mario (Mario at ~tile 2)
+                if (Math.abs(tx - 2) < 10) continue;
+
+                // Spawn on top of a tile or ground
+                const hasGround = ty === groundRow - 1;
+                const hasTile = this.tiles.get(`${tx},${ty + 1}`) !== undefined;
+                const spaceEmpty = this.tiles.get(`${tx},${ty}`) === undefined;
+
+                if ((hasGround || hasTile) && spaceEmpty) {
+                    const label = altLabels.length > 0 ? altLabels[Math.floor(rng.next() * altLabels.length)] : null;
+                    this.enemies.push(new Enemy(tx * this.tileSize, ty * this.tileSize, label, this.tileSize));
+                    placed = true;
+                }
+            }
+        }
+
         // Pre-calculate bottom pipe positions (in tiles) to avoid overlapping them
         const pipePositions = [];
         if (this.game.concept && this.game.concept.related) {
@@ -455,6 +522,14 @@ export class Level {
 
         // Draw Coins
         this.coins.forEach(c => c.draw(ctx));
+
+        // Draw Enemies
+        this.enemies.forEach(e => {
+            // Viewport culling
+            if (e.x + e.width > cameraX - buffer && e.x < cameraX + viewportWidth + buffer) {
+                e.draw(ctx, this.tileCache);
+            }
+        });
     }
 
     drawGround(ctx) {
@@ -487,14 +562,61 @@ export class Level {
             }
         }
 
-        // Check for player death (falling in gap)
-        if (this.game.player.y > this.game.height + 100) {
-            // Respawn player
-            this.game.player.y = -100; // Drop from sky
-            this.game.player.x = 100; // Reset X
-            this.game.player.vy = 0;
-            // Maybe subtract score or life?
+        // --- ENEMY UPDATE & COLLISIONS ---
+        const player = this.game.player;
+        const cameraX = this.game.camera.x;
+        const viewportWidth = this.game.width;
+        const buffer = 200;
+
+        for (let i = this.enemies.length - 1; i >= 0; i--) {
+            const enemy = this.enemies[i];
+
+            // Viewport culling for updates
+            if (enemy.x + enemy.width > cameraX - buffer && enemy.x < cameraX + viewportWidth + buffer) {
+                enemy.update(this);
+
+                // Check collision with player
+                if (!enemy.isDead && !this.game.transition.active &&
+                    player.x + player.width > enemy.x &&
+                    player.x < enemy.x + enemy.width &&
+                    player.y + player.height > enemy.y &&
+                    player.y < enemy.y + enemy.height) {
+
+                    // Collision detected!
+                    const overlapTop = (player.y + player.height) - enemy.y;
+
+                    // Simple stomp check: if player is falling and hitting the top 1/3rd of the enemy
+                    if (player.vy > 0 && overlapTop < enemy.height / 3) {
+                        // STOMP!
+                        enemy.isDead = true;
+                        this.game.addScore(400);
+                        player.vy = -8; // Small bounce
+                        player.grounded = false;
+                    } else {
+                        // DAMAGE!
+                        console.log("Player hit by enemy:", enemy.label);
+                        // For now, let's just reset player (standard platformer penalty)
+                        this.respawnPlayer();
+                    }
+                }
+            } else if (enemy.y > this.game.height + 100) {
+                // Remove if fallen off world
+                this.enemies.splice(i, 1);
+            }
         }
+
+        // Check for player death (falling in gap)
+        if (player.y > this.game.height + 100) {
+            this.respawnPlayer();
+        }
+    }
+
+    respawnPlayer() {
+        // Drop from sky at start of concept
+        this.game.player.y = -100;
+        this.game.player.x = 100;
+        this.game.player.vy = 0;
+        this.game.player.vx = 0;
     }
 
     drawBoundaryWalls(ctx) {
