@@ -46,13 +46,21 @@ export class Enemy {
                 if (this.x + this.width > px && this.x < px + pw &&
                     this.y + this.height > py && this.y < py + ph) {
 
+                    const overlapTop = (this.y + this.height) - py;
+                    const overlapBottom = (py + ph) - this.y;
                     const overlapLeft = (this.x + this.width) - px;
                     const overlapRight = (px + pw) - this.x;
 
-                    if (overlapLeft < overlapRight) {
+                    const minOverlap = Math.min(overlapTop, overlapBottom, overlapLeft, overlapRight);
+
+                    // Vertical Inset: Ignore horizontal collisions that happen at the very bottom/top
+                    const vInset = 4;
+                    const isWithinVerticalBody = overlapTop > vInset && overlapBottom > vInset;
+
+                    if (minOverlap === overlapLeft && isWithinVerticalBody) {
                         this.x = px - this.width;
                         this.vx *= -1;
-                    } else {
+                    } else if (minOverlap === overlapRight && isWithinVerticalBody) {
                         this.x = px + pw;
                         this.vx *= -1;
                     }
@@ -112,12 +120,18 @@ export class Enemy {
                     } else if (minOverlap === overlapBottom && this.vy < 0) {
                         this.y = py + ph;
                         this.vy = 0;
-                    } else if (minOverlap === overlapLeft) {
-                        this.x = px - this.width;
-                        this.vx *= -1; // Reverse direction
-                    } else if (minOverlap === overlapRight) {
-                        this.x = px + pw;
-                        this.vx *= -1; // Reverse direction
+                    } else {
+                        // Vertical Inset: Ignore horizontal collisions at the very bottom/top
+                        const vInset = 4;
+                        const isWithinVerticalBody = overlapTop > vInset && overlapBottom > vInset;
+
+                        if (minOverlap === overlapLeft && isWithinVerticalBody) {
+                            this.x = px - this.width;
+                            this.vx *= -1;
+                        } else if (minOverlap === overlapRight && isWithinVerticalBody) {
+                            this.x = px + pw;
+                            this.vx *= -1;
+                        }
                     }
                 }
             }

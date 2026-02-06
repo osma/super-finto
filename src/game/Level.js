@@ -415,12 +415,18 @@ export class Level {
     }
 
     renderGeometryLayer() {
+        const groundY = this.game.height - 50;
+        const groundRow = Math.floor(groundY / this.tileSize);
+        // Expand totalRows significantly to handle deep soil and scrolling
+        const totalRows = groundRow - this.minRow + 15;
+        const yOffset = -this.minRow * this.tileSize;
+
         // Create tiles canvas (background layer)
         if (!this.tilesCanvas) {
             this.tilesCanvas = document.createElement('canvas');
         }
         this.tilesCanvas.width = this.game.levelWidth;
-        this.tilesCanvas.height = this.game.height;
+        this.tilesCanvas.height = totalRows * this.tileSize;
         const tilesCtx = this.tilesCanvas.getContext('2d');
         tilesCtx.clearRect(0, 0, this.tilesCanvas.width, this.tilesCanvas.height);
 
@@ -428,7 +434,7 @@ export class Level {
         for (let [key, type] of this.tiles) {
             const [tx, ty] = key.split(',').map(Number);
             const cacheId = type === 'solid' ? 'solid' : 'brick';
-            tilesCtx.drawImage(this.tileCache[cacheId], Math.floor(tx * this.tileSize), Math.floor(ty * this.tileSize));
+            tilesCtx.drawImage(this.tileCache[cacheId], Math.floor(tx * this.tileSize), Math.floor(ty * this.tileSize + yOffset));
         }
 
         // Create foreground canvas (ground + walls)
@@ -436,33 +442,41 @@ export class Level {
             this.foregroundCanvas = document.createElement('canvas');
         }
         this.foregroundCanvas.width = this.game.levelWidth;
-        this.foregroundCanvas.height = this.game.height;
+        this.foregroundCanvas.height = totalRows * this.tileSize;
         const fgCtx = this.foregroundCanvas.getContext('2d');
         fgCtx.clearRect(0, 0, this.foregroundCanvas.width, this.foregroundCanvas.height);
 
-        const groundY = this.game.height - 50;
-        const groundRow = Math.floor(groundY / this.tileSize);
         const levelWidthTiles = Math.ceil(this.game.levelWidth / this.tileSize);
 
         // Draw ground to foreground layer
+        const soilColor = '#92450e';
+        const soilDepth = 400; // Extra depth for scrolling
         for (let i = 0; i < Math.ceil(this.game.levelWidth / this.tileSize); i++) {
             const isGap = this.groundGaps.some(g => i >= g.start && i < g.end);
             if (!isGap) {
-                fgCtx.drawImage(this.tileCache['ground'], Math.floor(i * this.tileSize), Math.floor(groundY));
+                const gx = Math.floor(i * this.tileSize);
+                const gy = Math.floor(groundY + yOffset);
+
+                // Draw soil fill first
+                fgCtx.fillStyle = soilColor;
+                fgCtx.fillRect(gx, gy + 10, this.tileSize, soilDepth);
+
+                // Draw the cached ground sprite (grass top + initial soil)
+                fgCtx.drawImage(this.tileCache['ground'], gx, gy);
             }
         }
 
         // Draw boundary walls to foreground layer
         // Left Wall
         for (let y = this.minRow; y <= groundRow; y++) {
-            fgCtx.drawImage(this.tileCache['solid'], 0, Math.floor(y * this.tileSize));
+            fgCtx.drawImage(this.tileCache['solid'], 0, Math.floor(y * this.tileSize + yOffset));
         }
 
         // Right Wall
         const rightX = (levelWidthTiles - 1) * this.tileSize;
         if (rightX > 0) {
             for (let y = this.minRow; y <= groundRow; y++) {
-                fgCtx.drawImage(this.tileCache['solid'], Math.floor(rightX), Math.floor(y * this.tileSize));
+                fgCtx.drawImage(this.tileCache['solid'], Math.floor(rightX), Math.floor(y * this.tileSize + yOffset));
             }
         }
 
@@ -477,7 +491,7 @@ export class Level {
 
         // Draw cached tiles layer (background)
         if (this.tilesCanvas) {
-            ctx.drawImage(this.tilesCanvas, 0, 0);
+            ctx.drawImage(this.tilesCanvas, 0, Math.floor(this.minRow * this.tileSize));
         }
 
         // Draw Related Concept Pipes (Vertical)
@@ -535,7 +549,7 @@ export class Level {
     drawGround(ctx) {
         // Draw from cached foreground layer
         if (this.foregroundCanvas) {
-            ctx.drawImage(this.foregroundCanvas, 0, 0);
+            ctx.drawImage(this.foregroundCanvas, 0, Math.floor(this.minRow * this.tileSize));
         }
     }
     createExplosion(x, y) {
@@ -585,8 +599,20 @@ export class Level {
                     // Collision detected!
                     const overlapTop = (player.y + player.height) - enemy.y;
 
-                    // Simple stomp check: if player is falling and hitting the top 1/3rd of the enemy
-                    if (player.vy > 0 && overlapTop < enemy.height / 3) {
+                    // --- HIGHLY ROBUST STOMP DETECTION ---
+                    // 1. Calculate previous positions (backtrack)
+                    const prevPlayerBottom = player.y + player.height - player.vy;
+                    const prevEnemyTop = enemy.y - (enemy.vy || 0);
+
+                    // 2. Conditions for a stomp:
+                    // - Mario is moving down relative to the monster
+                    // - Mario was above the monster in the last frame (with a tiny buffer)
+                    // - OR the overlap is significantly from the top (upper 75% of monster)
+                    const isFalling = (player.vy - (enemy.vy || 0)) > 0;
+                    const wasAbove = prevPlayerBottom <= prevEnemyTop + 10;
+                    const isHittingTop = overlapTop < enemy.height * 0.75;
+
+                    if (isFalling && (wasAbove || isHittingTop)) {
                         // STOMP!
                         enemy.isDead = true;
                         this.game.addScore(400);
@@ -595,7 +621,6 @@ export class Level {
                     } else {
                         // DAMAGE!
                         console.log("Player hit by enemy:", enemy.label);
-                        // For now, let's just reset player (standard platformer penalty)
                         this.respawnPlayer();
                     }
                 }
@@ -972,6 +997,10 @@ export class Level {
                                 }
 
                                 this.tiles.delete(`${tx},${ty}`);
+                                if (this.tilesCanvas) {
+                                    const yOffset = -this.minRow * this.tileSize;
+                                    this.tilesCanvas.getContext('2d').clearRect(px, py + yOffset, this.tileSize, this.tileSize);
+                                }
                             }
                         }
                     } else if (minOverlap === overlapLeft) {
