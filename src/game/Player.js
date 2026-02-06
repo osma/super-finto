@@ -56,7 +56,7 @@ export class Player {
         this.lastJumpPressed = jumpPressed;
 
         // Apply Gravity
-        this.vy += this.weight;
+        this.vy = Math.min(this.vy + this.weight, this.jumpForce);
         this.y += this.vy;
 
         // Screen Boundaries
