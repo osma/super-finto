@@ -131,11 +131,46 @@ export class Level {
         const coinCount = Math.min(5, Math.max(1, Math.floor(area / 400)));
 
         for (let i = 0; i < coinCount; i++) {
-            // Random position at least 5 tiles up from ground
-            const cx = Math.floor(rng.next() * (levelWidthTiles - 10)) + 5;
-            const cy = Math.floor(rng.next() * (groundRow - 5 - this.minRow)) + this.minRow;
+            let cx, cy;
+            let attempts = 0;
+            let placed = false;
 
-            this.coins.push(new Coin(cx * this.tileSize + 10, cy * this.tileSize + 10));
+            while (attempts < 20 && !placed) {
+                attempts++;
+
+                // 20% Chance: Try to place above existing destroyable brick
+                if (rng.next() < 0.2) {
+                    // Find valid bricks (above minRow, below ground)
+                    const validBricks = this.tiles.filter(t => t.type === 'brick' && t.ty > this.minRow + 1 && t.ty < groundRow - 4);
+                    if (validBricks.length > 0) {
+                        const targetBrick = validBricks[Math.floor(rng.next() * validBricks.length)];
+                        cx = targetBrick.tx;
+                        cy = targetBrick.ty - 1; // Above it
+                    } else {
+                        // Fallback to random if no bricks
+                        cx = Math.floor(rng.next() * (levelWidthTiles - 10)) + 5;
+                        cy = Math.floor(rng.next() * (groundRow - 5 - this.minRow)) + this.minRow;
+                    }
+                } else {
+                    // 80% Chance: Random position
+                    cx = Math.floor(rng.next() * (levelWidthTiles - 10)) + 5;
+                    cy = Math.floor(rng.next() * (groundRow - 5 - this.minRow)) + this.minRow;
+                }
+
+                // CHECK OVERLAP with Tiles
+                const overlap = this.tiles.some(t => t.tx === cx && t.ty === cy);
+
+                // Check overlap with other coins
+                // Coin pos is tile*size + 10
+                const cxPx = cx * this.tileSize + 10;
+                const cyPx = cy * this.tileSize + 10;
+                const coinOverlap = this.coins.some(c => Math.abs(c.x - cxPx) < 20 && Math.abs(c.y - cyPx) < 20);
+
+                if (!overlap && !coinOverlap) {
+                    this.coins.push(new Coin(cxPx, cyPx));
+                    placed = true;
+                }
+            }
         }
     }
 
@@ -575,6 +610,31 @@ export class Level {
                             this.game.addScore(50);
                             // Create explosion particles
                             this.createExplosion(px, py);
+
+                            // Check for Coin ABOVE this brick
+                            for (let c = this.coins.length - 1; c >= 0; c--) {
+                                const coin = this.coins[c];
+                                // Coin center is x+size/2. Brick center is px+tileSize/2.
+                                // Coin Y is roughly py - tileSize (since coin is on top)
+                                // Coin collider is roughly 20x20 in the middle of 40x40.
+
+                                // Center-to-center check
+                                const coinCenterX = coin.x + coin.size / 2;
+                                const brickCenterX = px + this.tileSize / 2;
+
+                                // Check if coin is "on top" (y matches) and aligned horizontally
+                                // Allow some horizontal slop (e.g. 20px)
+                                if (Math.abs(coinCenterX - brickCenterX) < 20 &&
+                                    Math.abs(coin.y + coin.size - py) < 10) { // Coin bottom near brick top
+
+                                    // Collect Coin
+                                    this.game.addScore(200);
+                                    this.coins.splice(c, 1);
+
+                                    // Optional: Add a sparkle effect? For now just collect.
+                                }
+                            }
+
                             this.tiles.splice(i, 1);
                         }
                     }
