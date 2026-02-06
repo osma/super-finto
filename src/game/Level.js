@@ -14,47 +14,6 @@ export class Level {
         const rng = new SeededRNG(seedUri);
         const levelWidthTiles = Math.ceil(this.game.levelWidth / this.tileSize);
 
-        // Start from x=5 to give some start space, end with padding
-        let x = 5;
-
-        while (x < levelWidthTiles - 5) {
-            // 90% chance to spawn a platform at this x
-            if (rng.next() < 0.9) {
-                const width = Math.floor(rng.next() * 6) + 1; // 1 to 6 width
-                // Rows: Ground is ~13. Sky is 0. 
-                // Platforms between row 3 (high) and 10 (low)
-                // Bias towards lower platforms (higher row numbers) using max of two randoms
-                const bias = Math.max(rng.next(), rng.next());
-                const row = Math.floor(bias * 8) + 3;
-
-                // Don't spawn if too low (optional, user asked to remove low ones before but now asked for random distribution)
-                // Let's keep it generally open.
-
-                for (let i = 0; i < width; i++) {
-                    if (x + i >= levelWidthTiles - 5) break;
-
-                    // Simple logic to avoid exact overlap with pipes? 
-                    // Pipes are at game.getPipeX(). Since this is grid based and pipes are absolute, 
-                    // it's a bit hard to perfectly check. 
-                    // But random distribution usually works out okay for Mario.
-
-                    // But random distribution usually works out okay for Mario.
-
-                    const isSolid = rng.next() > 0.5;
-                    this.tiles.push({
-                        tx: x + i,
-                        ty: row,
-                        type: isSolid ? 'solid' : 'brick'
-                    });
-                }
-
-                // Advance x by width + random gap (1-2 empty tiles)
-                x += width + Math.floor(rng.next() * 2) + 1;
-                x++;
-            }
-        }
-
-        // Add Solid Boundary Walls (Left and Right)
         const broaderCount = this.game.concept?.broader?.length || 0;
         const narrowerCount = this.game.concept?.narrower?.length || 0;
         const maxSidePipes = Math.max(broaderCount, narrowerCount);
@@ -62,12 +21,48 @@ export class Level {
         const groundRow = Math.floor((this.game.height - 50) / this.tileSize); // ~13
 
         // Calculate minRow based on pipes (pipeHeight 80 + gap 40 = 120 per pipe)
-        // Highest pipe Y is (groundRow * tileSize - 70) - ((maxSidePipes - 1) * 120)
-        // We want some buffer above that.
         const pipeHeight = 80;
         const gap = 40;
         const highestPipeY = (this.game.height - 50 - 70) - ((maxSidePipes - 1) * (pipeHeight + gap));
         this.minRow = Math.min(0, Math.floor(highestPipeY / this.tileSize) - 2);
+
+        // Start from x=5 to give some start space, end with padding
+        let x = 5;
+
+        while (x < levelWidthTiles - 5) {
+            // 90% chance to spawn a platform at this x
+            if (rng.next() < 0.9) {
+                const width = Math.floor(rng.next() * 6) + 1; // 1 to 6 width
+
+                // Density based spawning: Every 5-8 blocks (constant density)
+                // START at a jumpable height: 3-5 blocks above ground
+                let currentY = groundRow - (Math.floor(rng.next() * 3) + 3);
+
+                while (currentY >= this.minRow) {
+                    // Add tiles for this row
+                    for (let i = 0; i < width; i++) {
+                        if (x + i >= levelWidthTiles - 5) break;
+                        const isSolid = rng.next() > 0.5;
+                        this.tiles.push({
+                            tx: x + i,
+                            ty: currentY,
+                            type: isSolid ? 'solid' : 'brick'
+                        });
+                    }
+
+                    // Move up for next layer
+                    const step = Math.floor(rng.next() * 4) + 5; // 5, 6, 7, 8
+                    currentY -= step;
+                }
+
+                // Advance x by width + random small gap (0-2 empty tiles)
+                x += width + Math.floor(rng.next() * 2);
+            } else {
+                x++;
+            }
+        }
+
+        // Calculate minRow calculation moved up
 
         for (let y = this.minRow; y <= groundRow; y++) {
             // Left Wall
