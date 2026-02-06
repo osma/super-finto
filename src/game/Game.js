@@ -173,7 +173,7 @@ export class Game {
                     // Came from Broader concept (which is now on Left Wall)
                     // Spawn Left Wall, Moving Right
                     const pipeHeight = 80;
-                    const gap = 20;
+                    const gap = 40;
                     const y = (groundY - 70) - (broaderIndex * (pipeHeight + gap));
 
                     this.transition.state = 'pipe_in';
@@ -191,7 +191,7 @@ export class Game {
                     // Came from Narrower concept (which is now on Right Wall)
                     // Spawn Right Wall, Moving Left
                     const pipeHeight = 80;
-                    const gap = 20;
+                    const gap = 40;
                     const y = (groundY - 70) - (narrowerIndex * (pipeHeight + gap));
 
                     this.transition.state = 'pipe_in';

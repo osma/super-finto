@@ -61,11 +61,11 @@ export class Level {
 
         const groundRow = Math.floor((this.game.height - 50) / this.tileSize); // ~13
 
-        // Calculate minRow based on pipes (pipeHeight 80 + gap 20 = 100 per pipe)
-        // Highest pipe Y is (groundRow * tileSize - 70) - ((maxSidePipes - 1) * 100)
+        // Calculate minRow based on pipes (pipeHeight 80 + gap 40 = 120 per pipe)
+        // Highest pipe Y is (groundRow * tileSize - 70) - ((maxSidePipes - 1) * 120)
         // We want some buffer above that.
         const pipeHeight = 80;
-        const gap = 20;
+        const gap = 40;
         const highestPipeY = (this.game.height - 50 - 70) - ((maxSidePipes - 1) * (pipeHeight + gap));
         this.minRow = Math.min(0, Math.floor(highestPipeY / this.tileSize) - 2);
 
@@ -85,7 +85,7 @@ export class Level {
         // Left Tower (for broader concepts)
         if (broaderCount > 2) {
             const pipeHeight = 80;
-            const gap = 20;
+            const gap = 40;
             const highestPipeY = (this.game.height - 50 - 70) - ((broaderCount - 1) * (pipeHeight + gap));
             const highestRow = Math.floor(highestPipeY / this.tileSize);
 
@@ -94,12 +94,12 @@ export class Level {
             // Start from groundRow - 1 (one row above ground)
             for (let y = groundRow - 1; y >= highestRow; y--) {
                 const rowFromBottom = groundRow - y;
-                // Column 3: rows 1, 7, 13... (every 6, starting at 1)
-                if (rowFromBottom % 6 === 1) {
+                // Column 3: rows 2, 8, 14...
+                if (rowFromBottom % 6 === 2) {
                     this.tiles.push({ tx: 3, ty: y, type: 'solid' });
                 }
-                // Column 4: rows 4, 10, 16... (every 6, starting at 4)
-                if (rowFromBottom % 6 === 4) {
+                // Column 4: rows 5, 11, 17...
+                if (rowFromBottom % 6 === 5) {
                     this.tiles.push({ tx: 4, ty: y, type: 'solid' });
                 }
             }
@@ -108,7 +108,7 @@ export class Level {
         // Right Tower (for narrower concepts)
         if (narrowerCount > 2) {
             const pipeHeight = 80;
-            const gap = 20;
+            const gap = 40;
             const highestPipeY = (this.game.height - 50 - 70) - ((narrowerCount - 1) * (pipeHeight + gap));
             const highestRow = Math.floor(highestPipeY / this.tileSize);
 
@@ -117,12 +117,12 @@ export class Level {
             // Start from groundRow - 1 (one row above ground)
             for (let y = groundRow - 1; y >= highestRow; y--) {
                 const rowFromBottom = groundRow - y;
-                // Right column 1: rows 1, 7, 13...
-                if (rowFromBottom % 6 === 1) {
+                // Right column 1: rows 2, 8, 14...
+                if (rowFromBottom % 6 === 2) {
                     this.tiles.push({ tx: levelWidthTiles - 5, ty: y, type: 'solid' });
                 }
-                // Right column 2: rows 4, 10, 16...
-                if (rowFromBottom % 6 === 4) {
+                // Right column 2: rows 5, 11, 17...
+                if (rowFromBottom % 6 === 5) {
                     this.tiles.push({ tx: levelWidthTiles - 4, ty: y, type: 'solid' });
                 }
             }
@@ -143,7 +143,7 @@ export class Level {
         // Draw Broader Concept Pipes (Left Wall, Horizontal)
         if (this.game.concept && this.game.concept.broader) {
             const pipeHeight = 80;
-            const gap = 20;
+            const gap = 40;
             this.game.concept.broader.forEach((broader, index) => {
                 // Stack upwards from ground
                 const y = (groundY - 70) - (index * (pipeHeight + gap));
@@ -154,7 +154,7 @@ export class Level {
         // Draw Narrower Concept Pipes (Right Wall, Horizontal)
         if (this.game.concept && this.game.concept.narrower) {
             const pipeHeight = 80;
-            const gap = 20;
+            const gap = 40;
             this.game.concept.narrower.forEach((narrower, index) => {
                 // Stack upwards from ground
                 const y = (groundY - 70) - (index * (pipeHeight + gap)); // 50 offset to align somewhat with ground
@@ -423,12 +423,12 @@ export class Level {
         // Check Broader Pipes (Left Wall)
         if (this.game.concept && this.game.concept.broader) {
             const pipeHeight = 80;
-            const gap = 20;
+            const gap = 40;
             this.game.concept.broader.forEach((broader, index) => {
                 const y = (groundY - 70) - (index * (pipeHeight + gap));
                 // Opening is roughly at x=80 (length of pipe)
                 // Hitbox: x=60 to 80, y=y to y+80
-                // Trigger if walking LEFT into it
+                // --- Teleport Trigger ---
                 if (player.vx < 0 &&
                     player.x < 90 && player.x > 50 &&
                     player.y + player.height > y + 10 &&
@@ -436,6 +436,35 @@ export class Level {
 
                     console.log("Teleporting Left to:", broader.uri);
                     this.game.startPipeTransition(broader.uri, 0, y, 'left');
+                    return;
+                }
+
+                // --- Solid Collision ---
+                const px = 0;
+                const py = y;
+                const pw = 80;
+                const ph = pipeHeight;
+
+                if (player.x + player.width > px && player.x < px + pw &&
+                    player.y + player.height > py && player.y < py + ph) {
+
+                    const overlapTop = (player.y + player.height) - py;
+                    const overlapBottom = (py + ph) - player.y;
+                    const overlapLeft = (player.x + player.width) - px;
+                    const overlapRight = (px + pw) - player.x;
+                    const minOverlap = Math.min(overlapTop, overlapBottom, overlapLeft, overlapRight);
+
+                    if (minOverlap === overlapTop && player.vy >= 0) {
+                        player.y = py - player.height;
+                        player.vy = 0;
+                        player.grounded = true;
+                    } else if (minOverlap === overlapBottom && player.vy < 0) {
+                        player.y = py + ph;
+                        player.vy = 0;
+                    } else if (minOverlap === overlapRight) {
+                        player.x = px + pw;
+                        player.vx = 0;
+                    }
                 }
             });
         }
@@ -443,12 +472,12 @@ export class Level {
         // Check Narrower Pipes (Right Wall)
         if (this.game.concept && this.game.concept.narrower) {
             const pipeHeight = 80;
-            const gap = 20;
+            const gap = 40;
             const lw = this.game.levelWidth;
             this.game.concept.narrower.forEach((narrower, index) => {
                 const y = (groundY - 70) - (index * (pipeHeight + gap));
                 // Opening is at lw - 80
-                // Trigger if walking RIGHT into it
+                // --- Teleport Trigger ---
                 if (player.vx > 0 &&
                     player.x + player.width > lw - 90 && player.x + player.width < lw - 50 &&
                     player.y + player.height > y + 10 &&
@@ -456,6 +485,35 @@ export class Level {
 
                     console.log("Teleporting Right to:", narrower.uri);
                     this.game.startPipeTransition(narrower.uri, lw, y, 'right');
+                    return;
+                }
+
+                // --- Solid Collision ---
+                const px = lw - 80;
+                const py = y;
+                const pw = 80;
+                const ph = pipeHeight;
+
+                if (player.x + player.width > px && player.x < px + pw &&
+                    player.y + player.height > py && player.y < py + ph) {
+
+                    const overlapTop = (player.y + player.height) - py;
+                    const overlapBottom = (py + ph) - player.y;
+                    const overlapLeft = (player.x + player.width) - px;
+                    const overlapRight = (px + pw) - player.x;
+                    const minOverlap = Math.min(overlapTop, overlapBottom, overlapLeft, overlapRight);
+
+                    if (minOverlap === overlapTop && player.vy >= 0) {
+                        player.y = py - player.height;
+                        player.vy = 0;
+                        player.grounded = true;
+                    } else if (minOverlap === overlapBottom && player.vy < 0) {
+                        player.y = py + ph;
+                        player.vy = 0;
+                    } else if (minOverlap === overlapLeft) {
+                        player.x = px - player.width;
+                        player.vx = 0;
+                    }
                 }
             });
         }
