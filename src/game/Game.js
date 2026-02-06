@@ -243,6 +243,14 @@ export class Game {
         if (enEl) enEl.textContent = `EN: ${this.concept.label_en || '-'}`;
     }
 
+    addScore(points) {
+        this.score += points;
+        const scoreEl = document.getElementById('score');
+        if (scoreEl) {
+            scoreEl.textContent = this.score.toString().padStart(5, '0');
+        }
+    }
+
     getPipeX(index) {
         if (!this.concept || !this.concept.uri) return 300 + index * 300;
 

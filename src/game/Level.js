@@ -473,6 +473,7 @@ export class Level {
                         headHit = true;
 
                         if (tile.type === 'brick') {
+                            this.game.addScore(50);
                             this.tiles.splice(i, 1);
                         }
                     }
