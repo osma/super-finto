@@ -5,6 +5,7 @@ export class Level {
         this.tiles = [];
         this.minRow = 0;
         this.particles = [];
+        this.coins = [];
     }
 
     generate(seedUri) {
@@ -122,6 +123,20 @@ export class Level {
                 }
             }
         }
+
+        // Generate Coins
+        this.coins = [];
+        const area = levelWidthTiles * (groundRow - this.minRow);
+        // Simple heuristic: roughly 1 coin per 400 tiles of area, clamped 1-5
+        const coinCount = Math.min(5, Math.max(1, Math.floor(area / 400)));
+
+        for (let i = 0; i < coinCount; i++) {
+            // Random position at least 5 tiles up from ground
+            const cx = Math.floor(rng.next() * (levelWidthTiles - 10)) + 5;
+            const cy = Math.floor(rng.next() * (groundRow - 5 - this.minRow)) + this.minRow;
+
+            this.coins.push(new Coin(cx * this.tileSize + 10, cy * this.tileSize + 10));
+        }
     }
 
     draw(ctx) {
@@ -167,6 +182,9 @@ export class Level {
 
         // Draw particles
         this.particles.forEach(p => p.draw(ctx));
+
+        // Draw Coins
+        this.coins.forEach(c => c.draw(ctx));
     }
 
     drawGround(ctx) {
@@ -575,6 +593,21 @@ export class Level {
         if (headHit) {
             player.vy = 2.5; // Decisive bounce back down
         }
+
+        // Check Coin Collisions
+        for (let i = this.coins.length - 1; i >= 0; i--) {
+            const coin = this.coins[i];
+            // Simple AABB (Coin is 20x20 centered in 40x40 tile, roughly)
+            if (player.x < coin.x + coin.size &&
+                player.x + player.width > coin.x &&
+                player.y < coin.y + coin.size &&
+                player.y + player.height > coin.y) {
+
+                // Collect!
+                this.game.addScore(200);
+                this.coins.splice(i, 1);
+            }
+        }
     }
 }
 
@@ -610,6 +643,35 @@ class BrickParticle {
         ctx.strokeStyle = 'rgba(0,0,0,0.3)';
         ctx.lineWidth = 1;
         ctx.strokeRect(-this.size / 2, -this.size / 2, this.size, this.size);
+
+        ctx.restore();
+    }
+}
+
+class Coin {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.size = 20;
+        this.wobble = Math.random() * Math.PI * 2;
+    }
+
+    draw(ctx) {
+        this.wobble += 0.1;
+        const scaleX = Math.abs(Math.sin(this.wobble));
+
+        ctx.save();
+        ctx.translate(this.x + this.size / 2, this.y + this.size / 2);
+        ctx.scale(scaleX, 1);
+
+        ctx.fillStyle = '#fcd34d'; // Gold
+        ctx.beginPath();
+        ctx.arc(0, 0, this.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#d97706'; // Darker gold outline
+        ctx.lineWidth = 2;
+        ctx.stroke();
 
         ctx.restore();
     }
