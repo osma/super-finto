@@ -4,6 +4,7 @@ export class Level {
         this.tileSize = 40;
         this.tiles = [];
         this.minRow = 0;
+        this.particles = [];
     }
 
     generate(seedUri) {
@@ -168,6 +169,9 @@ export class Level {
             const color = tile.type === 'solid' ? '#57534e' : '#f97316';
             this.drawBrickTile(ctx, px, py, this.tileSize, this.tileSize, color, false, tile.type === 'solid');
         });
+
+        // Draw particles
+        this.particles.forEach(p => p.draw(ctx));
     }
 
     drawGround(ctx) {
@@ -175,6 +179,30 @@ export class Level {
         const groundTileCount = Math.ceil(this.game.levelWidth / this.tileSize);
         for (let i = 0; i < groundTileCount; i++) {
             this.drawBrickTile(ctx, i * this.tileSize, groundY, this.tileSize, 50, '#92450e', true);
+        }
+    }
+    createExplosion(x, y) {
+        // Create 4 pieces flying out in different directions
+        const velocities = [
+            { vx: -2, vy: -5 },
+            { vx: 2, vy: -5 },
+            { vx: -1.5, vy: -7 },
+            { vx: 1.5, vy: -7 }
+        ];
+
+        velocities.forEach(v => {
+            this.particles.push(new BrickParticle(x + 20, y + 20, v.vx, v.vy));
+        });
+    }
+
+    update(deltaTime) {
+        // Update particles
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            this.particles[i].update();
+            // Remove if off screen
+            if (this.particles[i].y > this.game.height + 100) {
+                this.particles.splice(i, 1);
+            }
         }
     }
 
@@ -474,6 +502,8 @@ export class Level {
 
                         if (tile.type === 'brick') {
                             this.game.addScore(50);
+                            // Create explosion particles
+                            this.createExplosion(px, py);
                             this.tiles.splice(i, 1);
                         }
                     }
@@ -492,6 +522,43 @@ export class Level {
         if (headHit) {
             player.vy = 2.5; // Decisive bounce back down
         }
+    }
+}
+
+class BrickParticle {
+    constructor(x, y, vx, vy) {
+        this.x = x;
+        this.y = y;
+        this.vx = vx;
+        this.vy = vy;
+        this.size = 12;
+        this.weight = 0.25;
+        this.angle = 0;
+        this.rotationSpeed = (Math.random() - 0.5) * 0.2;
+    }
+
+    update() {
+        this.vy += this.weight;
+        this.x += this.vx;
+        this.y += this.vy;
+        this.angle += this.rotationSpeed;
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+
+        const color = '#f97316'; // Brick orange
+        ctx.fillStyle = color;
+        ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+
+        // Borders
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(-this.size / 2, -this.size / 2, this.size, this.size);
+
+        ctx.restore();
     }
 }
 

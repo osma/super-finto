@@ -354,6 +354,7 @@ export class Game {
 
         // Normal Update
         this.player.update(this.input);
+        this.level.update(deltaTime);
         this.level.checkCollisions(this.player);
 
         // Player boundary (X)
