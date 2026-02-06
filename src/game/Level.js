@@ -31,7 +31,7 @@ export class Level {
         types.forEach(type => {
             const canvas = document.createElement('canvas');
             canvas.width = this.tileSize;
-            canvas.height = type.ground ? 50 : this.tileSize;
+            canvas.height = this.tileSize; // Ground is now 40px (one tile)
             const ctx = canvas.getContext('2d');
 
             // Re-use existing draw logic but only once per type
@@ -174,12 +174,12 @@ export class Level {
         const narrowerCount = this.game.concept?.narrower?.length || 0;
         const maxSidePipes = Math.max(broaderCount, narrowerCount);
 
-        const groundRow = Math.floor((this.game.height - 50) / this.tileSize); // ~13
+        const groundRow = Math.floor((this.game.height - 40) / this.tileSize); // ~14
 
         // Calculate minRow based on pipes (pipeHeight 80 + gap 40 = 120 per pipe)
         const pipeHeight = 80;
         const gap = 40;
-        const highestPipeY = (this.game.height - 50 - 70) - ((maxSidePipes - 1) * (pipeHeight + gap));
+        const highestPipeY = (this.game.height - 40 - 70) - ((maxSidePipes - 1) * (pipeHeight + gap));
         this.minRow = Math.min(0, Math.floor(highestPipeY / this.tileSize) - 2);
 
         // Start from x=5 to give some start space, end with padding
@@ -415,7 +415,7 @@ export class Level {
     }
 
     renderGeometryLayer() {
-        const groundY = this.game.height - 50;
+        const groundY = this.game.height - 40;
         const groundRow = Math.floor(groundY / this.tileSize);
         // Expand totalRows significantly to handle deep soil and scrolling
         const totalRows = groundRow - this.minRow + 15;
@@ -484,7 +484,7 @@ export class Level {
     }
 
     draw(ctx) {
-        const groundY = this.game.height - 50;
+        const groundY = this.game.height - 40;
         const cameraX = this.game.camera.x;
         const viewportWidth = this.game.width;
         const buffer = 100; // 100px buffer on each side
@@ -743,7 +743,7 @@ export class Level {
         player.grounded = false;
 
         // Check ground
-        const groundY = this.game.height - 50;
+        const groundY = this.game.height - 40;
         if (player.y + player.height >= groundY) {
             // Check for gaps
             // Allow standing on edge: Check if either foot is on solid ground
@@ -778,7 +778,7 @@ export class Level {
 
                 const py = groundY - 40;
                 const pw = 100;
-                const ph = 40; // Just collision for the part above ground
+                const ph = 40; // Back to 40px height above ground
 
                 if (player.x + player.width > px &&
                     player.x < px + pw &&
@@ -840,7 +840,7 @@ export class Level {
                 // Hitbox: x=60 to 80, y=y to y+80
                 // --- Teleport Trigger ---
                 if (player.vx < 0 &&
-                    player.x < 90 && player.x > 50 &&
+                    player.x < 65 && player.x > 20 &&
                     player.y + player.height > y + 10 &&
                     player.y < y + pipeHeight - 10) {
 
@@ -852,7 +852,7 @@ export class Level {
                 // --- Solid Collision ---
                 const px = 0;
                 const py = y;
-                const pw = 80;
+                const pw = 80; // Full visual width for standing
                 const ph = pipeHeight;
 
                 if (player.x + player.width > px && player.x < px + pw &&
@@ -872,8 +872,11 @@ export class Level {
                         player.y = py + ph;
                         player.vy = 0;
                     } else if (minOverlap === overlapRight) {
-                        player.x = px + pw;
-                        player.vx = 0;
+                        // Only block if we're at the back of the pipe
+                        if (player.x < 40) {
+                            player.x = px + pw;
+                            player.vx = 0;
+                        }
                     }
                 }
             });
@@ -894,7 +897,7 @@ export class Level {
                 // Opening is at lw - 80
                 // --- Teleport Trigger ---
                 if (player.vx > 0 &&
-                    player.x + player.width > lw - 90 && player.x + player.width < lw - 50 &&
+                    player.x + player.width > lw - 65 && player.x + player.width < lw - 20 &&
                     player.y + player.height > y + 10 &&
                     player.y < y + pipeHeight - 10) {
 
@@ -926,8 +929,11 @@ export class Level {
                         player.y = py + ph;
                         player.vy = 0;
                     } else if (minOverlap === overlapLeft) {
-                        player.x = px - player.width;
-                        player.vx = 0;
+                        // Only block if we're at the back of the pipe
+                        if (player.x + player.width > lw - 40) {
+                            player.x = px - player.width;
+                            player.vx = 0;
+                        }
                     }
                 }
             });

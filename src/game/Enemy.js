@@ -33,7 +33,7 @@ export class Enemy {
     checkCollisions(level) {
         this.grounded = false;
 
-        const groundY = level.game.height - 50;
+        const groundY = level.game.height - 40;
 
         // --- Ground Pipe Collision ---
         if (level.game.concept && level.game.concept.related) {
@@ -84,6 +84,75 @@ export class Enemy {
                     this.vy = 0;
                     this.grounded = true;
                 }
+            }
+        }
+
+        // --- Side Pipe Collision ---
+        const pipeHeight = 80;
+        const gap = 40;
+        const lw = level.game.levelWidth;
+
+        if (level.game.concept) {
+            // Broader Pipes (Left Wall)
+            if (level.game.concept.broader) {
+                level.game.concept.broader.forEach((broader, index) => {
+                    const py = (groundY - 70) - (index * (pipeHeight + gap));
+                    const px = 0;
+                    const pw = 80; // Monsters reverse at the mouth (80px)
+                    const ph = pipeHeight;
+
+                    if (this.x + this.width > px && this.x < px + pw &&
+                        this.y + this.height > py && this.y < py + ph) {
+
+                        const overlapTop = (this.y + this.height) - py;
+                        const overlapBottom = (py + ph) - this.y;
+                        const overlapRight = (px + pw) - this.x;
+                        const minOverlap = Math.min(overlapTop, overlapBottom, overlapRight);
+
+                        if (minOverlap === overlapTop && this.vy >= 0) {
+                            this.y = py - this.height;
+                            this.vy = 0;
+                            this.grounded = true;
+                        } else if (minOverlap === overlapBottom && this.vy < 0) {
+                            this.y = py + ph;
+                            this.vy = 0;
+                        } else if (minOverlap === overlapRight) {
+                            this.x = px + pw;
+                            this.vx *= -1;
+                        }
+                    }
+                });
+            }
+
+            // Narrower Pipes (Right Wall)
+            if (level.game.concept.narrower) {
+                level.game.concept.narrower.forEach((narrower, index) => {
+                    const py = (groundY - 70) - (index * (pipeHeight + gap));
+                    const px = lw - 80; // Monsters reverse at the mouth
+                    const pw = 80;
+                    const ph = pipeHeight;
+
+                    if (this.x + this.width > px && this.x < px + pw &&
+                        this.y + this.height > py && this.y < py + ph) {
+
+                        const overlapTop = (this.y + this.height) - py;
+                        const overlapBottom = (py + ph) - this.y;
+                        const overlapLeft = (this.x + this.width) - px;
+                        const minOverlap = Math.min(overlapTop, overlapBottom, overlapLeft);
+
+                        if (minOverlap === overlapTop && this.vy >= 0) {
+                            this.y = py - this.height;
+                            this.vy = 0;
+                            this.grounded = true;
+                        } else if (minOverlap === overlapBottom && this.vy < 0) {
+                            this.y = py + ph;
+                            this.vy = 0;
+                        } else if (minOverlap === overlapLeft) {
+                            this.x = px - this.width;
+                            this.vx *= -1;
+                        }
+                    }
+                });
             }
         }
 
