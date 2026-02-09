@@ -27,19 +27,7 @@ export class Game {
         this.backgroundCanvas = document.createElement('canvas');
         this.backgroundCanvas.width = this.width;
         this.backgroundCanvas.height = this.height;
-        const bgCtx = this.backgroundCanvas.getContext('2d');
-
-        // Draw sky
-        bgCtx.fillStyle = '#5c94fc'; // Classic NES Mario sky blue
-        bgCtx.fillRect(0, 0, this.width, this.height);
-
-        // Draw background details (stars/clouds)
-        bgCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-        for (let i = 0; i < 30; i++) {
-            const x = (Math.sin(i * 123) * 0.5 + 0.5) * this.width;
-            const y = (Math.cos(i * 234) * 0.5 + 0.5) * (this.height - 100);
-            bgCtx.fillRect(x, y, 4, 4);
-        }
+        this.drawDefaultBackground(this.backgroundCanvas.getContext('2d'));
 
         // Game State
         this.isGameOver = false;
@@ -142,6 +130,25 @@ export class Game {
             }),
             altLabels: conceptData.altlabel_en || []
         };
+
+        // Load Background (Custom jpg or fallback to sky)
+        const conceptId = conceptKey.split('/').pop();
+        this.latestBGConceptId = conceptId; // Track current request
+        const bgPath = `/src/assets/images/backgrounds/${conceptId}.jpg`;
+        const bgImg = new Image();
+        bgImg.onload = () => {
+            // Only draw if this is still the latest requested concept
+            if (this.latestBGConceptId === conceptId) {
+                const bgCtx = this.backgroundCanvas.getContext('2d');
+                bgCtx.drawImage(bgImg, 0, 0, this.width, this.height);
+            }
+        };
+        bgImg.onerror = () => {
+            if (this.latestBGConceptId === conceptId) {
+                this.drawDefaultBackground(this.backgroundCanvas.getContext('2d'));
+            }
+        };
+        bgImg.src = bgPath;
 
         // Calculate level width based on related concepts
         const relatedCount = this.concept.related.length;
@@ -483,6 +490,20 @@ export class Game {
 
         if (!this.isGameOver) {
             requestAnimationFrame(this.animate);
+        }
+    }
+
+    drawDefaultBackground(ctx) {
+        // Draw sky
+        ctx.fillStyle = '#5c94fc'; // Classic NES Mario sky blue
+        ctx.fillRect(0, 0, this.width, this.height);
+
+        // Draw background details (stars/clouds)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        for (let i = 0; i < 30; i++) {
+            const x = (Math.sin(i * 123) * 0.5 + 0.5) * this.width;
+            const y = (Math.cos(i * 234) * 0.5 + 0.5) * (this.height - 100);
+            ctx.fillRect(x, y, 4, 4);
         }
     }
 }
