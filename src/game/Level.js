@@ -15,9 +15,11 @@ export class Level {
         this.tileCache = {};
         this.initCache();
 
-        // Layer caching for static geometry
-        this.tilesCanvas = null; // Background layer (tiles only)
-        this.foregroundCanvas = null; // Foreground layer (ground + walls)
+        // Layer caching for static geometry (2D Grid Chunking for massive levels)
+        this.chunkWidth = 2000;
+        this.chunkHeight = 2000;
+        this.tilesGrid = new Map(); // "gx,gy" -> canvas
+        this.foregroundGrid = new Map(); // "gx,gy" -> canvas
         this.geometryNeedsRedraw = true;
     }
 
@@ -407,74 +409,95 @@ export class Level {
                 createdGaps++;
             }
         }
-
         // Render static geometry to cache
         this.renderGeometryLayer();
+    }
+
+    getGridCanvas(grid, gx, gy, height) {
+        const key = `${gx},${gy}`;
+        if (!grid.has(key)) {
+            const canvas = document.createElement('canvas');
+            canvas.width = this.chunkWidth;
+            canvas.height = this.chunkHeight;
+            grid.set(key, canvas);
+        }
+        return grid.get(key);
     }
 
     renderGeometryLayer() {
         const groundY = this.game.height - 40;
         const groundRow = Math.floor(groundY / this.tileSize);
-        // Expand totalRows significantly to handle deep soil and scrolling
-        const totalRows = groundRow - this.minRow + 15;
         const yOffset = -this.minRow * this.tileSize;
 
-        // Create tiles canvas (background layer)
-        if (!this.tilesCanvas) {
-            this.tilesCanvas = document.createElement('canvas');
-        }
-        this.tilesCanvas.width = this.game.levelWidth;
-        this.tilesCanvas.height = totalRows * this.tileSize;
-        const tilesCtx = this.tilesCanvas.getContext('2d');
-        tilesCtx.clearRect(0, 0, this.tilesCanvas.width, this.tilesCanvas.height);
+        // Clear existing grids
+        this.tilesGrid.clear();
+        this.foregroundGrid.clear();
 
-        // Draw all individual tiles to tiles layer
+        // Draw all individual tiles to 2D grid
         for (let [key, type] of this.tiles) {
             const [tx, ty] = key.split(',').map(Number);
+            const x = tx * this.tileSize;
+            const y = ty * this.tileSize + yOffset;
+
+            const gx = Math.floor(x / this.chunkWidth);
+            const gy = Math.floor(y / this.chunkHeight);
+            const localX = x % this.chunkWidth;
+            const localY = y % this.chunkHeight;
+
+            const canvas = this.getGridCanvas(this.tilesGrid, gx, gy);
+            const ctx = canvas.getContext('2d');
             const cacheId = type === 'solid' ? 'solid' : 'brick';
-            tilesCtx.drawImage(this.tileCache[cacheId], Math.floor(tx * this.tileSize), Math.floor(ty * this.tileSize + yOffset));
+            ctx.drawImage(this.tileCache[cacheId], Math.floor(localX), Math.floor(localY));
         }
 
-        // Create foreground canvas (ground + walls)
-        if (!this.foregroundCanvas) {
-            this.foregroundCanvas = document.createElement('canvas');
-        }
-        this.foregroundCanvas.width = this.game.levelWidth;
-        this.foregroundCanvas.height = totalRows * this.tileSize;
-        const fgCtx = this.foregroundCanvas.getContext('2d');
-        fgCtx.clearRect(0, 0, this.foregroundCanvas.width, this.foregroundCanvas.height);
-
+        // Draw Ground and Walls to Foreground Grid
+        const soilColor = '#92450e';
+        const soilDepth = 600; // Extra depth for vertical scrolling
         const levelWidthTiles = Math.ceil(this.game.levelWidth / this.tileSize);
 
-        // Draw ground to foreground layer
-        const soilColor = '#92450e';
-        const soilDepth = 400; // Extra depth for scrolling
-        for (let i = 0; i < Math.ceil(this.game.levelWidth / this.tileSize); i++) {
+        for (let i = 0; i < levelWidthTiles; i++) {
+            const x = i * this.tileSize;
+            const gx = Math.floor(x / this.chunkWidth);
+            const localX = x % this.chunkWidth;
+
             const isGap = this.groundGaps.some(g => i >= g.start && i < g.end);
             if (!isGap) {
-                const gx = Math.floor(i * this.tileSize);
-                const gy = Math.floor(groundY + yOffset);
+                const gy_world = groundY + yOffset;
+                // Soil can span multiple grid cells vertically
+                for (let d = 0; d < soilDepth; d += this.chunkHeight) {
+                    const currentY = gy_world + d;
+                    const gridY = Math.floor(currentY / this.chunkHeight);
+                    const localY = currentY % this.chunkHeight;
 
-                // Draw soil fill first
-                fgCtx.fillStyle = soilColor;
-                fgCtx.fillRect(gx, gy + 10, this.tileSize, soilDepth);
+                    const canvas = this.getGridCanvas(this.foregroundGrid, gx, gridY);
+                    const ctx = canvas.getContext('2d');
 
-                // Draw the cached ground sprite (grass top + initial soil)
-                fgCtx.drawImage(this.tileCache['ground'], gx, gy);
+                    ctx.fillStyle = soilColor;
+                    if (d === 0) {
+                        // Top layer: draw grass+soil sprite
+                        ctx.fillRect(Math.floor(localX), Math.floor(localY + 10), this.tileSize, this.chunkHeight - localY);
+                        ctx.drawImage(this.tileCache['ground'], Math.floor(localX), Math.floor(localY));
+                    } else {
+                        // Deep soil: just fill
+                        ctx.fillRect(Math.floor(localX), 0, this.tileSize, this.chunkHeight);
+                    }
+                }
             }
-        }
 
-        // Draw boundary walls to foreground layer
-        // Left Wall
-        for (let y = this.minRow; y <= groundRow; y++) {
-            fgCtx.drawImage(this.tileCache['solid'], 0, Math.floor(y * this.tileSize + yOffset));
-        }
+            // Boundary Walls
+            if (i === 0 || i === levelWidthTiles - 1) {
+                const wallX = (i === 0) ? 0 : x;
+                const wallGx = Math.floor(wallX / this.chunkWidth);
+                const wallLocalX = wallX % this.chunkWidth;
 
-        // Right Wall
-        const rightX = (levelWidthTiles - 1) * this.tileSize;
-        if (rightX > 0) {
-            for (let y = this.minRow; y <= groundRow; y++) {
-                fgCtx.drawImage(this.tileCache['solid'], Math.floor(rightX), Math.floor(y * this.tileSize + yOffset));
+                for (let y = this.minRow; y <= groundRow; y++) {
+                    const worldY = y * this.tileSize + yOffset;
+                    const wallGy = Math.floor(worldY / this.chunkHeight);
+                    const wallLocalY = worldY % this.chunkHeight;
+
+                    const canvas = this.getGridCanvas(this.foregroundGrid, wallGx, wallGy);
+                    canvas.getContext('2d').drawImage(this.tileCache['solid'], Math.floor(wallLocalX), Math.floor(wallLocalY));
+                }
             }
         }
 
@@ -484,47 +507,67 @@ export class Level {
     draw(ctx) {
         const groundY = this.game.height - 40;
         const cameraX = this.game.camera.x;
+        const cameraY = this.game.camera.y;
         const viewportWidth = this.game.width;
-        const buffer = 100; // 100px buffer on each side
+        const viewportHeight = this.game.height;
+        const buffer = 100;
 
-        // Draw cached tiles layer (background)
-        if (this.tilesCanvas) {
-            ctx.drawImage(this.tilesCanvas, 0, Math.floor(this.minRow * this.tileSize));
+        const yOffset = -this.minRow * this.tileSize;
+
+        // --- DRAW 2D GRID (Background Tiles) ---
+        const startGX = Math.floor((cameraX - buffer) / this.chunkWidth);
+        const endGX = Math.floor((cameraX + viewportWidth + buffer) / this.chunkWidth);
+        const startGY = Math.floor((cameraY + yOffset - buffer) / this.chunkHeight);
+        const endGY = Math.floor((cameraY + yOffset + viewportHeight + buffer) / this.chunkHeight);
+
+        for (let gx = startGX; gx <= endGX; gx++) {
+            for (let gy = startGY; gy <= endGY; gy++) {
+                const key = `${gx},${gy}`;
+                const canvas = this.tilesGrid.get(key);
+                if (canvas) {
+                    ctx.drawImage(canvas, gx * this.chunkWidth, gy * this.chunkHeight - yOffset);
+                }
+            }
         }
 
         // Draw Related Concept Pipes (Vertical)
         if (this.game.concept && this.game.concept.related) {
             this.game.concept.related.forEach((rel, index) => {
                 const x = this.game.getPipeX(index);
-                // Pipe width is 100px
+                const pipeTop = groundY - 40;
                 if (x + 100 > cameraX - buffer && x < cameraX + viewportWidth + buffer) {
-                    this.drawPipe(ctx, x, groundY - 40, rel.label_fi);
+                    // Vertical Culling: Is pipe within viewport? (Pipes go from pipeTop down to game.height)
+                    if (this.game.height > cameraY - buffer && pipeTop < cameraY + viewportHeight + buffer) {
+                        this.drawPipe(ctx, x, pipeTop, rel.label_fi);
+                    }
                 }
             });
         }
 
         // Draw Broader Concept Pipes (Left Wall, Horizontal)
         if (this.game.concept && this.game.concept.broader) {
-            // Only draw if left wall is visible
             if (cameraX < viewportWidth + buffer) {
                 const pipeHeight = 80;
                 const gap = 40;
                 this.game.concept.broader.forEach((broader, index) => {
                     const y = (groundY - 70) - (index * (pipeHeight + gap));
-                    this.drawHorizontalPipe(ctx, 0, y, 'right', broader.label_fi);
+                    if (y + pipeHeight > cameraY - buffer && y < cameraY + viewportHeight + buffer) {
+                        this.drawHorizontalPipe(ctx, 0, y, 'right', broader.label_fi);
+                    }
                 });
             }
         }
 
         // Draw Narrower Concept Pipes (Right Wall, Horizontal)
         if (this.game.concept && this.game.concept.narrower) {
-            // Only draw if right wall is visible
             if (cameraX + viewportWidth > this.game.levelWidth - buffer) {
                 const pipeHeight = 80;
                 const gap = 40;
                 this.game.concept.narrower.forEach((narrower, index) => {
                     const y = (groundY - 70) - (index * (pipeHeight + gap));
-                    this.drawHorizontalPipe(ctx, this.game.levelWidth, y, 'left', narrower.label_fi);
+                    if (y + pipeHeight > cameraY - buffer && y < cameraY + viewportHeight + buffer) {
+                        this.drawHorizontalPipe(ctx, this.game.levelWidth, y, 'left', narrower.label_fi);
+                    }
                 });
             }
         }
@@ -533,21 +576,44 @@ export class Level {
         this.particles.forEach(p => p.draw(ctx));
 
         // Draw Coins
-        this.coins.forEach(c => c.draw(ctx));
+        this.coins.forEach(c => {
+            if (c.x + 20 > cameraX - buffer && c.x - 20 < cameraX + viewportWidth + buffer &&
+                c.y + 20 > cameraY - buffer && c.y - 20 < cameraY + viewportHeight + buffer) {
+                c.draw(ctx);
+            }
+        });
 
         // Draw Enemies
         this.enemies.forEach(e => {
-            // Viewport culling
-            if (e.x + e.width > cameraX - buffer && e.x < cameraX + viewportWidth + buffer) {
+            if (e.x + e.width > cameraX - buffer && e.x < cameraX + viewportWidth + buffer &&
+                e.y + e.height > cameraY - buffer && e.y < cameraY + viewportHeight + buffer) {
                 e.draw(ctx, this.tileCache);
             }
         });
     }
 
     drawGround(ctx) {
-        // Draw from cached foreground layer
-        if (this.foregroundCanvas) {
-            ctx.drawImage(this.foregroundCanvas, 0, Math.floor(this.minRow * this.tileSize));
+        const cameraX = this.game.camera.x;
+        const cameraY = this.game.camera.y;
+        const viewportWidth = this.game.width;
+        const viewportHeight = this.game.height;
+        const buffer = 100;
+        const yOffset = -this.minRow * this.tileSize;
+
+        // --- DRAW 2D GRID (Foreground) ---
+        const startGX = Math.floor((cameraX - buffer) / this.chunkWidth);
+        const endGX = Math.floor((cameraX + viewportWidth + buffer) / this.chunkWidth);
+        const startGY = Math.floor((cameraY + yOffset - buffer) / this.chunkHeight);
+        const endGY = Math.floor((cameraY + yOffset + viewportHeight + buffer) / this.chunkHeight);
+
+        for (let gx = startGX; gx <= endGX; gx++) {
+            for (let gy = startGY; gy <= endGY; gy++) {
+                const key = `${gx},${gy}`;
+                const canvas = this.foregroundGrid.get(key);
+                if (canvas) {
+                    ctx.drawImage(canvas, gx * this.chunkWidth, gy * this.chunkHeight - yOffset);
+                }
+            }
         }
     }
     createExplosion(x, y) {
@@ -641,8 +707,7 @@ export class Level {
     }
 
     drawBoundaryWalls(ctx) {
-        // Walls are already in the foreground canvas, no need to redraw
-        // This method is kept for compatibility but does nothing
+        // Already handled in foregroundCanvasChunks via drawGround
     }
 
     drawHorizontalPipe(ctx, x, y, direction, label) {
@@ -676,19 +741,30 @@ export class Level {
         const totalHeight = this.game.height - y;
         const bodySegment = 40;
 
-        // Draw cached cap
-        ctx.drawImage(this.tileCache['pipeCapV'], Math.floor(x - capExtra), Math.floor(y));
+        const cameraY = this.game.camera.y;
+        const viewportHeight = this.game.height;
+        const buffer = 100;
 
-        // Draw body segments (tiled for variable height)
+        // Draw cached cap (if visible)
+        if (y + capHeight > cameraY - buffer && y < cameraY + viewportHeight + buffer) {
+            ctx.drawImage(this.tileCache['pipeCapV'], Math.floor(x - capExtra), Math.floor(y));
+        }
+
+        // Draw body segments (culling segments that are off-screen vertically)
         const bodyStart = y + capHeight;
         const bodyHeight = totalHeight - capHeight;
         const segments = Math.ceil(bodyHeight / bodySegment);
+
         for (let i = 0; i < segments; i++) {
-            ctx.drawImage(this.tileCache['pipeBodyV'], Math.floor(x), Math.floor(bodyStart + i * bodySegment));
+            const segmentY = bodyStart + i * bodySegment;
+            // Visible?
+            if (segmentY + bodySegment > cameraY - buffer && segmentY < cameraY + viewportHeight + buffer) {
+                ctx.drawImage(this.tileCache['pipeBodyV'], Math.floor(x), Math.floor(segmentY));
+            }
         }
 
-        // Label (still procedural since it varies)
-        if (label) {
+        // Label (procedural, only draw if visible)
+        if (label && (y - 20) + 14 > cameraY - buffer && (y - 20) < cameraY + viewportHeight + buffer) {
             ctx.font = 'bold 14px monospace';
             ctx.textAlign = 'center';
             ctx.fillStyle = 'black';
@@ -1010,9 +1086,15 @@ export class Level {
                                 });
 
                                 this.tiles.delete(`${tx},${ty}`);
-                                if (this.tilesCanvas) {
-                                    const yOffset = -this.minRow * this.tileSize;
-                                    this.tilesCanvas.getContext('2d').clearRect(px, py + yOffset, this.tileSize, this.tileSize);
+                                const yOffset = -this.minRow * this.tileSize;
+                                const transformedY = py + yOffset;
+                                const gx = Math.floor(px / this.chunkWidth);
+                                const gy = Math.floor(transformedY / this.chunkHeight);
+                                const localX = px % this.chunkWidth;
+                                const localY = transformedY % this.chunkHeight;
+                                const canvas = this.tilesGrid.get(`${gx},${gy}`);
+                                if (canvas) {
+                                    canvas.getContext('2d').clearRect(Math.floor(localX), Math.floor(localY), this.tileSize, this.tileSize);
                                 }
                             }
                         }
