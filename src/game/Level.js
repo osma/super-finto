@@ -198,8 +198,7 @@ export class Level {
                     // Add tiles for this row
                     for (let i = 0; i < width; i++) {
                         if (x + i >= levelWidthTiles - 5) break;
-                        const isSolid = rng.next() > 0.5;
-                        this.tiles.set(`${x + i},${currentY}`, isSolid ? 'solid' : 'brick');
+                        this.tiles.set(`${x + i},${currentY}`, 'brick');
                     }
 
                     // Move up for next layer
