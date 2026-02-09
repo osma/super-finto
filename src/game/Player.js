@@ -1,8 +1,8 @@
 export class Player {
     constructor(game) {
         this.game = game;
-        this.width = 40;
-        this.height = 60;
+        this.width = 30;
+        this.height = 40;
         this.x = 100;
         this.y = this.game.height - this.height - 40;
 
@@ -26,11 +26,11 @@ export class Player {
         this.isKneeling = input.isKneeling() && this.grounded;
 
         if (this.isKneeling && !wasKneeling) {
-            this.height = 30;
-            this.y += 30;
+            this.height = 20;
+            this.y += 20;
         } else if (!this.isKneeling && wasKneeling) {
-            this.height = 60;
-            this.y -= 30;
+            this.height = 40;
+            this.y -= 20;
         }
 
         // Horizontal Movement with acceleration
@@ -65,8 +65,8 @@ export class Player {
 
     draw(ctx) {
         const isFacingRight = this.vx >= 0;
-        const pSize = 4; // Size of our "pixels"
-        const pSizeY = this.isKneeling ? 2 : 4;
+        const pSize = this.width / 10; // Based on max columns in frame
+        const pSizeY = this.height / 15; // Based on rows in frame
 
         ctx.save();
 
