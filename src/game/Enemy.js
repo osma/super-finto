@@ -232,17 +232,17 @@ export class Enemy {
 
         // Draw Label
         if (this.label && !this.isDead) {
-            ctx.fillStyle = 'rgba(0,0,0,0.7)';
             ctx.font = 'bold 12px monospace';
             ctx.textAlign = 'center';
-            const textY = this.y - 10;
+            const textX = Math.floor(this.x + this.width / 2);
+            const textY = Math.floor(this.y - 10);
 
-            // Text Shadow
+            // Shadow
             ctx.fillStyle = 'black';
-            ctx.fillText(this.label, Math.floor(this.x + this.width / 2) + 1, Math.floor(textY) + 1);
+            ctx.fillText(this.label, textX + 1, textY + 1);
             // Main Text
-            ctx.fillStyle = '#ff4da6'; // Pinkish-red to stand out as "enemy" concept
-            ctx.fillText(this.label, Math.floor(this.x + this.width / 2), Math.floor(textY));
+            ctx.fillStyle = 'white';
+            ctx.fillText(this.label, textX, textY);
         }
 
         ctx.restore();

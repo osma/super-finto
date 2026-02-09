@@ -333,12 +333,11 @@ export class Level {
 
         // --- ENEMY SPAWNING ---
         const altLabels = this.game.concept ? this.game.concept.altLabels : [];
-        const numEnemies = Math.min(10, Math.max(5, Math.ceil(levelWidthTiles / 15)));
 
-        for (let i = 0; i < numEnemies; i++) {
+        altLabels.forEach(labelObj => {
             let placed = false;
             let attempts = 0;
-            while (!placed && attempts < 50) {
+            while (!placed && attempts < 100) {
                 attempts++;
                 const tx = Math.floor(rng.next() * (levelWidthTiles - 10)) + 5;
                 const ty = Math.floor(rng.next() * (groundRow - 2 - this.minRow)) + this.minRow;
@@ -352,12 +351,12 @@ export class Level {
                 const spaceEmpty = this.tiles.get(`${tx},${ty}`) === undefined;
 
                 if ((hasGround || hasTile) && spaceEmpty) {
-                    const label = altLabels.length > 0 ? altLabels[Math.floor(rng.next() * altLabels.length)] : null;
-                    this.enemies.push(new Enemy(tx * this.tileSize, ty * this.tileSize, label, this.tileSize));
+                    const labelText = `${labelObj.label} (${labelObj.lang})`;
+                    this.enemies.push(new Enemy(tx * this.tileSize, ty * this.tileSize, labelText, this.tileSize));
                     placed = true;
                 }
             }
-        }
+        });
 
         // Pre-calculate bottom pipe positions (in tiles) to avoid overlapping them
         const pipePositions = [];
@@ -1000,6 +999,17 @@ export class Level {
                                         this.coins.splice(c, 1);
                                     }
                                 }
+
+                                // Kill enemies on top of the brick
+                                this.enemies.forEach(enemy => {
+                                    if (!enemy.isDead &&
+                                        enemy.x + enemy.width > px &&
+                                        enemy.x < px + this.tileSize &&
+                                        Math.abs((enemy.y + enemy.height) - py) < 10) { // On top of the brick
+                                        enemy.isDead = true;
+                                        this.game.addScore(400);
+                                    }
+                                });
 
                                 this.tiles.delete(`${tx},${ty}`);
                                 if (this.tilesCanvas) {

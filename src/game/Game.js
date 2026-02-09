@@ -128,7 +128,12 @@ export class Game {
                     label_en: c ? c.label_en : ''
                 };
             }),
-            altLabels: conceptData.altlabel_en || []
+            altLabels: [
+                ...(conceptData.altlabel_fi || []).map(l => ({ label: l, lang: 'fi' })),
+                ...(conceptData.altlabel_sv || []).map(l => ({ label: l, lang: 'sv' })),
+                ...(conceptData.altlabel_en || []).map(l => ({ label: l, lang: 'en' })),
+                ...(conceptData.altlabel_se || []).map(l => ({ label: l, lang: 'se' }))
+            ]
         };
 
         // Load Background (Custom jpg or fallback to sky)
