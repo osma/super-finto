@@ -8,10 +8,11 @@ export class Player {
 
         this.vx = 0;
         this.vy = 0;
-        this.weight = 0.28; // Reduced gravity for slower, more controlled jumps
-        this.speed = 2.5;    // Max horizontal speed
-        this.acceleration = 0.3; // Acceleration for gradual speed-up
-        this.jumpForce = 9.2; // Adjusted for slower gravity to still reach 3 levels
+        this.weight = 0.28;
+        this.speed = 2.5;
+        this.acceleration = 0.3;
+        this.jumpForce = 9.7; // Exactly 4 tiles max height
+        this.maxFallSpeed = 10;
         this.friction = 0.9;
         this.grounded = false;
         this.lastJumpPressed = false;
@@ -55,8 +56,12 @@ export class Player {
         }
         this.lastJumpPressed = jumpPressed;
 
-        // Apply Gravity
-        this.vy = Math.min(this.vy + this.weight, this.jumpForce);
+        // Apply Gravity (Variable for jump control)
+        let currentWeight = this.weight;
+        if (this.vy < 0 && !jumpPressed) {
+            currentWeight = this.weight * 8; // 8x gravity if button released early for 1-tile hop
+        }
+        this.vy = Math.min(this.vy + currentWeight, this.maxFallSpeed);
         this.y += this.vy;
 
         // Screen Boundaries

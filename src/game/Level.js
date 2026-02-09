@@ -745,16 +745,15 @@ export class Level {
         if (player.y + player.height >= groundY) {
             // Check for gaps
             // Allow standing on edge: Check if either foot is on solid ground
-            // Use a small inset so we don't fall if we're just 1px over
-            const inset = 10;
+            // Use a speed-based inset: Sprinting (vx >= 2.4) allows skipping 1-tile gaps
+            const isSprinting = Math.abs(player.vx) >= 2.4;
+            const inset = isSprinting ? -10 : 10;
             const leftTile = Math.floor((player.x + inset) / this.tileSize);
             const rightTile = Math.floor((player.x + player.width - inset) / this.tileSize);
 
             const leftInGap = this.groundGaps.some(g => leftTile >= g.start && leftTile < g.end);
             const rightInGap = this.groundGaps.some(g => rightTile >= g.start && rightTile < g.end);
 
-            // If BOTH points are in a gap (or unsupported), we fall.
-            // So if at least one is supported (!InGap), we land.
             const isSupported = !leftInGap || !rightInGap;
 
             if (isSupported && player.vy >= 0) {
@@ -956,11 +955,12 @@ export class Level {
                 const ph = this.tileSize;
 
                 // Simple AABB Collision
-                if (player.x + player.width > px &&
+                const standardOverlap = player.x + player.width > px &&
                     player.x < px + pw &&
                     player.y + player.height > py &&
-                    player.y < py + ph) {
+                    player.y < py + ph;
 
+                if (standardOverlap) {
                     const overlapTop = (player.y + player.height) - py;
                     const overlapBottom = (py + ph) - player.y;
                     const overlapLeft = (player.x + player.width) - px;
@@ -1026,6 +1026,22 @@ export class Level {
                         // Right Collision
                         player.x = px + pw;
                         player.vx = 0;
+                    }
+                } else {
+                    // Sprint-over-gaps fallback: check if we should land on this tile even without overlap
+                    const isSprinting = Math.abs(player.vx) >= 2.4;
+                    if (isSprinting && player.vy >= 0) {
+                        const hMargin = 15;
+                        const vMargin = 8; // Small vertical allowance for landing
+                        if (player.x + player.width + hMargin > px &&
+                            player.x - hMargin < px + pw &&
+                            player.y + player.height >= py &&
+                            player.y + player.height <= py + vMargin) {
+
+                            player.y = py - player.height;
+                            player.vy = 0;
+                            player.grounded = true;
+                        }
                     }
                 }
             }
