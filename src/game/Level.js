@@ -598,14 +598,9 @@ export class Level {
                     const overlapTop = (player.y + player.height) - enemy.y;
 
                     // --- HIGHLY ROBUST STOMP DETECTION ---
-                    // 1. Calculate previous positions (backtrack)
                     const prevPlayerBottom = player.y + player.height - player.vy;
                     const prevEnemyTop = enemy.y - (enemy.vy || 0);
 
-                    // 2. Conditions for a stomp:
-                    // - Mario is moving down relative to the monster
-                    // - Mario was above the monster in the last frame (with a tiny buffer)
-                    // - OR the overlap is significantly from the top (upper 75% of monster)
                     const isFalling = (player.vy - (enemy.vy || 0)) > 0;
                     const wasAbove = prevPlayerBottom <= prevEnemyTop + 10;
                     const isHittingTop = overlapTop < enemy.height * 0.75;
@@ -622,8 +617,11 @@ export class Level {
                         this.respawnPlayer();
                     }
                 }
-            } else if (enemy.y > this.game.height + 100) {
-                // Remove if fallen off world
+            }
+
+            // --- Cleanup Dead or Fallen Enemies ---
+            // Remove if dead (after 30 frames of animation) OR fallen off world
+            if ((enemy.isDead && enemy.deathTimer > 30) || enemy.y > this.game.height + 100) {
                 this.enemies.splice(i, 1);
             }
         }

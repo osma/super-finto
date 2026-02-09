@@ -28,6 +28,12 @@ export class Enemy {
         this.x += this.vx;
 
         this.checkCollisions(level);
+
+        // Pit Death: If enemy falls below the world, mark as dead instantly
+        if (this.y > level.game.height + 50) {
+            this.isDead = true;
+            this.deathTimer = 100; // Skip explosion/fade, just stay dead
+        }
     }
 
     checkCollisions(level) {
