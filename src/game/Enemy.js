@@ -59,16 +59,25 @@ export class Enemy {
 
                     const minOverlap = Math.min(overlapTop, overlapBottom, overlapLeft, overlapRight);
 
-                    // Vertical Inset: Ignore horizontal collisions that happen at the very bottom/top
-                    const vInset = 4;
-                    const isWithinVerticalBody = overlapTop > vInset && overlapBottom > vInset;
+                    if (minOverlap === overlapTop && this.vy >= 0) {
+                        this.y = py - this.height;
+                        this.vy = 0;
+                        this.grounded = true;
+                    } else if (minOverlap === overlapBottom && this.vy < 0) {
+                        this.y = py + ph;
+                        this.vy = 0;
+                    } else {
+                        // Vertical Inset: Ignore horizontal collisions that happen at the very bottom/top
+                        const vInset = 4;
+                        const isWithinVerticalBody = overlapTop > vInset && overlapBottom > vInset;
 
-                    if (minOverlap === overlapLeft && isWithinVerticalBody) {
-                        this.x = px - this.width;
-                        this.vx *= -1;
-                    } else if (minOverlap === overlapRight && isWithinVerticalBody) {
-                        this.x = px + pw;
-                        this.vx *= -1;
+                        if (minOverlap === overlapLeft && isWithinVerticalBody) {
+                            this.x = px - this.width;
+                            this.vx *= -1;
+                        } else if (minOverlap === overlapRight && isWithinVerticalBody) {
+                            this.x = px + pw;
+                            this.vx *= -1;
+                        }
                     }
                 }
             });
