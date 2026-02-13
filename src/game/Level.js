@@ -240,22 +240,22 @@ export class Level {
         const highestPipeY = (this.game.height - 40 - 70) - ((maxSidePipes - 1) * (pipeHeight + gap));
         this.minRow = Math.min(0, Math.floor(highestPipeY / this.tileSize) - 2);
 
-        // Start from x=5 to give some start space, end with padding
-        let x = 5;
+        // Start from x=3 to give some start space, end with padding
+        let x = 3;
 
-        while (x < levelWidthTiles - 5) {
+        while (x < levelWidthTiles - 4) {
             // 90% chance to spawn a platform at this x
             if (rng.next() < 0.9) {
                 const width = Math.floor(rng.next() * 6) + 1; // 1 to 6 width
 
                 // Density based spawning: Every 5-8 blocks (constant density)
-                // START at a jumpable height: 3-5 blocks above ground
-                let currentY = groundRow - (Math.floor(rng.next() * 3) + 3);
+                // START at a jumpable height: 4-6 blocks above ground
+                let currentY = groundRow - (Math.floor(rng.next() * 3) + 4);
 
                 while (currentY >= this.minRow) {
                     // Add tiles for this row
                     for (let i = 0; i < width; i++) {
-                        if (x + i >= levelWidthTiles - 5) break;
+                        if (x + i >= levelWidthTiles - 4) break;
                         this.tiles.set(`${x + i},${currentY}`, 'brick');
                     }
 
