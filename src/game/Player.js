@@ -54,23 +54,26 @@ export class Player {
         }
 
         // Horizontal Movement with acceleration
+        // Make it slightly faster and snappier in the air for better control
+        const currentSpeed = this.isBig ? this.speed * 1.2 : this.speed;
+        const currentAccel = this.grounded ? this.acceleration : this.acceleration * 1.5;
+        const currentFriction = this.grounded ? this.friction : 0.98; // Less horizontal drag in air
+
         if (this.isKneeling) {
             this.vx = 0;
         } else if (input.isMovingRight()) {
-            // Accelerate to the right
-            this.vx = Math.min(this.vx + this.acceleration, this.speed);
+            this.vx = Math.min(this.vx + currentAccel, currentSpeed);
         } else if (input.isMovingLeft()) {
-            // Accelerate to the left
-            this.vx = Math.max(this.vx - this.acceleration, -this.speed);
+            this.vx = Math.max(this.vx - currentAccel, -currentSpeed);
         } else {
-            this.vx *= this.friction;
+            this.vx *= currentFriction;
         }
         this.x += this.vx;
 
         // Vertical Movement (Jump)
         const jumpPressed = input.isJumping();
         if (!this.isKneeling && jumpPressed && !this.lastJumpPressed && this.grounded) {
-            this.vy = -this.jumpForce;
+            this.vy = -(this.isBig ? this.jumpForce * 1.05 : this.jumpForce);
             this.grounded = false;
         }
         this.lastJumpPressed = jumpPressed;
@@ -89,7 +92,8 @@ export class Player {
 
     draw(ctx) {
         const isFacingRight = this.vx >= 0;
-        const pSize = this.width / 10; // Based on max columns in frame
+        const displayWidth = this.isBig ? 40 : 30;
+        const pSize = displayWidth / 10; // Based on max columns in frame
         const pSizeY = this.height / (this.isBig ? 30 : 15); // Based on rows in frame
 
         ctx.save();
@@ -194,7 +198,8 @@ export class Player {
             6: '#1e293b'  // Eye (Dark)
         };
 
-        const offsetX = this.x;
+        // Center visual sprite on hitbox
+        const offsetX = this.x - (displayWidth - this.width) / 2;
         const offsetY = this.y;
 
         frame.forEach((row, rowIndex) => {
@@ -202,7 +207,7 @@ export class Player {
                 if (pixel > 0) {
                     ctx.fillStyle = colors[pixel];
                     // Flip horizontal if facing left
-                    const xPos = isFacingRight ? (colIndex * pSize) : (this.width - (colIndex + 1) * pSize);
+                    const xPos = isFacingRight ? (colIndex * pSize) : (displayWidth - (colIndex + 1) * pSize);
                     ctx.fillRect(Math.floor(offsetX + xPos), Math.floor(offsetY + (rowIndex * pSizeY)), pSize, pSizeY);
                 }
             });

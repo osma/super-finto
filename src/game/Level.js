@@ -1201,13 +1201,15 @@ export class Level {
                         player.grounded = true;
                     } else if (minOverlap === overlapBottom && player.vy <= 0) {
                         // Bottom Collision (Head Hit) - use narrower collision box
-                        const headInset = 10;
+                        const headInset = 12; // Narrower kill zone
                         const headLeft = player.x + headInset;
                         const headRight = player.x + player.width - headInset;
 
                         if (headRight > px && headLeft < px + pw) {
                             player.y = py + ph;
                             headHit = true;
+                            // Do NOT set player.vy = 0 here yet, let the headHit logic handle it or just stop rising
+                            player.vy = 0; // Stop rising immediately, but don't bounce down violently
 
                             if (type === 'brick') {
                                 this.game.addScore(50);
@@ -1279,11 +1281,11 @@ export class Level {
                     } else if (minOverlap === overlapLeft) {
                         // Left Collision
                         player.x = px - player.width;
-                        player.vx = 0;
+                        if (player.grounded) player.vx = 0; // Only stop if grounded
                     } else if (minOverlap === overlapRight) {
                         // Right Collision
                         player.x = px + pw;
-                        player.vx = 0;
+                        if (player.grounded) player.vx = 0; // Only stop if grounded
                     }
                 } else {
                     // Sprint-over-gaps fallback: check if we should land on this tile even without overlap
@@ -1306,7 +1308,7 @@ export class Level {
         }
 
         if (headHit) {
-            player.vy = 2.5; // Decisive bounce back down
+            // player.vy = 2.5; // REMOVED bounce
         }
 
         // Check Coin Collisions
