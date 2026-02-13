@@ -27,8 +27,15 @@ export class Player {
 
         this.isBig = true;
         this.width = 40;
-        this.height = 80;
-        this.y -= 40;
+
+        // If already kneeling, grow to half of big height
+        if (this.isKneeling) {
+            this.height = 40;
+            this.y -= 20; // Was 20, now 40
+        } else {
+            this.height = 80;
+            this.y -= 40; // Was 40, now 80
+        }
     }
 
     update(input) {
@@ -37,11 +44,13 @@ export class Player {
         this.isKneeling = input.isKneeling() && this.grounded;
 
         if (this.isKneeling && !wasKneeling) {
-            this.height = 20;
-            this.y += 20;
+            const hDiff = this.isBig ? 40 : 20;
+            this.height -= hDiff;
+            this.y += hDiff;
         } else if (!this.isKneeling && wasKneeling) {
-            this.height = 40;
-            this.y -= 20;
+            const hDiff = this.isBig ? 40 : 20;
+            this.height += hDiff;
+            this.y -= hDiff;
         }
 
         // Horizontal Movement with acceleration
