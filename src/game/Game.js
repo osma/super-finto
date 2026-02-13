@@ -427,21 +427,27 @@ export class Game {
 
         // Horizontal Ratio
         const playerWidth = this.player.width;
-        const maxLevelX = Math.max(playerWidth + 1, this.levelWidth - playerWidth);
-        const ratioX = Math.min(1, Math.max(0, this.player.x / (this.levelWidth - playerWidth)));
+        // Treat small levels as if they're larger for smoother parallax
+        const effectiveLevelWidth = Math.max(2000, this.levelWidth);
+        const ratioX = Math.min(1, Math.max(0, this.player.x / (effectiveLevelWidth - playerWidth)));
 
         // Vertical Ratio
         const groundY = this.height - 40;
         const minLevelY = this.level.minRow * this.level.tileSize;
         const levelHeightRange = Math.max(1, groundY - minLevelY);
-        const ratioY = Math.min(1, Math.max(0, (this.player.y - minLevelY) / levelHeightRange));
+        const effectiveLevelHeight = Math.max(800, levelHeightRange);
+        const ratioY = Math.min(1, Math.max(0, (this.player.y - minLevelY) / effectiveLevelHeight));
 
         // Max background scroll is bgWidth - viewportWidth
         const maxBgX = 1536 - this.width;
         const maxBgY = 1024 - this.height;
 
-        const bgX = ratioX * maxBgX;
-        const bgY = ratioY * maxBgY;
+        // Cap maximum scroll to prevent fast movement in small levels
+        const maxScrollX = 500;  // ~68% of available 736px
+        const maxScrollY = 300;  // ~71% of available 424px
+
+        const bgX = ratioX * Math.min(maxBgX, maxScrollX);
+        const bgY = ratioY * Math.min(maxBgY, maxScrollY);
 
         // Draw portion of the 1536x1024 background canvas
         this.ctx.drawImage(
