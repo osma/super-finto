@@ -266,11 +266,11 @@ export class Level {
                 const rowFromBottom = groundRow - y;
                 // Column 3: rows 3, 9, 15... (shifted up from 2)
                 if (rowFromBottom % 6 === 3) {
-                    this.tiles.set(`3,${y}`, 'solid');
+                    this.tiles.set(`2,${y}`, 'solid');
                 }
-                // Column 4: rows 6, 12, 18... (shifted up from 5)
+                // Column 3: rows 6, 12, 18... (shifted up from 5)
                 if (rowFromBottom % 6 === 0) {
-                    this.tiles.set(`4,${y}`, 'solid');
+                    this.tiles.set(`3,${y}`, 'solid');
                 }
             }
         }
@@ -289,11 +289,11 @@ export class Level {
                 const rowFromBottom = groundRow - y;
                 // Right column 1: rows 3, 9, 15... (shifted up from 2)
                 if (rowFromBottom % 6 === 3) {
-                    this.tiles.set(`${levelWidthTiles - 5},${y}`, 'solid');
+                    this.tiles.set(`${levelWidthTiles - 4},${y}`, 'solid');
                 }
                 // Right column 2: rows 6, 12, 18... (shifted up from 5)
                 if (rowFromBottom % 6 === 0) {
-                    this.tiles.set(`${levelWidthTiles - 4},${y}`, 'solid');
+                    this.tiles.set(`${levelWidthTiles - 3},${y}`, 'solid');
                 }
             }
         }
