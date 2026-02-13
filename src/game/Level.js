@@ -27,7 +27,8 @@ export class Level {
         const types = [
             { id: 'brick', color: '#f97316', solid: false },
             { id: 'solid', color: '#57534e', solid: true },
-            { id: 'ground', color: '#92450e', ground: true }
+            { id: 'ground', color: '#92450e', ground: true },
+            { id: 'question', color: '#fbbf24', solid: true, question: true }
         ];
 
         types.forEach(type => {
@@ -37,7 +38,7 @@ export class Level {
             const ctx = canvas.getContext('2d');
 
             // Re-use existing draw logic but only once per type
-            this.drawBrickTile(ctx, 0, 0, this.tileSize, canvas.height, type.color, type.ground, type.solid);
+            this.drawBrickTile(ctx, 0, 0, this.tileSize, canvas.height, type.color, type.ground, type.solid, type.question);
             this.tileCache[type.id] = canvas;
         });
 
@@ -213,6 +214,24 @@ export class Level {
             } else {
                 x++;
             }
+        }
+
+        // --- ADD QUESTION MARK BLOCKS ---
+        const pipesCount = (this.game.concept?.related?.length || 0) + broaderCount + narrowerCount;
+
+        // Find all destroyable bricks
+        const brickPositions = [];
+        for (let [key, type] of this.tiles) {
+            if (type === 'brick') {
+                brickPositions.push(key);
+            }
+        }
+
+        // Shuffle brickPositions using RNG and pick pipesCount bricks to replace
+        for (let i = 0; i < pipesCount && brickPositions.length > 0; i++) {
+            const randomIndex = Math.floor(rng.next() * brickPositions.length);
+            const key = brickPositions.splice(randomIndex, 1)[0];
+            this.tiles.set(key, 'question');
         }
 
         // Calculate minRow calculation moved up
@@ -446,7 +465,7 @@ export class Level {
 
             const canvas = this.getGridCanvas(this.tilesGrid, gx, gy);
             const ctx = canvas.getContext('2d');
-            const cacheId = type === 'solid' ? 'solid' : 'brick';
+            const cacheId = type === 'solid' ? 'solid' : (type === 'question' ? 'question' : 'brick');
             ctx.drawImage(this.tileCache[cacheId], Math.floor(localX), Math.floor(localY));
         }
 
@@ -774,7 +793,7 @@ export class Level {
         }
     }
 
-    drawBrickTile(ctx, x, y, w, h, baseColor, isGround = false, isSolid = false) {
+    drawBrickTile(ctx, x, y, w, h, baseColor, isGround = false, isSolid = false, isQuestion = false) {
         ctx.fillStyle = baseColor;
         ctx.fillRect(x, y, w, h);
 
@@ -808,6 +827,34 @@ export class Level {
             ctx.fillRect(x, y + h / 2, w, 1);
             ctx.fillRect(x + w / 2, y, 1, h / 2);
             ctx.fillRect(x + w / 4, y + h / 2, 1, h / 2);
+        }
+
+        if (isQuestion) {
+            // Background is already filled with baseColor (#fbbf24)
+            // Add a subtle border
+            ctx.strokeStyle = '#d97706';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
+
+            // Red rivets in corners
+            ctx.fillStyle = '#b91c1c';
+            const rSize = 4;
+            ctx.fillRect(x + 4, y + 4, rSize, rSize);
+            ctx.fillRect(x + w - 8, y + 4, rSize, rSize);
+            ctx.fillRect(x + 4, y + h - 8, rSize, rSize);
+            ctx.fillRect(x + w - 8, y + h - 8, rSize, rSize);
+
+            // The Question Mark
+            ctx.fillStyle = '#78350f';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('?', x + w / 2, y + h / 2 + 2);
+
+            // Subtle highlight
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.fillRect(x + 6, y + 6, w - 12, 2);
+            ctx.fillRect(x + 6, y + 8, 2, h - 16);
         }
     }
 
