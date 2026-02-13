@@ -75,33 +75,33 @@ export class Player {
 
         ctx.save();
 
-        // Pixel Art Grid Map (Simplified Mario-like)
-        // 0: empty, 1: skin, 2: overall (blue), 3: shirt (red/cyan), 4: hat (blue), 5: boot (black), 6: eye/mustache (black)
+        // Pixel Art Grid Map (Slender Elf - Side Profile)
+        // 0: empty, 1: skin, 2: tunic (dark blue), 3: trim/belt (gold), 4: hair (blonde), 5: boot (brown), 6: eye (dark)
         const frame = [
-            [0, 0, 4, 4, 4, 4, 4, 0],
-            [0, 4, 4, 4, 4, 4, 4, 4, 4],
-            [0, 5, 5, 5, 1, 1, 6, 1],
-            [5, 1, 5, 1, 1, 1, 6, 1, 1],
-            [5, 1, 5, 5, 1, 1, 1, 6, 6, 6],
-            [0, 0, 1, 1, 1, 1, 1, 1],
-            [0, 0, 3, 3, 2, 3, 3, 0],
-            [0, 3, 3, 3, 2, 3, 3, 3, 0],
-            [3, 3, 3, 3, 2, 2, 2, 2, 2],
-            [1, 1, 3, 2, 1, 2, 2, 1, 2],
-            [1, 1, 1, 2, 2, 2, 2, 2, 2],
-            [1, 1, 2, 2, 2, 2, 2, 2, 2],
-            [0, 0, 2, 2, 2, 0, 2, 2],
-            [0, 5, 5, 5, 0, 0, 5, 5, 5],
-            [5, 5, 5, 5, 0, 0, 5, 5, 5, 5]
+            [0, 0, 0, 4, 4, 4, 4, 0, 0], // Hair top
+            [0, 0, 0, 4, 4, 4, 4, 4, 0], // Hair main
+            [0, 0, 0, 4, 1, 1, 1, 1, 0], // Ear (back) / Forehead
+            [0, 0, 0, 4, 1, 1, 6, 1, 0], // Eye
+            [0, 0, 0, 4, 1, 1, 1, 1, 0], // Nose
+            [0, 0, 0, 1, 1, 1, 1, 0, 0], // Chin/Neck
+            [0, 0, 0, 2, 2, 2, 2, 0, 0], // Shoulders
+            [0, 0, 2, 2, 2, 2, 2, 1, 0], // Chest + Arm/Hand forward
+            [0, 0, 2, 2, 2, 2, 2, 0, 0], // Torso
+            [0, 0, 2, 3, 3, 3, 2, 0, 0], // Belt
+            [0, 0, 2, 2, 2, 2, 2, 0, 0], // Tunic Skirt
+            [0, 0, 2, 2, 0, 0, 2, 0, 0], // Leg stride front
+            [0, 0, 2, 2, 0, 5, 5, 0, 0], // Leg back / Boot front
+            [0, 5, 5, 0, 0, 5, 5, 0, 0], // Boots
+            [0, 5, 5, 0, 0, 5, 5, 0, 0]  // Boots bottom
         ];
 
         const colors = {
-            1: '#ffd4a3', // Skin
-            2: '#2563eb', // Overalls (Blue)
-            3: '#0ea5e9', // Shirt (Light Blue)
-            4: '#1d4ed8', // Hat (Dark Blue)
-            5: '#000000', // Boots/Detail
-            6: '#1e293b'  // Eye/Mustache
+            1: '#ffe4c4', // Skin (Bisque)
+            2: '#1e3a8a', // Tunic (Dark Blue)
+            3: '#eab308', // Trim/Belt (Gold)
+            4: '#facc15', // Hair (Blonde)
+            5: '#78350f', // Boots (Brown)
+            6: '#1e293b'  // Eye (Dark)
         };
 
         const offsetX = this.x;
