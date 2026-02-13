@@ -8,6 +8,8 @@ export class Level {
         this.minRow = 0;
         this.particles = [];
         this.coins = [];
+        this.parcels = [];
+        this.parcelAssignments = new Map(); // "x,y" -> Wikidata ID
         this.enemies = [];
         this.groundGaps = [];
 
@@ -24,29 +26,79 @@ export class Level {
     }
 
     initCache() {
-        const types = [
+        const images = [
             { id: 'brick', color: '#f97316', solid: false },
             { id: 'solid', color: '#57534e', solid: true },
             { id: 'ground', color: '#92450e', ground: true },
-            { id: 'question', color: '#fbbf24', solid: true, question: true },
-            { id: 'empty-block', color: '#78716c', solid: true, empty: true }
+            { id: 'question', color: '#fbbf24', solid: true, isQuestion: true },
+            { id: 'empty-block', color: '#78716c', solid: true, isEmpty: true }
         ];
 
-        types.forEach(type => {
+        // Load Wikidata Logo for Parcels
+        const wikidataLogo = new Image();
+        wikidataLogo.src = '/src/assets/images/Wikidata-logo.svg';
+        wikidataLogo.onload = () => {
+            this.wikidataLogo = wikidataLogo;
+            this.initParcelCache();
+        };
+
+        images.forEach(imgData => {
             const canvas = document.createElement('canvas');
             canvas.width = this.tileSize;
-            canvas.height = this.tileSize; // Ground is now 40px (one tile)
+            canvas.height = this.tileSize;
             const ctx = canvas.getContext('2d');
 
-            // Re-use existing draw logic but only once per type
-            const isQuestion = type.id === 'question';
-            const isEmpty = type.id === 'empty-block';
-            this.drawBrickTile(ctx, 0, 0, this.tileSize, canvas.height, type.color, type.ground, type.solid, isQuestion, isEmpty);
-            this.tileCache[type.id] = canvas;
+            const isQuestion = imgData.id === 'question';
+            const isEmpty = imgData.id === 'empty-block';
+            this.drawBrickTile(ctx, 0, 0, this.tileSize, canvas.height, imgData.color, imgData.ground, imgData.solid, isQuestion, isEmpty);
+            this.tileCache[imgData.id] = canvas;
         });
+
+        // Pre-render parcel components
+        this.initParcelCache();
 
         // Pre-render pipe components
         this.initPipeCache();
+    }
+
+    initParcelCache() {
+        const canvas = document.createElement('canvas');
+        canvas.width = this.tileSize;
+        canvas.height = this.tileSize;
+        const ctx = canvas.getContext('2d');
+
+        // Draw Parcel: White box with rounded corners
+        const r = 8;
+        const x = 2;
+        const y = 2;
+        const w = this.tileSize - 4;
+        const h = this.tileSize - 4;
+
+        ctx.fillStyle = '#f8fafc'; // Subdued white
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+        ctx.fill();
+
+        // Border
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Wikidata Logo Overlay
+        if (this.wikidataLogo) {
+            ctx.drawImage(this.wikidataLogo, x + 5, y + 5, w - 10, h - 10);
+        }
+
+        this.tileCache['parcel'] = canvas;
     }
 
     initPipeCache() {
@@ -237,6 +289,24 @@ export class Level {
             this.tiles.set(key, 'question');
         }
 
+        // --- Wikidata Parcel Assignment ---
+        this.parcelAssignments.clear();
+        if (this.game.concept && this.game.concept.wikidata) {
+            const wikidataIds = this.game.concept.wikidata;
+            const questionBlocks = [];
+            for (let [key, type] of this.tiles) {
+                if (type === 'question') {
+                    questionBlocks.push(key);
+                }
+            }
+
+            // Pick one question block for each wikidata ID
+            for (let i = 0; i < wikidataIds.length && questionBlocks.length > 0; i++) {
+                const randomIndex = Math.floor(rng.next() * questionBlocks.length);
+                const key = questionBlocks.splice(randomIndex, 1)[0];
+                this.parcelAssignments.set(key, wikidataIds[i]);
+            }
+        }
         // Calculate minRow calculation moved up
 
         for (let y = this.minRow; y <= groundRow; y++) {
@@ -598,11 +668,16 @@ export class Level {
         this.particles.forEach(p => p.draw(ctx));
 
         // Draw Coins
-        this.coins.forEach(c => {
-            if (c.x + 20 > cameraX - buffer && c.x - 20 < cameraX + viewportWidth + buffer &&
-                c.y + 20 > cameraY - buffer && c.y - 20 < cameraY + viewportHeight + buffer) {
-                c.draw(ctx);
+        this.coins.forEach(coin => {
+            if (coin.x + 20 > cameraX - buffer && coin.x - 20 < cameraX + viewportWidth + buffer &&
+                coin.y + 20 > cameraY - buffer && coin.y - 20 < cameraY + viewportHeight + buffer) {
+                coin.draw(ctx);
             }
+        });
+
+        // Draw Parcels
+        this.parcels.forEach(parcel => {
+            parcel.draw(ctx, this.tileCache);
         });
 
         // Draw Enemies
@@ -660,6 +735,16 @@ export class Level {
             const p = this.particles[i];
             if (p.y > this.game.height + 100 || (p.maxTimer && p.timer > p.maxTimer)) {
                 this.particles.splice(i, 1);
+            }
+        }
+
+        // Update parcels
+        for (let i = this.parcels.length - 1; i >= 0; i--) {
+            this.parcels[i].update(this);
+            if (this.parcels[i].isDead && this.parcels[i].deathTimer > 30) {
+                this.parcels.splice(i, 1);
+            } else if (this.parcels[i].y > this.game.height + 100) {
+                this.parcels.splice(i, 1);
             }
         }
 
@@ -1165,10 +1250,16 @@ export class Level {
                             } else if (type === 'question') {
                                 // Turn to empty block
                                 this.tiles.set(`${tx},${ty}`, 'empty-block');
-                                this.game.addScore(200);
-
-                                // Spawning Floating Coin Animation
-                                this.particles.push(new FloatingCoin(px + 10, py - 10));
+                                // Spawning Hidden Content
+                                const wikidataId = this.parcelAssignments.get(`${tx},${ty}`);
+                                if (wikidataId) {
+                                    // Spawning Parcel
+                                    this.parcels.push(new Parcel(px, py - this.tileSize, wikidataId, this.tileSize));
+                                } else {
+                                    // Spawning Floating Coin Animation
+                                    this.particles.push(new FloatingCoin(px + 10, py - 10));
+                                    this.game.addScore(200);
+                                }
 
                                 // Update Geometry Cache
                                 const yOffset = -this.minRow * this.tileSize;
@@ -1236,6 +1327,22 @@ export class Level {
                 // Collect!
                 this.game.addScore(200);
                 this.coins.splice(i, 1);
+            }
+        }
+
+        // Check Parcel Collisions
+        for (let i = this.parcels.length - 1; i >= 0; i--) {
+            const parcel = this.parcels[i];
+            if (!parcel.isDead &&
+                player.x < parcel.x + parcel.width &&
+                player.x + player.width > parcel.x &&
+                player.y < parcel.y + parcel.height &&
+                player.y + player.height > parcel.y) {
+
+                // Collect Parcel
+                this.game.addScore(1000); // Parcels are worth more!
+                this.parcels.splice(i, 1);
+                console.log("Collected Parcel:", parcel.label);
             }
         }
     }
@@ -1354,5 +1461,50 @@ class FloatingCoin {
         ctx.moveTo(this.x + 10, this.y - 10);
         ctx.lineTo(this.x + 10, this.y + 10);
         ctx.stroke();
+    }
+}
+
+class Parcel extends Enemy {
+    constructor(x, y, wikidataId, tileSize) {
+        super(x, y, wikidataId, tileSize);
+        this.vx = (Math.random() > 0.5 ? 1 : -1) * 1.0;
+    }
+
+    draw(ctx, tileCache) {
+        if (this.isDead && this.deathTimer > 30) return;
+
+        ctx.save();
+        if (this.isDead) {
+            ctx.globalAlpha = Math.max(0, 1 - this.deathTimer / 30);
+            ctx.translate(Math.floor(this.x + this.width / 2), Math.floor(this.y + this.height));
+            ctx.scale(1, 0.2);
+            ctx.translate(-Math.floor(this.width / 2), -Math.floor(this.height));
+        }
+
+        // Draw cached parcel sprite
+        if (tileCache['parcel']) {
+            ctx.drawImage(tileCache['parcel'], Math.floor(this.x), Math.floor(this.y));
+        } else {
+            // Fallback if cache not ready
+            ctx.fillStyle = 'white';
+            ctx.fillRect(Math.floor(this.x), Math.floor(this.y), this.width, this.height);
+        }
+
+        // Draw Label (Wikidata ID)
+        if (this.label && !this.isDead) {
+            ctx.font = 'bold 12px monospace';
+            ctx.textAlign = 'center';
+            const textX = Math.floor(this.x + this.width / 2);
+            const textY = Math.floor(this.y - 10);
+
+            // Shadow
+            ctx.fillStyle = 'black';
+            ctx.fillText(this.label, textX + 1, textY + 1);
+            // Main Text
+            ctx.fillStyle = 'white';
+            ctx.fillText(this.label, textX, textY);
+        }
+
+        ctx.restore();
     }
 }

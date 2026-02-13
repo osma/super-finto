@@ -133,7 +133,8 @@ export class Game {
                 ...(conceptData.altlabel_sv || []).map(l => ({ label: l, lang: 'sv' })),
                 ...(conceptData.altlabel_en || []).map(l => ({ label: l, lang: 'en' })),
                 ...(conceptData.altlabel_se || []).map(l => ({ label: l, lang: 'se' }))
-            ]
+            ],
+            wikidata: conceptData.wikidata || []
         };
 
         // Load Background (Custom jpg or fallback to sky)
