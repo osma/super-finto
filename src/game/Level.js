@@ -1211,6 +1211,18 @@ export class Level {
                             // Do NOT set player.vy = 0 here yet, let the headHit logic handle it or just stop rising
                             player.vy = 0; // Stop rising immediately, but don't bounce down violently
 
+                            // Kill enemies on top of the hit tile
+                            this.enemies.forEach(enemy => {
+                                if (!enemy.isDead &&
+                                    enemy.x + enemy.width > px &&
+                                    enemy.x < px + this.tileSize &&
+                                    Math.abs((enemy.y + enemy.height) - py) < 10) { // On top of the tile
+                                    enemy.isDead = true;
+                                    enemy.vy = -5; // Pop up animation
+                                    this.game.addScore(400);
+                                }
+                            });
+
                             if (type === 'brick') {
                                 if (player.isBig) {
                                     this.game.addScore(50);
@@ -1228,17 +1240,6 @@ export class Level {
                                         }
                                     }
 
-                                    // Kill enemies on top of the brick
-                                    this.enemies.forEach(enemy => {
-                                        if (!enemy.isDead &&
-                                            enemy.x + enemy.width > px &&
-                                            enemy.x < px + this.tileSize &&
-                                            Math.abs((enemy.y + enemy.height) - py) < 10) { // On top of the brick
-                                            enemy.isDead = true;
-                                            this.game.addScore(400);
-                                        }
-                                    });
-
                                     this.tiles.delete(`${tx},${ty}`);
                                     const yOffset = -this.minRow * this.tileSize;
                                     const transformedY = py + yOffset;
@@ -1252,6 +1253,7 @@ export class Level {
                                     }
                                 } else {
                                     // Small elf just bumps the brick
+                                    this.startBump(px, py, 'brick', tx, ty);
                                 }
                             } else if (type === 'question') {
                                 // Turn to empty block
@@ -1267,19 +1269,10 @@ export class Level {
                                     this.game.addScore(200);
                                 }
 
-                                // Update Geometry Cache
-                                const yOffset = -this.minRow * this.tileSize;
-                                const transformedY = py + yOffset;
-                                const gx = Math.floor(px / this.chunkWidth);
-                                const gy = Math.floor(transformedY / this.chunkHeight);
-                                const localX = px % this.chunkWidth;
-                                const localY = transformedY % this.chunkHeight;
-                                const canvasGrid = this.tilesGrid.get(`${gx},${gy}`);
-                                if (canvasGrid) {
-                                    const ctx = canvasGrid.getContext('2d');
-                                    ctx.clearRect(Math.floor(localX), Math.floor(localY), this.tileSize, this.tileSize);
-                                    ctx.drawImage(this.tileCache['empty-block'], Math.floor(localX), Math.floor(localY));
-                                }
+                                // Trigger Bump Animation with the new sprite
+                                this.startBump(px, py, 'empty-block', tx, ty);
+                            } else if (type === 'empty-block') {
+                                this.startBump(px, py, 'empty-block', tx, ty);
                             }
                         }
                     } else if (minOverlap === overlapLeft) {
@@ -1351,6 +1344,45 @@ export class Level {
                 this.parcels.splice(i, 1);
                 console.log("Collected Parcel:", parcel.label);
             }
+        }
+    }
+
+    startBump(px, py, type, tx, ty) {
+        // Prevent double bump
+        if (this.particles.some(p => p instanceof BumpingBlock && p.tx === tx && p.ty === ty)) {
+            return;
+        }
+
+        // Clear from cache
+        const yOffset = -this.minRow * this.tileSize;
+        const transformedY = py + yOffset;
+        const gx = Math.floor(px / this.chunkWidth);
+        const gy = Math.floor(transformedY / this.chunkHeight);
+        const localX = px % this.chunkWidth;
+        const localY = transformedY % this.chunkHeight;
+        const canvas = this.tilesGrid.get(`${gx},${gy}`);
+        if (canvas) {
+            canvas.getContext('2d').clearRect(Math.floor(localX), Math.floor(localY), this.tileSize, this.tileSize);
+        }
+
+        // Add to bumping particles
+        this.particles.push(new BumpingBlock(this, px, py, type, tx, ty));
+    }
+
+    restoreTile(tx, ty, type) {
+        const px = tx * this.tileSize;
+        const py = ty * this.tileSize;
+        const yOffset = -this.minRow * this.tileSize;
+        const transformedY = py + yOffset;
+        const gx = Math.floor(px / this.chunkWidth);
+        const gy = Math.floor(transformedY / this.chunkHeight);
+        const localX = px % this.chunkWidth;
+        const localY = transformedY % this.chunkHeight;
+        const canvas = this.tilesGrid.get(`${gx},${gy}`);
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(Math.floor(localX), Math.floor(localY), this.tileSize, this.tileSize);
+            ctx.drawImage(this.tileCache[type], Math.floor(localX), Math.floor(localY));
         }
     }
 }
@@ -1513,5 +1545,38 @@ class Parcel extends Enemy {
         }
 
         ctx.restore();
+    }
+}
+
+class BumpingBlock {
+    constructor(level, x, y, type, tx, ty) {
+        this.level = level;
+        this.x = x;
+        this.y = y;
+        this.originalY = y;
+        this.type = type;
+        this.tx = tx;
+        this.ty = ty;
+        this.timer = 0;
+        this.maxTimer = 8; // Quick bump
+    }
+    update() {
+        this.timer++;
+        // Sine wave bump: 0 to PI
+        const progress = this.timer / this.maxTimer;
+        const offset = Math.sin(progress * Math.PI) * 12;
+        this.y = this.originalY - offset;
+
+        if (this.timer >= this.maxTimer) {
+            this.level.restoreTile(this.tx, this.ty, this.type);
+            return true; // Mark for removal
+        }
+        return false;
+    }
+    draw(ctx) {
+        const img = this.level.tileCache[this.type];
+        if (img) {
+            ctx.drawImage(img, Math.floor(this.x), Math.floor(this.y));
+        }
     }
 }
