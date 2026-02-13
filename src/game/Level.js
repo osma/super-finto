@@ -28,7 +28,8 @@ export class Level {
             { id: 'brick', color: '#f97316', solid: false },
             { id: 'solid', color: '#57534e', solid: true },
             { id: 'ground', color: '#92450e', ground: true },
-            { id: 'question', color: '#fbbf24', solid: true, question: true }
+            { id: 'question', color: '#fbbf24', solid: true, question: true },
+            { id: 'empty-block', color: '#78716c', solid: true, empty: true }
         ];
 
         types.forEach(type => {
@@ -38,7 +39,9 @@ export class Level {
             const ctx = canvas.getContext('2d');
 
             // Re-use existing draw logic but only once per type
-            this.drawBrickTile(ctx, 0, 0, this.tileSize, canvas.height, type.color, type.ground, type.solid, type.question);
+            const isQuestion = type.id === 'question';
+            const isEmpty = type.id === 'empty-block';
+            this.drawBrickTile(ctx, 0, 0, this.tileSize, canvas.height, type.color, type.ground, type.solid, isQuestion, isEmpty);
             this.tileCache[type.id] = canvas;
         });
 
@@ -653,8 +656,9 @@ export class Level {
         // Update particles
         for (let i = this.particles.length - 1; i >= 0; i--) {
             this.particles[i].update();
-            // Remove if off screen
-            if (this.particles[i].y > this.game.height + 100) {
+            // Remove if off screen OR if specialized particle (like FloatingCoin) is finished
+            const p = this.particles[i];
+            if (p.y > this.game.height + 100 || (p.maxTimer && p.timer > p.maxTimer)) {
                 this.particles.splice(i, 1);
             }
         }
@@ -793,7 +797,7 @@ export class Level {
         }
     }
 
-    drawBrickTile(ctx, x, y, w, h, baseColor, isGround = false, isSolid = false, isQuestion = false) {
+    drawBrickTile(ctx, x, y, w, h, baseColor, isGround = false, isSolid = false, isQuestion = false, isEmpty = false) {
         ctx.fillStyle = baseColor;
         ctx.fillRect(x, y, w, h);
 
@@ -855,6 +859,21 @@ export class Level {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
             ctx.fillRect(x + 6, y + 6, w - 12, 2);
             ctx.fillRect(x + 6, y + 8, 2, h - 16);
+        }
+
+        if (isEmpty) {
+            // Background is already filled with baseColor (#78716c)
+            ctx.strokeStyle = '#44403c';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
+
+            // Darker rivets
+            ctx.fillStyle = '#44403c';
+            const rSize = 4;
+            ctx.fillRect(x + 4, y + 4, rSize, rSize);
+            ctx.fillRect(x + w - 8, y + 4, rSize, rSize);
+            ctx.fillRect(x + 4, y + h - 8, rSize, rSize);
+            ctx.fillRect(x + w - 8, y + h - 8, rSize, rSize);
         }
     }
 
@@ -1143,6 +1162,27 @@ export class Level {
                                 if (canvas) {
                                     canvas.getContext('2d').clearRect(Math.floor(localX), Math.floor(localY), this.tileSize, this.tileSize);
                                 }
+                            } else if (type === 'question') {
+                                // Turn to empty block
+                                this.tiles.set(`${tx},${ty}`, 'empty-block');
+                                this.game.addScore(200);
+
+                                // Spawning Floating Coin Animation
+                                this.particles.push(new FloatingCoin(px + 10, py - 10));
+
+                                // Update Geometry Cache
+                                const yOffset = -this.minRow * this.tileSize;
+                                const transformedY = py + yOffset;
+                                const gx = Math.floor(px / this.chunkWidth);
+                                const gy = Math.floor(transformedY / this.chunkHeight);
+                                const localX = px % this.chunkWidth;
+                                const localY = transformedY % this.chunkHeight;
+                                const canvasGrid = this.tilesGrid.get(`${gx},${gy}`);
+                                if (canvasGrid) {
+                                    const ctx = canvasGrid.getContext('2d');
+                                    ctx.clearRect(Math.floor(localX), Math.floor(localY), this.tileSize, this.tileSize);
+                                    ctx.drawImage(this.tileCache['empty-block'], Math.floor(localX), Math.floor(localY));
+                                }
                             }
                         }
                     } else if (minOverlap === overlapLeft) {
@@ -1280,5 +1320,39 @@ class SeededRNG {
     next() {
         this.seed = (this.seed * 9301 + 49297) % 233280;
         return Math.abs(this.seed / 233280);
+    }
+}
+
+class FloatingCoin {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.vy = -8;
+        this.ay = 0.5;
+        this.timer = 0;
+        this.maxTimer = 30;
+    }
+    update() {
+        this.y += this.vy;
+        this.vy += this.ay;
+        this.timer++;
+    }
+    draw(ctx) {
+        const wobble = Math.sin(this.timer * 0.5) * 5;
+        ctx.fillStyle = '#fbbf24'; // Same as question block yellow
+        ctx.beginPath();
+        // Coin shape
+        ctx.ellipse(this.x + 10, this.y, 8 + Math.abs(wobble), 15, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#b45309';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Inner line
+        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+        ctx.beginPath();
+        ctx.moveTo(this.x + 10, this.y - 10);
+        ctx.lineTo(this.x + 10, this.y + 10);
+        ctx.stroke();
     }
 }
