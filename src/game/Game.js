@@ -183,7 +183,7 @@ export class Game {
                 const broaderIndex = this.concept.broader.findIndex(b => b.uri === sourceUri);
                 const narrowerIndex = this.concept.narrower.findIndex(n => n.uri === sourceUri);
 
-                const groundY = this.height - 50;
+                const groundY = this.height - 40; // Align with Level.js
 
                 if (relatedIndex !== -1) {
                     const pipeX = this.getPipeX(relatedIndex);
@@ -330,7 +330,7 @@ export class Game {
                     // Moving Down
                     this.player.y += speed;
 
-                    const groundY = this.height - 50;
+                    const groundY = this.height - 40; // Align with Level.js
                     if (this.player.y > groundY) {
                         this.transition.state = 'loading';
                         this.loadConcept(this.transition.targetUri, this.concept.uri);
@@ -354,7 +354,7 @@ export class Game {
                 return; // SKIP normal update
             }
             else if (this.transition.state === 'pipe_in') {
-                const groundY = this.height - 50;
+                const groundY = this.height - 40; // Align with Level.js
 
                 if (this.transition.direction === 'down') {
                     // Moving Up
@@ -416,7 +416,7 @@ export class Game {
         }
 
         // Clamp camera Y (don't show below ground, but allow going up)
-        const groundY = this.height - 50;
+        const groundY = this.height - 40;
         if (this.camera.y > 0) this.camera.y = 0;
     }
 
@@ -431,7 +431,7 @@ export class Game {
         const ratioX = Math.min(1, Math.max(0, this.player.x / (this.levelWidth - playerWidth)));
 
         // Vertical Ratio
-        const groundY = this.height - 50;
+        const groundY = this.height - 40;
         const minLevelY = this.level.minRow * this.level.tileSize;
         const levelHeightRange = Math.max(1, groundY - minLevelY);
         const ratioY = Math.min(1, Math.max(0, (this.player.y - minLevelY) / levelHeightRange));
