@@ -1341,6 +1341,7 @@ export class Level {
 
                 // Collect Parcel
                 this.game.addScore(1000); // Parcels are worth more!
+                player.grow(); // Grow if not already
                 this.parcels.splice(i, 1);
                 console.log("Collected Parcel:", parcel.label);
             }
