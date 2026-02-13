@@ -1062,9 +1062,9 @@ export class Level {
                 // Hitbox: x=60 to 80, y=y to y+80
                 // --- Teleport Trigger ---
                 if (player.vx < 0 &&
-                    player.x < 65 && player.x > 20 &&
-                    player.y + player.height > y + 10 &&
-                    player.y < y + pipeHeight - 10) {
+                    player.x < 45 && player.x > 10 &&
+                    player.y + player.height > y + 20 &&
+                    player.y < y + pipeHeight - 20) {
 
                     console.log("Teleporting Left to:", broader.uri);
                     this.game.startPipeTransition(broader.uri, 0, y, 'left');
@@ -1119,9 +1119,9 @@ export class Level {
                 // Opening is at lw - 80
                 // --- Teleport Trigger ---
                 if (player.vx > 0 &&
-                    player.x + player.width > lw - 65 && player.x + player.width < lw - 20 &&
-                    player.y + player.height > y + 10 &&
-                    player.y < y + pipeHeight - 10) {
+                    player.x + player.width > lw - 45 && player.x + player.width < lw - 10 &&
+                    player.y + player.height > y + 20 &&
+                    player.y < y + pipeHeight - 20) {
 
                     console.log("Teleporting Right to:", narrower.uri);
                     this.game.startPipeTransition(narrower.uri, lw, y, 'right');

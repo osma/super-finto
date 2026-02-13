@@ -9,8 +9,8 @@ export class Player {
         this.vx = 0;
         this.vy = 0;
         this.weight = 0.28;
-        this.speed = 2.5;
-        this.acceleration = 0.3;
+        this.speed = 2.0;
+        this.acceleration = 0.2;
         this.jumpForce = 9.7; // Exactly 4 tiles max height
         this.maxFallSpeed = 10;
         this.friction = 0.9;
