@@ -395,7 +395,7 @@ export class Game {
         }
 
         // Normal Update
-        this.player.update(this.input);
+        this.player.update(this.input, deltaTime);
         this.level.update(deltaTime);
         this.level.checkCollisions(this.player);
 

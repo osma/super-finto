@@ -16,6 +16,7 @@ export class Player {
         this.friction = 0.9;
         this.grounded = false;
         this.lastJumpPressed = false;
+        this.invulnerableTimer = 0;
 
         // Visual properties
         this.color = '#f472b6'; // Pinkish accent
@@ -38,7 +39,12 @@ export class Player {
         }
     }
 
-    update(input) {
+    update(input, deltaTime) {
+        if (this.invulnerableTimer > 0) {
+            this.invulnerableTimer = Math.max(0, this.invulnerableTimer - deltaTime);
+        }
+
+        // --- GROW (Parcel Collection) ---
         // Kneeling logic
         const wasKneeling = this.isKneeling;
         this.isKneeling = input.isKneeling() && this.grounded;
@@ -90,7 +96,28 @@ export class Player {
         if (this.x < 0) this.x = 0;
     }
 
+    shrink() {
+        if (!this.isBig) return;
+        this.isBig = false;
+        const oldHeight = this.height;
+        this.width = 30; // Reset to small hitbox width
+        this.height = 40; // Reset to small hitbox height
+
+        // Correct position so feet stay grounded
+        // If big and NOT kneeling, height was 80. (80-40) = 40.
+        // If big AND kneeling, height was 40. (40-40) = 0.
+        this.y += (oldHeight - this.height);
+
+        this.invulnerableTimer = 3000; // 3 seconds
+        console.log("Player shrunk and became invulnerable");
+    }
+
     draw(ctx) {
+        // Blinking Effect when invulnerable
+        if (this.invulnerableTimer > 0 && Math.floor(Date.now() / 100) % 2 === 0) {
+            return;
+        }
+
         const isFacingRight = this.vx >= 0;
         const displayWidth = this.isBig ? 40 : 30;
         const pSize = displayWidth / 10; // Based on max columns in frame

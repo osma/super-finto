@@ -785,10 +785,14 @@ export class Level {
                         this.game.addScore(400);
                         player.vy = -8; // Small bounce
                         player.grounded = false;
-                    } else {
+                    } else if (player.invulnerableTimer <= 0) {
                         // DAMAGE!
                         console.log("Player hit by enemy:", enemy.label);
-                        this.respawnPlayer();
+                        if (player.isBig) {
+                            player.shrink();
+                        } else {
+                            this.respawnPlayer();
+                        }
                     }
                 }
             }
