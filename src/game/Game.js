@@ -25,8 +25,8 @@ export class Game {
 
         // Pre-render static background for performance
         this.backgroundCanvas = document.createElement('canvas');
-        this.backgroundCanvas.width = this.width;
-        this.backgroundCanvas.height = this.height;
+        this.backgroundCanvas.width = 1536; // 768 * 2
+        this.backgroundCanvas.height = 1024; // 512 * 2
         this.drawDefaultBackground(this.backgroundCanvas.getContext('2d'));
 
         // Game State
@@ -146,7 +146,7 @@ export class Game {
             // Only draw if this is still the latest requested concept
             if (this.latestBGConceptId === conceptId) {
                 const bgCtx = this.backgroundCanvas.getContext('2d');
-                bgCtx.drawImage(bgImg, 0, 0, this.width, this.height);
+                bgCtx.drawImage(bgImg, 0, 0, 1536, 1024);
             }
         };
         bgImg.onerror = () => {
@@ -421,8 +421,25 @@ export class Game {
     }
 
     draw() {
-        // Draw pre-rendered background (single drawImage call)
-        this.ctx.drawImage(this.backgroundCanvas, 0, 0);
+        // --- PARALLAX BACKGROUND ---
+        // Calculate panning ratios based on total scrollable area
+        // Max camera X is levelWidth - viewportWidth
+        const maxCamX = Math.max(1, this.levelWidth - this.width);
+        const maxCamY = Math.max(1, 1000); // Fixed range for more stable vertical parallax
+
+        // Max background scroll is bgWidth - viewportWidth
+        const maxBgX = 1536 - this.width;
+        const maxBgY = 1024 - this.height;
+
+        const bgX = (this.camera.x / maxCamX) * maxBgX;
+        const bgY = Math.min(1, Math.max(0, Math.abs(this.camera.y) / maxCamY)) * maxBgY;
+
+        // Draw portion of the 1536x1024 background canvas
+        this.ctx.drawImage(
+            this.backgroundCanvas,
+            Math.floor(bgX), Math.floor(bgY), this.width, this.height,
+            0, 0, this.width, this.height
+        );
 
         // --- WORLD ELEMENTS (Camera translation) ---
         this.ctx.save();
@@ -502,14 +519,14 @@ export class Game {
     drawDefaultBackground(ctx) {
         // Draw sky
         ctx.fillStyle = '#5c94fc'; // Classic NES Mario sky blue
-        ctx.fillRect(0, 0, this.width, this.height);
+        ctx.fillRect(0, 0, 1536, 1024);
 
         // Draw background details (stars/clouds)
         ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-        for (let i = 0; i < 30; i++) {
-            const x = (Math.sin(i * 123) * 0.5 + 0.5) * this.width;
-            const y = (Math.cos(i * 234) * 0.5 + 0.5) * (this.height - 100);
-            ctx.fillRect(x, y, 4, 4);
+        for (let i = 0; i < 50; i++) {
+            const x = (Math.sin(i * 123) * 0.5 + 0.5) * 1536;
+            const y = (Math.cos(i * 234) * 0.5 + 0.5) * 1024;
+            ctx.fillRect(x, y, 6, 6);
         }
     }
 }
