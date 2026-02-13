@@ -1212,42 +1212,46 @@ export class Level {
                             player.vy = 0; // Stop rising immediately, but don't bounce down violently
 
                             if (type === 'brick') {
-                                this.game.addScore(50);
-                                this.createExplosion(px, py);
+                                if (player.isBig) {
+                                    this.game.addScore(50);
+                                    this.createExplosion(px, py);
 
-                                // Check for Coin ABOVE this brick
-                                for (let c = this.coins.length - 1; c >= 0; c--) {
-                                    const coin = this.coins[c];
-                                    const coinCenterX = coin.x + coin.size / 2;
-                                    const brickCenterX = px + this.tileSize / 2;
-                                    if (Math.abs(coinCenterX - brickCenterX) < 20 &&
-                                        Math.abs(coin.y + coin.size - py) < 10) {
-                                        this.game.addScore(200);
-                                        this.coins.splice(c, 1);
+                                    // Check for Coin ABOVE this brick
+                                    for (let c = this.coins.length - 1; c >= 0; c--) {
+                                        const coin = this.coins[c];
+                                        const coinCenterX = coin.x + coin.size / 2;
+                                        const brickCenterX = px + this.tileSize / 2;
+                                        if (Math.abs(coinCenterX - brickCenterX) < 20 &&
+                                            Math.abs(coin.y + coin.size - py) < 10) {
+                                            this.game.addScore(200);
+                                            this.coins.splice(c, 1);
+                                        }
                                     }
-                                }
 
-                                // Kill enemies on top of the brick
-                                this.enemies.forEach(enemy => {
-                                    if (!enemy.isDead &&
-                                        enemy.x + enemy.width > px &&
-                                        enemy.x < px + this.tileSize &&
-                                        Math.abs((enemy.y + enemy.height) - py) < 10) { // On top of the brick
-                                        enemy.isDead = true;
-                                        this.game.addScore(400);
+                                    // Kill enemies on top of the brick
+                                    this.enemies.forEach(enemy => {
+                                        if (!enemy.isDead &&
+                                            enemy.x + enemy.width > px &&
+                                            enemy.x < px + this.tileSize &&
+                                            Math.abs((enemy.y + enemy.height) - py) < 10) { // On top of the brick
+                                            enemy.isDead = true;
+                                            this.game.addScore(400);
+                                        }
+                                    });
+
+                                    this.tiles.delete(`${tx},${ty}`);
+                                    const yOffset = -this.minRow * this.tileSize;
+                                    const transformedY = py + yOffset;
+                                    const gx = Math.floor(px / this.chunkWidth);
+                                    const gy = Math.floor(transformedY / this.chunkHeight);
+                                    const localX = px % this.chunkWidth;
+                                    const localY = transformedY % this.chunkHeight;
+                                    const canvas = this.tilesGrid.get(`${gx},${gy}`);
+                                    if (canvas) {
+                                        canvas.getContext('2d').clearRect(Math.floor(localX), Math.floor(localY), this.tileSize, this.tileSize);
                                     }
-                                });
-
-                                this.tiles.delete(`${tx},${ty}`);
-                                const yOffset = -this.minRow * this.tileSize;
-                                const transformedY = py + yOffset;
-                                const gx = Math.floor(px / this.chunkWidth);
-                                const gy = Math.floor(transformedY / this.chunkHeight);
-                                const localX = px % this.chunkWidth;
-                                const localY = transformedY % this.chunkHeight;
-                                const canvas = this.tilesGrid.get(`${gx},${gy}`);
-                                if (canvas) {
-                                    canvas.getContext('2d').clearRect(Math.floor(localX), Math.floor(localY), this.tileSize, this.tileSize);
+                                } else {
+                                    // Small elf just bumps the brick
                                 }
                             } else if (type === 'question') {
                                 // Turn to empty block
