@@ -421,18 +421,27 @@ export class Game {
     }
 
     draw() {
-        // --- PARALLAX BACKGROUND ---
-        // Calculate panning ratios based on total scrollable area
-        // Max camera X is levelWidth - viewportWidth
-        const maxCamX = Math.max(1, this.levelWidth - this.width);
-        const maxCamY = Math.max(1, 1000); // Fixed range for more stable vertical parallax
+        // --- PARALLAX BACKGROUND (Refined) ---
+        // Calculate panning ratios based on player position relative to level bounds
+        // This ensures the full background is visible even in small levels.
+
+        // Horizontal Ratio
+        const playerWidth = this.player.width;
+        const maxLevelX = Math.max(playerWidth + 1, this.levelWidth - playerWidth);
+        const ratioX = Math.min(1, Math.max(0, this.player.x / (this.levelWidth - playerWidth)));
+
+        // Vertical Ratio
+        const groundY = this.height - 50;
+        const minLevelY = this.level.minRow * this.level.tileSize;
+        const levelHeightRange = Math.max(1, groundY - minLevelY);
+        const ratioY = Math.min(1, Math.max(0, (this.player.y - minLevelY) / levelHeightRange));
 
         // Max background scroll is bgWidth - viewportWidth
         const maxBgX = 1536 - this.width;
         const maxBgY = 1024 - this.height;
 
-        const bgX = (this.camera.x / maxCamX) * maxBgX;
-        const bgY = Math.min(1, Math.max(0, Math.abs(this.camera.y) / maxCamY)) * maxBgY;
+        const bgX = ratioX * maxBgX;
+        const bgY = ratioY * maxBgY;
 
         // Draw portion of the 1536x1024 background canvas
         this.ctx.drawImage(
