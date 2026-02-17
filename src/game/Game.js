@@ -49,8 +49,9 @@ export class Game {
             const response = await fetch('/src/assets/data/yso.json');
             this.allConcepts = await response.json();
 
-            // Initial concept
-            const startKey = 'http://www.yso.fi/onto/yso/p949';
+            // Pick a random starting concept
+            const keys = Object.keys(this.allConcepts);
+            const startKey = keys[Math.floor(Math.random() * keys.length)];
             this.loadConcept(startKey);
         } catch (error) {
             console.error("Failed to load YSO concepts:", error);
