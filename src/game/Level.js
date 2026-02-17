@@ -868,6 +868,7 @@ export class Level {
     respawnPlayer() {
         // Reset player to the starting position of the level (bottom-left)
         this.game.resetPlayerDefault();
+        this.game.player.invulnerableTimer = 3000; // 3 seconds of invincibility on respawn
     }
 
     drawBoundaryWalls(ctx) {

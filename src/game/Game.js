@@ -266,7 +266,7 @@ export class Game {
         this.player.reset();
         this.player.x = 100;
         this.player.y = this.height - this.player.height - 50;
-        this.player.invulnerableTimer = 3000; // 3 seconds of invincibility on restart
+
 
         this.camera.x = 0;
         this.camera.y = 0; // Default ground level
