@@ -73,7 +73,7 @@ export class Game {
 
         // Align player on pipe for the animation
         if (direction === 'down') {
-            this.player.x = pipeX + 100 / 2 - this.player.width / 2;
+            this.player.x = pipeX + 80 / 2 - this.player.width / 2;
         } else if (direction === 'left') {
             // Align Y center to pipe center (pipe height 80)
             this.player.y = pipeY + 80 / 2 - this.player.height / 2;
@@ -187,7 +187,7 @@ export class Game {
 
                 if (relatedIndex !== -1) {
                     const pipeX = this.getPipeX(relatedIndex);
-                    const pipeWidth = 100;
+                    const pipeWidth = 80;
 
                     // Setup 'Pipe In' Animation (Upwards)
                     this.transition.state = 'pipe_in';
@@ -492,7 +492,7 @@ export class Game {
 
         if (this.transition.direction === 'down') {
             // Vertical Pipe Overlay
-            const pipeWidth = 100;
+            const pipeWidth = 80;
             const totalHeight = this.height - y;
             const capHeight = 15;
 

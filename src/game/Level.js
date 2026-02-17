@@ -102,8 +102,8 @@ export class Level {
     }
 
     initPipeCache() {
-        // Vertical Pipe Cap (116 x 15)
-        const capWidth = 116; // 100 + 8*2 capExtra
+        // Vertical Pipe Cap (96 x 15) - 80px body + 8px extra on each side
+        const capWidth = 96; // 80 + 8*2 capExtra
         const capHeight = 15;
         const capCanvas = document.createElement('canvas');
         capCanvas.width = capWidth;
@@ -115,11 +115,11 @@ export class Level {
         capCtx.lineWidth = 2;
         capCtx.strokeRect(0, 0, capWidth, capHeight);
         capCtx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        capCtx.fillRect(18, 2, 8, capHeight - 4); // Highlight
+        capCtx.fillRect(14, 2, 8, capHeight - 4); // Highlight
         this.tileCache['pipeCapV'] = capCanvas;
 
-        // Vertical Pipe Body Segment (100 x 40)
-        const bodyWidth = 100;
+        // Vertical Pipe Body Segment (80 x 40) - 2 tiles wide, 1 tile tall
+        const bodyWidth = 80;
         const bodySegment = 40;
         const bodyCanvas = document.createElement('canvas');
         bodyCanvas.width = bodyWidth;
@@ -136,7 +136,7 @@ export class Level {
         bodyCtx.lineTo(bodyWidth, bodySegment);
         bodyCtx.stroke();
         bodyCtx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        bodyCtx.fillRect(10, 5, 8, bodySegment - 10); // Highlight
+        bodyCtx.fillRect(8, 5, 8, bodySegment - 10); // Highlight
         this.tileCache['pipeBodyV'] = bodyCanvas;
 
         // Horizontal Pipe - Right Facing (80 x 88)
@@ -463,10 +463,10 @@ export class Level {
         if (this.game.concept && this.game.concept.related) {
             this.game.concept.related.forEach((rel, index) => {
                 const px = this.game.getPipeX(index);
-                // Pipe width is 100px. Convert to tile coordinates.
+                // Pipe width is 80px. Convert to tile coordinates.
                 // Include a buffer of 5 tiles on each side
                 const startTile = Math.floor(px / this.tileSize) - 5;
-                const endTile = Math.ceil((px + 100) / this.tileSize) + 5;
+                const endTile = Math.ceil((px + 80) / this.tileSize) + 5;
                 pipePositions.push({ start: startTile, end: endTile });
             });
         }
@@ -634,7 +634,7 @@ export class Level {
             this.game.concept.related.forEach((rel, index) => {
                 const x = this.game.getPipeX(index);
                 const pipeTop = groundY - 40;
-                if (x + 100 > cameraX - buffer && x < cameraX + viewportWidth + buffer) {
+                if (x + 80 > cameraX - buffer && x < cameraX + viewportWidth + buffer) {
                     // Vertical Culling: Is pipe within viewport? (Pipes go from pipeTop down to game.height)
                     if (this.game.height > cameraY - buffer && pipeTop < cameraY + viewportHeight + buffer) {
                         this.drawPipe(ctx, x, pipeTop, rel.label_fi);
@@ -854,7 +854,7 @@ export class Level {
     }
 
     drawPipe(ctx, x, y, label) {
-        const pipeWidth = 100;
+        const pipeWidth = 80;
         const capHeight = 15;
         const capExtra = 8;
         const totalHeight = this.game.height - y;
@@ -1007,10 +1007,10 @@ export class Level {
                 const px = this.game.getPipeX(index);
 
                 // Culling: Only check if pipe is near player
-                if (px + 100 < player.x - buffer || px > player.x + player.width + buffer) return;
+                if (px + 80 < player.x - buffer || px > player.x + player.width + buffer) return;
 
                 const py = groundY - 40;
-                const pw = 100;
+                const pw = 80;
                 const ph = 40; // Back to 40px height above ground
 
                 if (player.x + player.width > px &&
