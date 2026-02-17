@@ -286,6 +286,15 @@ export class Game {
         if (scoreEl) {
             scoreEl.textContent = this.score.toString().padStart(5, '0');
         }
+
+        // Add visual floating score above player
+        if (this.level && this.player) {
+            this.level.spawnFloatingScore(
+                this.player.x + this.player.width / 2,
+                this.player.y - 10,
+                points
+            );
+        }
     }
 
     getPipeX(index) {

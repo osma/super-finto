@@ -772,9 +772,10 @@ export class Level {
         // Update particles
         for (let i = this.particles.length - 1; i >= 0; i--) {
             this.particles[i].update();
-            // Remove if off screen OR if specialized particle (like FloatingCoin) is finished
+            // Remove if off screen vertically (accounting for camera) OR if specialized particle timer finished
             const p = this.particles[i];
-            if (p.y > this.game.height + 100 || (p.maxTimer && p.timer > p.maxTimer)) {
+            const offBottom = p.y > Math.max(this.game.height, this.game.camera.y + this.game.height) + 100;
+            if (offBottom || (p.maxTimer && p.timer > p.maxTimer)) {
                 this.particles.splice(i, 1);
             }
         }
@@ -1432,6 +1433,10 @@ export class Level {
             ctx.drawImage(this.tileCache[type], Math.floor(localX), Math.floor(localY));
         }
     }
+
+    spawnFloatingScore(x, y, points) {
+        this.particles.push(new FloatingScore(x, y, points));
+    }
 }
 
 class BrickParticle {
@@ -1646,3 +1651,42 @@ class BumpingBlock {
         }
     }
 }
+
+class FloatingScore {
+    constructor(x, y, points) {
+        this.x = x;
+        this.y = y;
+        this.points = points;
+        this.timer = 0;
+        this.maxTimer = 60; // 1 second at 60fps
+        this.opacity = 1;
+        this.vy = -1.5; // Upward speed
+    }
+
+    update() {
+        this.timer++;
+        this.y += this.vy;
+        this.opacity = Math.max(0, 1 - (this.timer / this.maxTimer));
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = this.opacity;
+        ctx.font = 'bold 16px monospace';
+        ctx.textAlign = 'center';
+
+        const textX = Math.floor(this.x);
+        const textY = Math.floor(this.y);
+
+        // Shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillText(this.points, textX + 1, textY + 1);
+
+        // White text
+        ctx.fillStyle = 'white';
+        ctx.fillText(this.points, textX, textY);
+
+        ctx.restore();
+    }
+}
+
