@@ -326,6 +326,37 @@ export class Level {
             this.tiles.set(`${x},${ceilingRow}`, 'solid');
         }
 
+
+        // Fill gaps between horizontal side pipes to prevent player from getting stuck
+        // Pipe dimensions: 80px height (2 tiles), 40px gap (1 tile)
+        // Use 'invisible' blocks - they have collision but don't render
+        const groundY = this.game.height - 40;
+        const firstPipeY = groundY - 80;
+
+        // Left wall (broader concepts)
+        if (this.game.concept && this.game.concept.broader && this.game.concept.broader.length > 1) {
+            for (let i = 0; i < this.game.concept.broader.length - 1; i++) {
+                const pipeBottomY = firstPipeY - (i * 120) + 80; // 120 = pipeHeight + gap
+                const gapRow = Math.floor(pipeBottomY / this.tileSize);
+                // Fill the gap row at x=0 and x=1 (2 tiles wide to match pipe width)
+                this.tiles.set(`0,${gapRow}`, 'invisible');
+                this.tiles.set(`1,${gapRow}`, 'invisible');
+            }
+        }
+
+        // Right wall (narrower concepts)
+        if (this.game.concept && this.game.concept.narrower && this.game.concept.narrower.length > 1) {
+            for (let i = 0; i < this.game.concept.narrower.length - 1; i++) {
+                const pipeBottomY = firstPipeY - (i * 120) + 80; // 120 = pipeHeight + gap
+                const gapRow = Math.floor(pipeBottomY / this.tileSize);
+                // Fill the gap row at the right edge (2 tiles wide to match pipe width)
+                this.tiles.set(`${levelWidthTiles - 2},${gapRow}`, 'invisible');
+                this.tiles.set(`${levelWidthTiles - 1},${gapRow}`, 'invisible');
+            }
+        }
+
+
+
         // Add Climbing Towers if there are more than 2 pipes on either side
 
         // Left Tower (for broader concepts)
@@ -534,6 +565,9 @@ export class Level {
 
         // Draw all individual tiles to 2D grid
         for (let [key, type] of this.tiles) {
+            // Skip invisible tiles - they have collision but don't render
+            if (type === 'invisible') continue;
+
             const [tx, ty] = key.split(',').map(Number);
             const x = tx * this.tileSize;
             const y = ty * this.tileSize + yOffset;
