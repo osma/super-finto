@@ -336,8 +336,9 @@ export class Level {
         // Left wall (broader concepts)
         if (this.game.concept && this.game.concept.broader && this.game.concept.broader.length > 1) {
             for (let i = 0; i < this.game.concept.broader.length - 1; i++) {
-                const pipeBottomY = firstPipeY - (i * 120) + 80; // 120 = pipeHeight + gap
-                const gapRow = Math.floor(pipeBottomY / this.tileSize);
+                // Gap is ABOVE the current pipe (i)
+                const gapY = firstPipeY - (i * 120) - 40;
+                const gapRow = Math.floor(gapY / this.tileSize);
                 // Fill the gap row at x=0 and x=1 (2 tiles wide to match pipe width)
                 this.tiles.set(`0,${gapRow}`, 'invisible');
                 this.tiles.set(`1,${gapRow}`, 'invisible');
@@ -347,8 +348,8 @@ export class Level {
         // Right wall (narrower concepts)
         if (this.game.concept && this.game.concept.narrower && this.game.concept.narrower.length > 1) {
             for (let i = 0; i < this.game.concept.narrower.length - 1; i++) {
-                const pipeBottomY = firstPipeY - (i * 120) + 80; // 120 = pipeHeight + gap
-                const gapRow = Math.floor(pipeBottomY / this.tileSize);
+                const gapY = firstPipeY - (i * 120) - 40;
+                const gapRow = Math.floor(gapY / this.tileSize);
                 // Fill the gap row at the right edge (2 tiles wide to match pipe width)
                 this.tiles.set(`${levelWidthTiles - 2},${gapRow}`, 'invisible');
                 this.tiles.set(`${levelWidthTiles - 1},${gapRow}`, 'invisible');
