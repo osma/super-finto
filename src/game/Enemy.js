@@ -12,11 +12,17 @@ export class Enemy {
         this.grounded = false;
         this.isDead = false;
         this.deathTimer = 0;
+        this.deathType = null; // 'squash' or 'flip'
     }
 
     update(level) {
         if (this.isDead) {
             this.deathTimer++;
+            if (this.deathType === 'flip') {
+                this.vy += this.weight * 2;
+                this.y += this.vy;
+                this.x += this.vx;
+            }
             return;
         }
 
@@ -235,15 +241,27 @@ export class Enemy {
         if (this.isDead && this.deathTimer > 30) return;
 
         ctx.save();
+        const drawX = Math.floor(this.x);
+        const drawY = Math.floor(this.y);
+
         if (this.isDead) {
             ctx.globalAlpha = Math.max(0, 1 - this.deathTimer / 30);
-            ctx.translate(Math.floor(this.x + this.width / 2), Math.floor(this.y + this.height));
-            ctx.scale(1, 0.2); // Squashed effect
-            ctx.translate(-Math.floor(this.width / 2), -Math.floor(this.height));
-        }
 
-        // Draw cached enemy sprite
-        ctx.drawImage(tileCache['enemy'], Math.floor(this.x), Math.floor(this.y));
+            if (this.deathType === 'squash') {
+                // Squeezed to 50% height, anchored to ground
+                ctx.translate(drawX + this.width / 2, drawY + this.height);
+                ctx.scale(1, 0.5);
+                ctx.drawImage(tileCache['enemy'], -this.width / 2, -this.height);
+            } else if (this.deathType === 'flip') {
+                // Flipped and falling
+                ctx.translate(drawX + this.width / 2, drawY + this.height / 2);
+                ctx.rotate(Math.PI);
+                ctx.drawImage(tileCache['enemy'], -this.width / 2, -this.height / 2);
+            }
+        } else {
+            // Draw normal enemy sprite
+            ctx.drawImage(tileCache['enemy'], drawX, drawY);
+        }
 
         // Draw Label
         if (this.label && !this.isDead) {

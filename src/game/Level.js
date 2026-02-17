@@ -823,6 +823,7 @@ export class Level {
                     if (isFalling && (wasAbove || isHittingTop)) {
                         // STOMP!
                         enemy.isDead = true;
+                        enemy.deathType = 'squash';
                         this.game.addScore(400);
                         player.vy = -8; // Small bounce
                         player.grounded = false;
@@ -1263,6 +1264,7 @@ export class Level {
                                     enemy.x < px + this.tileSize &&
                                     Math.abs((enemy.y + enemy.height) - py) < 10) { // On top of the tile
                                     enemy.isDead = true;
+                                    enemy.deathType = 'flip';
                                     enemy.vy = -5; // Pop up animation
                                     this.game.addScore(400);
                                 }
@@ -1558,20 +1560,39 @@ class Parcel extends Enemy {
         if (this.isDead && this.deathTimer > 30) return;
 
         ctx.save();
+        const drawX = Math.floor(this.x);
+        const drawY = Math.floor(this.y);
+
         if (this.isDead) {
             ctx.globalAlpha = Math.max(0, 1 - this.deathTimer / 30);
-            ctx.translate(Math.floor(this.x + this.width / 2), Math.floor(this.y + this.height));
-            ctx.scale(1, 0.2);
-            ctx.translate(-Math.floor(this.width / 2), -Math.floor(this.height));
-        }
 
-        // Draw cached parcel sprite
-        if (tileCache['parcel']) {
-            ctx.drawImage(tileCache['parcel'], Math.floor(this.x), Math.floor(this.y));
+            if (this.deathType === 'squash') {
+                ctx.translate(drawX + this.width / 2, drawY + this.height);
+                ctx.scale(1, 0.5);
+                if (tileCache['parcel']) {
+                    ctx.drawImage(tileCache['parcel'], -this.width / 2, -this.height);
+                } else {
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(-this.width / 2, -this.height, this.width, this.height);
+                }
+            } else if (this.deathType === 'flip') {
+                ctx.translate(drawX + this.width / 2, drawY + this.height / 2);
+                ctx.rotate(Math.PI);
+                if (tileCache['parcel']) {
+                    ctx.drawImage(tileCache['parcel'], -this.width / 2, -this.height / 2);
+                } else {
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
+                }
+            }
         } else {
-            // Fallback if cache not ready
-            ctx.fillStyle = 'white';
-            ctx.fillRect(Math.floor(this.x), Math.floor(this.y), this.width, this.height);
+            // Draw normal parcel sprite
+            if (tileCache['parcel']) {
+                ctx.drawImage(tileCache['parcel'], drawX, drawY);
+            } else {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(drawX, drawY, this.width, this.height);
+            }
         }
 
         // Draw Label (Wikidata ID)
