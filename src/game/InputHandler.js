@@ -2,11 +2,17 @@
  * Handles keyboard inputs for the game.
  */
 export class InputHandler {
-    constructor() {
+    constructor(game) {
         this.keys = new Set();
+        this.game = game;
 
         window.addEventListener('keydown', (e) => {
             this.keys.add(e.key.toLowerCase());
+
+            if (e.key.toLowerCase() === 'm' && this.game) {
+                const isMuted = this.game.toggleMusic();
+                console.log(isMuted ? "Music Muted" : "Music Playing");
+            }
         });
 
         window.addEventListener('keyup', (e) => {

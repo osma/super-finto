@@ -2,12 +2,13 @@ import { InputHandler } from './InputHandler.js';
 import { Player } from './Player.js';
 import { Level } from './Level.js';
 import { PALETTES } from './Palettes.js';
+import { MusicEngine } from '../audio/MusicEngine.js';
 
 export class Game {
     constructor() {
         this.canvas = document.getElementById('game-canvas');
         this.ctx = this.canvas.getContext('2d');
-        this.input = new InputHandler();
+        this.input = new InputHandler(this);
 
         this.width = 800;
         this.height = 600;
@@ -16,6 +17,10 @@ export class Game {
 
         this.player = new Player(this);
         this.level = new Level(this);
+
+        // Audio
+        this.musicEngine = new MusicEngine();
+        this.musicStarted = false;
 
         this.camera = { x: 0, y: 0 };
         this.lastTime = 0;
@@ -57,6 +62,10 @@ export class Game {
             // Pick a random starting concept
             const keys = Object.keys(this.allConcepts);
             const startKey = keys[Math.floor(Math.random() * keys.length)];
+
+            // Initialize Music (using startKey as seed)
+            this.musicEngine.init(startKey);
+
             this.loadConcept(startKey);
         } catch (error) {
             console.error("Failed to load YSO concepts:", error);
@@ -621,11 +630,20 @@ export class Game {
         ctx.fillRect(0, 0, 1536, 1024);
 
         // Draw background details (stars/clouds)
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
         for (let i = 0; i < 50; i++) {
             const x = (Math.sin(i * 123) * 0.5 + 0.5) * 1536;
             const y = (Math.cos(i * 234) * 0.5 + 0.5) * 1024;
-            ctx.fillRect(x, y, 6, 6);
+            this.ctx.fillRect(x, y, 6, 6);
         }
+    }
+
+    toggleMusic() {
+        if (!this.musicStarted) {
+            this.musicEngine.start();
+            this.musicStarted = true;
+            return false; // Not muted
+        }
+        return this.musicEngine.toggleMute();
     }
 }
