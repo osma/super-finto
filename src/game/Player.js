@@ -247,16 +247,31 @@ export class Player {
         const pSize = displayWidth / cols;
         const pSizeY = this.height / rows;
 
-        const colors = {
-            1: '#f5d0a9', // Skin
-            2: '#1e3a8a', // Tunic (Dark Blue)
-            3: '#d4a017', // Belt (Gold)
-            4: '#c8a25c', // Hair (Dirty Blonde)
-            5: '#5a3a1a', // Boots (Dark Brown)
-            6: '#ffffff', // Eye white
-            7: '#0f172a', // Outline (Near-black)
-            8: '#2d4ea8', // Tunic highlight
-        };
+        let colors;
+        if (this.game.currentPalette && this.game.currentPalette.player) {
+            const p = this.game.currentPalette.player;
+            colors = {
+                1: p.skin,
+                2: p.tunic,
+                3: p.belt,
+                4: p.hair,
+                5: p.boots,
+                6: p.eyeWhite || '#ffffff',
+                7: p.outline,
+                8: p.highlight
+            };
+        } else {
+            colors = {
+                1: '#f5d0a9', // Skin
+                2: '#1e3a8a', // Tunic (Dark Blue)
+                3: '#d4a017', // Belt (Gold)
+                4: '#c8a25c', // Hair (Dirty Blonde)
+                5: '#5a3a1a', // Boots (Dark Brown)
+                6: '#ffffff', // Eye white
+                7: '#0f172a', // Outline (Near-black)
+                8: '#2d4ea8', // Tunic highlight
+            };
+        }
 
         // Center visual sprite on hitbox
         const offsetX = this.x - (displayWidth - this.width) / 2;

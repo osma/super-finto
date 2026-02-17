@@ -15,7 +15,8 @@ export class Level {
 
         // Pre-render tile cache for performance
         this.tileCache = {};
-        this.initCache();
+        // Cache initialization moved to setPalette(palette)
+
 
         // Layer caching for static geometry (2D Grid Chunking for massive levels)
         this.chunkWidth = 2000;
@@ -25,43 +26,56 @@ export class Level {
         this.geometryNeedsRedraw = true;
     }
 
-    initCache() {
-        const images = [
-            { id: 'brick', color: '#f97316', solid: false },
-            { id: 'solid', color: '#57534e', solid: true },
-            { id: 'ground', color: '#92450e', ground: true },
-            { id: 'question', color: '#fbbf24', solid: true, isQuestion: true },
-            { id: 'empty-block', color: '#78716c', solid: true, isEmpty: true }
+    setPalette(palette) {
+        this.currentPalette = palette;
+        this.generateSprites(palette);
+
+        // Force Redraw
+        this.tilesGrid.clear();
+        this.foregroundGrid.clear();
+        this.geometryNeedsRedraw = true;
+    }
+
+    generateSprites(palette) {
+        // Load Wikidata Logo for Parcels if not loaded
+        if (!this.wikidataLogo) {
+            const wikidataLogo = new Image();
+            wikidataLogo.src = '/src/assets/images/Wikidata-logo.svg';
+            wikidataLogo.onload = () => {
+                this.wikidataLogo = wikidataLogo;
+                this.drawParcelSprite(palette.parcel); // Redraw parcel with logo
+            };
+        }
+
+        // --- 1. Basic Tiles ---
+        const tileTypes = [
+            { id: 'brick', style: palette.brick, type: 'brick' },
+            { id: 'solid', style: palette.solid, type: 'solid' },
+            { id: 'ground', style: palette.ground, type: 'ground' },
+            { id: 'question', style: palette.question, type: 'question' }, // Using question style
+            { id: 'empty-block', style: palette.solid, type: 'empty' } // Use solid style but darker/muted
         ];
 
-        // Load Wikidata Logo for Parcels
-        const wikidataLogo = new Image();
-        wikidataLogo.src = '/src/assets/images/Wikidata-logo.svg';
-        wikidataLogo.onload = () => {
-            this.wikidataLogo = wikidataLogo;
-            this.initParcelCache();
-        };
-
-        images.forEach(imgData => {
+        tileTypes.forEach(t => {
             const canvas = document.createElement('canvas');
             canvas.width = this.tileSize;
             canvas.height = this.tileSize;
             const ctx = canvas.getContext('2d');
-
-            const isQuestion = imgData.id === 'question';
-            const isEmpty = imgData.id === 'empty-block';
-            this.drawBrickTile(ctx, 0, 0, this.tileSize, canvas.height, imgData.color, imgData.ground, imgData.solid, isQuestion, isEmpty);
-            this.tileCache[imgData.id] = canvas;
+            this.drawBrickTile(ctx, 0, 0, this.tileSize, this.tileSize, t.style, t.type);
+            this.tileCache[t.id] = canvas;
         });
 
-        // Pre-render parcel components
-        this.initParcelCache();
+        // --- 2. Parcel ---
+        this.drawParcelSprite(palette.parcel);
 
-        // Pre-render pipe components
-        this.initPipeCache();
+        // --- 3. Pipes ---
+        this.drawPipeSet(palette.pipe);
+
+        // --- 4. Enemy ---
+        this.drawEnemySprite(palette.enemy);
     }
 
-    initParcelCache() {
+    drawParcelSprite(style) {
         const canvas = document.createElement('canvas');
         canvas.width = this.tileSize;
         canvas.height = this.tileSize;
@@ -74,7 +88,7 @@ export class Level {
         const w = this.tileSize - 4;
         const h = this.tileSize - 4;
 
-        ctx.fillStyle = '#f8fafc'; // Subdued white
+        ctx.fillStyle = style.body || '#f8fafc';
         ctx.beginPath();
         ctx.moveTo(x + r, y);
         ctx.lineTo(x + w - r, y);
@@ -89,7 +103,7 @@ export class Level {
         ctx.fill();
 
         // Border
-        ctx.strokeStyle = '#e2e8f0';
+        ctx.strokeStyle = style.border || '#e2e8f0';
         ctx.lineWidth = 2;
         ctx.stroke();
 
@@ -101,31 +115,31 @@ export class Level {
         this.tileCache['parcel'] = canvas;
     }
 
-    initPipeCache() {
-        // Vertical Pipe Cap (96 x 15) - 80px body + 8px extra on each side
-        const capWidth = 96; // 80 + 8*2 capExtra
+    drawPipeSet(style) {
+        // Vertical Pipe Cap (96 x 15)
+        const capWidth = 96;
         const capHeight = 15;
         const capCanvas = document.createElement('canvas');
         capCanvas.width = capWidth;
         capCanvas.height = capHeight;
         const capCtx = capCanvas.getContext('2d');
-        capCtx.fillStyle = '#22c55e';
+        capCtx.fillStyle = style.base;
         capCtx.fillRect(0, 0, capWidth, capHeight);
-        capCtx.strokeStyle = '#000';
+        capCtx.strokeStyle = '#000'; // Keep outline black? Or use style.dark?
         capCtx.lineWidth = 2;
         capCtx.strokeRect(0, 0, capWidth, capHeight);
         capCtx.fillStyle = 'rgba(255, 255, 255, 0.3)';
         capCtx.fillRect(14, 2, 8, capHeight - 4); // Highlight
         this.tileCache['pipeCapV'] = capCanvas;
 
-        // Vertical Pipe Body Segment (80 x 40) - 2 tiles wide, 1 tile tall
+        // Vertical Pipe Body
         const bodyWidth = 80;
         const bodySegment = 40;
         const bodyCanvas = document.createElement('canvas');
         bodyCanvas.width = bodyWidth;
         bodyCanvas.height = bodySegment;
         const bodyCtx = bodyCanvas.getContext('2d');
-        bodyCtx.fillStyle = '#16a34a';
+        bodyCtx.fillStyle = style.dark; // Use dark for body? Or base? usually darker
         bodyCtx.fillRect(0, 0, bodyWidth, bodySegment);
         bodyCtx.strokeStyle = '#000';
         bodyCtx.lineWidth = 2;
@@ -139,76 +153,78 @@ export class Level {
         bodyCtx.fillRect(8, 5, 8, bodySegment - 10); // Highlight
         this.tileCache['pipeBodyV'] = bodyCanvas;
 
-        // Horizontal Pipe - Right Facing (80 x 88)
+        // Horizontal Pipes
         const hLength = 80;
         const hThickness = 80;
         const hCapWidth = 15;
         const hCapExtra = 4;
+
+        // Right Facing
         const hCanvasR = document.createElement('canvas');
         hCanvasR.width = hLength;
         hCanvasR.height = hThickness + hCapExtra * 2;
         const hCtxR = hCanvasR.getContext('2d');
-        // Body
         const bodyW = hLength - hCapWidth;
-        hCtxR.fillStyle = '#16a34a';
+
+        hCtxR.fillStyle = style.dark;
         hCtxR.fillRect(0, hCapExtra, bodyW, hThickness);
         hCtxR.strokeStyle = '#000';
         hCtxR.lineWidth = 2;
         hCtxR.strokeRect(0, hCapExtra, bodyW, hThickness);
-        // Cap
-        hCtxR.fillStyle = '#22c55e';
+
+        hCtxR.fillStyle = style.base;
         hCtxR.fillRect(bodyW, 0, hCapWidth, hThickness + hCapExtra * 2);
         hCtxR.strokeRect(bodyW, 0, hCapWidth, hThickness + hCapExtra * 2);
-        // Highlight
+
         hCtxR.fillStyle = 'rgba(255, 255, 255, 0.3)';
         hCtxR.fillRect(0, hCapExtra + 5, hLength, 8);
         this.tileCache['pipeHorzR'] = hCanvasR;
 
-        // Horizontal Pipe - Left Facing (80 x 88)
+        // Left Facing
         const hCanvasL = document.createElement('canvas');
         hCanvasL.width = hLength;
         hCanvasL.height = hThickness + hCapExtra * 2;
         const hCtxL = hCanvasL.getContext('2d');
-        // Body (offset by capWidth)
-        hCtxL.fillStyle = '#16a34a';
+
+        hCtxL.fillStyle = style.dark;
         hCtxL.fillRect(hCapWidth, hCapExtra, bodyW, hThickness);
         hCtxL.strokeStyle = '#000';
         hCtxL.lineWidth = 2;
         hCtxL.strokeRect(hCapWidth, hCapExtra, bodyW, hThickness);
-        // Cap (at start)
-        hCtxL.fillStyle = '#22c55e';
+
+        hCtxL.fillStyle = style.base;
         hCtxL.fillRect(0, 0, hCapWidth, hThickness + hCapExtra * 2);
         hCtxL.strokeRect(0, 0, hCapWidth, hThickness + hCapExtra * 2);
-        // Highlight
+
         hCtxL.fillStyle = 'rgba(255, 255, 255, 0.3)';
         hCtxL.fillRect(0, hCapExtra + 5, hLength, 8);
         this.tileCache['pipeHorzL'] = hCanvasL;
+    }
 
-        // Enemy Sprite (40x40)
+    drawEnemySprite(style) {
         const enemyCanvas = document.createElement('canvas');
         enemyCanvas.width = 40;
         enemyCanvas.height = 40;
         const eCtx = enemyCanvas.getContext('2d');
-        const eColor = '#b91c1c'; // Burgundy/Red
 
-        eCtx.fillStyle = eColor;
+        eCtx.fillStyle = style.body;
         // Body (Circle-ish)
         eCtx.beginPath();
         eCtx.arc(20, 25, 15, 0, Math.PI * 2);
         eCtx.fill();
         // Feet
-        eCtx.fillStyle = '#450a0a';
+        eCtx.fillStyle = style.feet;
         eCtx.fillRect(10, 35, 10, 5);
         eCtx.fillRect(20, 35, 10, 5);
         // Eyes
-        eCtx.fillStyle = 'white';
+        eCtx.fillStyle = style.eyes || 'white';
         eCtx.fillRect(12, 20, 6, 6);
         eCtx.fillRect(22, 20, 6, 6);
         eCtx.fillStyle = 'black';
         eCtx.fillRect(14, 22, 2, 2);
         eCtx.fillRect(24, 22, 2, 2);
         // Eyebrows (Angry)
-        eCtx.strokeStyle = 'black';
+        eCtx.strokeStyle = style.brows || 'black';
         eCtx.lineWidth = 2;
         eCtx.beginPath();
         eCtx.moveTo(10, 18); eCtx.lineTo(18, 22);
@@ -939,51 +955,57 @@ export class Level {
         }
     }
 
-    drawBrickTile(ctx, x, y, w, h, baseColor, isGround = false, isSolid = false, isQuestion = false, isEmpty = false) {
-        ctx.fillStyle = baseColor;
+    drawBrickTile(ctx, x, y, w, h, style, type) {
+        ctx.fillStyle = style.base;
         ctx.fillRect(x, y, w, h);
 
-        if (isGround) {
-            ctx.fillStyle = '#16a34a'; // Grass green
-            ctx.fillRect(x, y, w, 10);
+        if (type === 'ground') {
+            // Ground specific: Grass top?
+            // User requested palette.ground.base and dark.
+            // If it's pure color, maybe no grass?
+            // Previous code had green grass at top.
+            // Let's create a separation using darker color.
+            ctx.fillStyle = style.dark; // Or dedicated trim color
+            ctx.fillRect(x, y, w, 6); // Top trim
+
             ctx.fillStyle = 'rgba(0,0,0,0.1)';
             ctx.fillRect(x + 5, y + 20, 4, 4);
             ctx.fillRect(x + 25, y + 35, 4, 4);
-        } else if (isSolid) {
+        } else if (type === 'solid' || type === 'empty') {
             // Solid Block (Metal/Stone look with rivets)
+            // Use style.highlight or derived outline
             ctx.strokeStyle = 'rgba(0,0,0,0.5)';
             ctx.lineWidth = 2;
             ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
 
             // Rivets
-            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillStyle = style.dark;
             ctx.fillRect(x + 4, y + 4, 4, 4);
             ctx.fillRect(x + w - 8, y + 4, 4, 4);
             ctx.fillRect(x + 4, y + h - 8, 4, 4);
             ctx.fillRect(x + w - 8, y + h - 8, 4, 4);
-        } else {
+        } else if (type === 'brick') {
             // Brick Pattern
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillStyle = style.highlight;
             ctx.fillRect(x, y, w, 2);
             ctx.fillRect(x, y, 2, h);
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.fillStyle = style.dark;
             ctx.fillRect(x, y + h - 2, w, 2);
             ctx.fillRect(x + w - 2, y, 2, h);
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+
+            ctx.fillStyle = style.mortar;
             ctx.fillRect(x, y + h / 2, w, 1);
             ctx.fillRect(x + w / 2, y, 1, h / 2);
             ctx.fillRect(x + w / 4, y + h / 2, 1, h / 2);
-        }
-
-        if (isQuestion) {
-            // Background is already filled with baseColor (#fbbf24)
-            // Add a subtle border
-            ctx.strokeStyle = '#d97706';
+        } else if (type === 'question') {
+            // Background is already base
+            // Border
+            ctx.strokeStyle = style.dark;
             ctx.lineWidth = 2;
             ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
 
-            // Red rivets in corners
-            ctx.fillStyle = '#b91c1c';
+            // Rivets
+            ctx.fillStyle = style.dark; // or red? Old was #b91c1c. Let's stick to style.dark to match palette
             const rSize = 4;
             ctx.fillRect(x + 4, y + 4, rSize, rSize);
             ctx.fillRect(x + w - 8, y + 4, rSize, rSize);
@@ -991,31 +1013,16 @@ export class Level {
             ctx.fillRect(x + w - 8, y + h - 8, rSize, rSize);
 
             // The Question Mark
-            ctx.fillStyle = '#78350f';
+            ctx.fillStyle = style.dark;
             ctx.font = 'bold 24px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('?', x + w / 2, y + h / 2 + 2);
 
-            // Subtle highlight
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            // Highlight
+            ctx.fillStyle = style.highlight;
             ctx.fillRect(x + 6, y + 6, w - 12, 2);
             ctx.fillRect(x + 6, y + 8, 2, h - 16);
-        }
-
-        if (isEmpty) {
-            // Background is already filled with baseColor (#78716c)
-            ctx.strokeStyle = '#44403c';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
-
-            // Darker rivets
-            ctx.fillStyle = '#44403c';
-            const rSize = 4;
-            ctx.fillRect(x + 4, y + 4, rSize, rSize);
-            ctx.fillRect(x + w - 8, y + 4, rSize, rSize);
-            ctx.fillRect(x + 4, y + h - 8, rSize, rSize);
-            ctx.fillRect(x + w - 8, y + h - 8, rSize, rSize);
         }
     }
 

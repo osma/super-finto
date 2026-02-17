@@ -1,6 +1,7 @@
 import { InputHandler } from './InputHandler.js';
 import { Player } from './Player.js';
 import { Level } from './Level.js';
+import { PALETTES } from './Palettes.js';
 
 export class Game {
     constructor() {
@@ -141,6 +142,15 @@ export class Game {
             ],
             wikidata: conceptData.wikidata || []
         };
+
+        // Select Random Palette
+        const paletteKeys = Object.keys(PALETTES);
+        const randomKey = paletteKeys[Math.floor(Math.random() * paletteKeys.length)];
+        this.currentPalette = PALETTES[randomKey];
+        console.log("Selected Palette:", this.currentPalette.name);
+
+        // Apply Palette to Level (regenerates sprites)
+        this.level.setPalette(this.currentPalette);
 
         // Load Background (Custom jpg or fallback to sky)
         const conceptId = conceptKey.split('/').pop();
@@ -284,6 +294,25 @@ export class Game {
         if (fiEl) fiEl.textContent = `FI: ${this.concept.label_fi || '-'}`;
         if (svEl) svEl.textContent = `SV: ${this.concept.label_sv || '-'}`;
         if (enEl) enEl.textContent = `EN: ${this.concept.label_en || '-'}`;
+
+        // Palette Display
+        let paletteEl = document.getElementById('palette-display');
+        if (!paletteEl) {
+            const scoreEl = document.getElementById('score');
+            if (scoreEl && scoreEl.parentNode) {
+                paletteEl = document.createElement('div');
+                paletteEl.id = 'palette-display';
+                paletteEl.style.fontSize = '14px';
+                paletteEl.style.color = '#ccc'; // Default
+                paletteEl.style.marginTop = '5px';
+                paletteEl.style.textAlign = 'center';
+                scoreEl.parentNode.insertBefore(paletteEl, scoreEl.nextSibling);
+            }
+        }
+        if (paletteEl && this.currentPalette) {
+            paletteEl.textContent = this.currentPalette.name;
+            paletteEl.style.color = this.currentPalette.player.tunic; // Match player tunic
+        }
     }
 
     addScore(points) {
@@ -584,7 +613,11 @@ export class Game {
 
     drawDefaultBackground(ctx) {
         // Draw sky
-        ctx.fillStyle = '#5c94fc'; // Classic NES Mario sky blue
+        if (this.currentPalette && this.currentPalette.background) {
+            ctx.fillStyle = this.currentPalette.background;
+        } else {
+            ctx.fillStyle = '#5c94fc'; // Classic NES Mario sky blue
+        }
         ctx.fillRect(0, 0, 1536, 1024);
 
         // Draw background details (stars/clouds)
