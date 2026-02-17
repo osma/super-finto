@@ -804,11 +804,14 @@ export class Level {
                 enemy.update(this);
 
                 // Check collision with player
+                const hInset = 2; // Horizontal "mercy" inset
+                const vInset = 4; // Vertical "mercy" inset to prevent collisions between levels
                 if (!enemy.isDead && !this.game.transition.active &&
-                    player.x + player.width > enemy.x &&
-                    player.x < enemy.x + enemy.width &&
-                    player.y + player.height > enemy.y &&
-                    player.y < enemy.y + enemy.height) {
+                    player.x + player.width - hInset > enemy.x + hInset &&
+                    player.x + hInset < enemy.x + enemy.width - hInset &&
+                    player.y + player.height - vInset > enemy.y + vInset &&
+                    player.y + vInset < enemy.y + enemy.height - vInset) {
+
 
                     // Collision detected!
                     const overlapTop = (player.y + player.height) - enemy.y;
@@ -1380,11 +1383,12 @@ export class Level {
         // Check Parcel Collisions
         for (let i = this.parcels.length - 1; i >= 0; i--) {
             const parcel = this.parcels[i];
+            const pInset = 4;
             if (!parcel.isDead &&
-                player.x < parcel.x + parcel.width &&
-                player.x + player.width > parcel.x &&
-                player.y < parcel.y + parcel.height &&
-                player.y + player.height > parcel.y) {
+                player.x + pInset < parcel.x + parcel.width &&
+                player.x + player.width - pInset > parcel.x &&
+                player.y + pInset < parcel.y + parcel.height &&
+                player.y + player.height - pInset > parcel.y) {
 
                 // Collect Parcel
                 this.game.addScore(1000); // Parcels are worth more!
