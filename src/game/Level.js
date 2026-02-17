@@ -320,6 +320,12 @@ export class Level {
             }
         }
 
+        // Add Ceiling (1 unit above side barriers)
+        const ceilingRow = this.minRow - 1;
+        for (let x = 0; x < levelWidthTiles; x++) {
+            this.tiles.set(`${x},${ceilingRow}`, 'solid');
+        }
+
         // Add Climbing Towers if there are more than 2 pipes on either side
 
         // Left Tower (for broader concepts)
@@ -519,7 +525,8 @@ export class Level {
     renderGeometryLayer() {
         const groundY = this.game.height - 40;
         const groundRow = Math.floor(groundY / this.tileSize);
-        const yOffset = -this.minRow * this.tileSize;
+        // Adjust yOffset to account for ceiling at minRow - 1
+        const yOffset = -(this.minRow - 1) * this.tileSize;
 
         // Clear existing grids
         this.tilesGrid.clear();
@@ -604,7 +611,7 @@ export class Level {
         const viewportHeight = this.game.height;
         const buffer = 100;
 
-        const yOffset = -this.minRow * this.tileSize;
+        const yOffset = -(this.minRow - 1) * this.tileSize;
 
         // --- DRAW 2D GRID (Background Tiles) ---
         const startGX = Math.floor((cameraX - buffer) / this.chunkWidth);
@@ -695,7 +702,7 @@ export class Level {
         const viewportWidth = this.game.width;
         const viewportHeight = this.game.height;
         const buffer = 100;
-        const yOffset = -this.minRow * this.tileSize;
+        const yOffset = -(this.minRow - 1) * this.tileSize;
 
         // --- DRAW 2D GRID (Foreground) ---
         const startGX = Math.floor((cameraX - buffer) / this.chunkWidth);
@@ -1245,7 +1252,7 @@ export class Level {
                                     }
 
                                     this.tiles.delete(`${tx},${ty}`);
-                                    const yOffset = -this.minRow * this.tileSize;
+                                    const yOffset = -(this.minRow - 1) * this.tileSize;
                                     const transformedY = py + yOffset;
                                     const gx = Math.floor(px / this.chunkWidth);
                                     const gy = Math.floor(transformedY / this.chunkHeight);
@@ -1358,7 +1365,7 @@ export class Level {
         }
 
         // Clear from cache
-        const yOffset = -this.minRow * this.tileSize;
+        const yOffset = -(this.minRow - 1) * this.tileSize;
         const transformedY = py + yOffset;
         const gx = Math.floor(px / this.chunkWidth);
         const gy = Math.floor(transformedY / this.chunkHeight);
@@ -1376,7 +1383,7 @@ export class Level {
     restoreTile(tx, ty, type) {
         const px = tx * this.tileSize;
         const py = ty * this.tileSize;
-        const yOffset = -this.minRow * this.tileSize;
+        const yOffset = -(this.minRow - 1) * this.tileSize;
         const transformedY = py + yOffset;
         const gx = Math.floor(px / this.chunkWidth);
         const gy = Math.floor(transformedY / this.chunkHeight);

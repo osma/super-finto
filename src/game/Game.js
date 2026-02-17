@@ -415,8 +415,14 @@ export class Game {
             this.camera.x = this.levelWidth - this.width;
         }
 
-        // Clamp camera Y (don't show below ground, but allow going up)
+        // Clamp camera Y (between ceiling and ground)
         const groundY = this.height - 40;
+        const ceilingY = (this.level.minRow - 1) * this.level.tileSize;
+
+        // Upper limit: don't scroll above ceiling
+        if (this.camera.y < ceilingY) this.camera.y = ceilingY;
+
+        // Lower limit: don't show below ground
         if (this.camera.y > 0) this.camera.y = 0;
     }
 
