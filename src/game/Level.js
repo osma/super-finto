@@ -476,6 +476,14 @@ export class Level {
                 // Ensure not horizontally closer than 10 tiles to Mario (Mario at ~tile 2)
                 if (Math.abs(tx - 2) < 10) continue;
 
+                // Ensure not too close to other enemies (at least 1 grid unit away)
+                const tooClose = this.enemies.some(e => {
+                    const etx = Math.floor(e.x / this.tileSize);
+                    const ety = Math.floor(e.y / this.tileSize);
+                    return Math.abs(tx - etx) <= 1 && Math.abs(ty - ety) <= 1;
+                });
+                if (tooClose) continue;
+
                 // Spawn on top of a tile or ground
                 const hasGround = ty === groundRow - 1;
                 const hasTile = this.tiles.get(`${tx},${ty + 1}`) !== undefined;

@@ -30,8 +30,29 @@ export class Enemy {
         this.vy = Math.min(this.vy + this.weight, 6); // Capped at 6 for slower falling
         this.y += this.vy;
 
+        // Check for other enemies to prevent overlap
+        let isBlockedByEnemy = false;
+        const myIndex = level.enemies.indexOf(this);
+        for (let i = 0; i < level.enemies.length; i++) {
+            const other = level.enemies[i];
+            if (other === this || other.isDead) continue;
+
+            // Simple AABB overlap check
+            if (this.x + this.width > other.x && this.x < other.x + other.width &&
+                this.y + this.height > other.y && this.y < other.y + other.height) {
+
+                // One enemy stops, the other continues. We use index to decide.
+                if (myIndex > i) {
+                    isBlockedByEnemy = true;
+                    break;
+                }
+            }
+        }
+
         // Apply Horizontal Movement
-        this.x += this.vx;
+        if (!isBlockedByEnemy) {
+            this.x += this.vx;
+        }
 
         this.checkCollisions(level);
 
