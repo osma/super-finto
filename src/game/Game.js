@@ -259,10 +259,10 @@ export class Game {
     }
 
     resetPlayerDefault() {
+        this.player.reset();
         this.player.x = 100;
         this.player.y = this.height - this.player.height - 50;
-        this.player.vx = 0;
-        this.player.vy = 0;
+
         this.camera.x = 0;
         this.camera.y = 0; // Default ground level
         this.transition.active = false; // No animation for default spawn
@@ -417,7 +417,14 @@ export class Game {
 
         // Camera follow player (center both X and Y)
         this.camera.x = this.player.x - this.width / 2 + this.player.width / 2;
-        this.camera.y = this.player.y - this.height / 2 + this.player.height / 2;
+
+        // Vertical follow: Only follow if player is above ground level
+        const groundY = this.height - 40;
+        if (this.player.y < groundY) {
+            this.camera.y = this.player.y - this.height / 2 + this.player.height / 2;
+        } else {
+            this.camera.y = 0; // Lock to ground view
+        }
 
         // Clamp camera X
         if (this.camera.x < 0) this.camera.x = 0;
@@ -426,13 +433,8 @@ export class Game {
         }
 
         // Clamp camera Y (between ceiling and ground)
-        const groundY = this.height - 40;
         const ceilingY = (this.level.minRow - 1) * this.level.tileSize;
-
-        // Upper limit: don't scroll above ceiling
         if (this.camera.y < ceilingY) this.camera.y = ceilingY;
-
-        // Lower limit: don't show below ground
         if (this.camera.y > 0) this.camera.y = 0;
     }
 

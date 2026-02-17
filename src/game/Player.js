@@ -21,6 +21,18 @@ export class Player {
         // Visual properties
         this.color = '#f472b6'; // Pinkish accent
         this.isBig = false;
+        this.isKneeling = false;
+    }
+
+    reset() {
+        this.isBig = false;
+        this.isKneeling = false;
+        this.width = 30;
+        this.height = 40;
+        this.vx = 0;
+        this.vy = 0;
+        this.invulnerableTimer = 0;
+        this.grounded = false;
     }
 
     grow() {

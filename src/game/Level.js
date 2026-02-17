@@ -859,17 +859,16 @@ export class Level {
         }
 
         // Check for player death (falling in gap)
-        if (player.y > this.game.height + 100) {
+        if (player.y > this.game.height) {
             this.respawnPlayer();
         }
     }
 
     respawnPlayer() {
-        // Drop from sky at start of concept
-        this.game.player.y = -100;
+        // Drop from sky at start of concept (visible on screen)
+        this.game.player.reset();
+        this.game.player.y = 100;
         this.game.player.x = 100;
-        this.game.player.vy = 0;
-        this.game.player.vx = 0;
     }
 
     drawBoundaryWalls(ctx) {
