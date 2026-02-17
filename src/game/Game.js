@@ -427,33 +427,32 @@ export class Game {
     }
 
     draw() {
-        // --- PARALLAX BACKGROUND (Refined) ---
-        // Calculate panning ratios based on player position relative to level bounds
-        // This ensures the full background is visible even in small levels.
+        // --- PARALLAX BACKGROUND (Center-Aligned) ---
+        const imgWidth = 1536;
+        const imgHeight = 1024;
 
-        // Horizontal Ratio
-        const playerWidth = this.player.width;
-        // Treat small levels as if they're larger for smoother parallax
-        const effectiveLevelWidth = Math.max(2000, this.levelWidth);
-        const ratioX = Math.min(1, Math.max(0, this.player.x / (effectiveLevelWidth - playerWidth)));
+        // Horizontal Ratio (Actual progress through the level)
+        const effectiveLevelWidth = Math.max(this.width, this.levelWidth);
+        const ratioX = Math.min(1, Math.max(0, this.player.x / effectiveLevelWidth));
 
-        // Vertical Ratio
+        // Vertical Ratio (Actual progress through height)
         const groundY = this.height - 40;
-        const minLevelY = this.level.minRow * this.level.tileSize;
-        const levelHeightRange = Math.max(1, groundY - minLevelY);
-        const effectiveLevelHeight = Math.max(800, levelHeightRange);
-        const ratioY = Math.min(1, Math.max(0, (this.player.y - minLevelY) / effectiveLevelHeight));
+        const ceilingY = (this.level.minRow - 1) * this.level.tileSize;
+        const levelHeightRange = Math.max(1, groundY - ceilingY);
+        const ratioY = Math.min(1, Math.max(0, (this.player.y - ceilingY) / levelHeightRange));
 
-        // Max background scroll is bgWidth - viewportWidth
-        const maxBgX = 1536 - this.width;
-        const maxBgY = 1024 - this.height;
+        // Background Center Offsets
+        const maxBgX = imgWidth - this.width;
+        const maxBgY = imgHeight - this.height;
+        const scrollRangeX = Math.min(maxBgX, 500);
+        const scrollRangeY = Math.min(maxBgY, 300);
 
-        // Cap maximum scroll to prevent fast movement in small levels
-        const maxScrollX = 500;  // ~68% of available 736px
-        const maxScrollY = 300;  // ~71% of available 424px
+        const centerX = maxBgX / 2;
+        const centerY = maxBgY / 2;
 
-        const bgX = ratioX * Math.min(maxBgX, maxScrollX);
-        const bgY = ratioY * Math.min(maxBgY, maxScrollY);
+        // Apply offsets: When ratio is 0.5, bgX is centerX
+        const bgX = centerX + (ratioX - 0.5) * scrollRangeX;
+        const bgY = centerY + (ratioY - 0.5) * scrollRangeY;
 
         // Draw portion of the 1536x1024 background canvas
         this.ctx.drawImage(
