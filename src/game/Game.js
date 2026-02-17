@@ -63,9 +63,6 @@ export class Game {
             const keys = Object.keys(this.allConcepts);
             const startKey = keys[Math.floor(Math.random() * keys.length)];
 
-            // Initialize Music (using startKey as seed)
-            this.musicEngine.init(startKey);
-
             this.loadConcept(startKey);
         } catch (error) {
             console.error("Failed to load YSO concepts:", error);
@@ -158,8 +155,10 @@ export class Game {
         this.currentPalette = PALETTES[randomKey];
         console.log("Selected Palette:", this.currentPalette.name);
 
-        // Apply Palette to Level (regenerates sprites)
         this.level.setPalette(this.currentPalette);
+
+        // Update Music Seed for the new level
+        this.musicEngine.init(conceptKey);
 
         // Load Background (Custom jpg or fallback to sky)
         const conceptId = conceptKey.split('/').pop();
