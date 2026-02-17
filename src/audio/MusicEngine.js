@@ -62,7 +62,8 @@ export class MusicEngine {
         this.masterGain = null;
     }
 
-    init(seed) {
+    init(seed, profile = null) {
+        this.profile = profile;
         if (!this.ctx) {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             this.ctx = new AudioContext();
@@ -71,19 +72,6 @@ export class MusicEngine {
             this.masterGain = this.ctx.createGain();
             this.masterGain.gain.value = 0.5; // Default volume
             this.masterGain.connect(this.ctx.destination);
-
-            // Override destination for synths to go through master gain
-            // We need to patch the Audio context destination or wrap the Audio module
-            // Simplest way: Pass a proxy context or modifying the Audio module.
-            // But Audio module uses ctx.destination directly. 
-            // Let's modify Audio module usage or just accept we might need to modify audio.js 
-            // actually, let's modify audio.js to accept a destination node? 
-            // OR checks ctx.destination. 
-            // For now, let's assume direct connection and we might need to properly implement volume later 
-            // by modifying audio.js or using a hack.
-            // HACK: We can't easily intercept without modifying audio.js, 
-            // so we will just use the context as is for now.
-            // To implement volume/mute, we can suspend/resume the context.
 
             this.au = Audio(this.ctx);
             this.synths = [
@@ -102,11 +90,24 @@ export class MusicEngine {
 
     createInitialState(seed) {
         seedRNG(seed);
+
+        let bpm = 112;
+        if (this.profile && this.profile.bpmRange) {
+            const [min, max] = this.profile.bpmRange;
+            bpm = Math.floor(rnd() * (max - min)) + min;
+        }
+
+        let scale = music.scales.minor;
+        if (this.profile && this.profile.scales) {
+            const scaleName = choose(this.profile.scales);
+            scale = music.scales[scaleName] || music.scales.minor;
+        }
+
         this.state = {
             key: rndInt(12),
-            scale: music.scales.minor,
+            scale: scale,
             progression: progressions[0],
-            bpm: 112,
+            bpm: bpm,
             seedCode: createSeedCode(),
             songIndex: 0
         };
@@ -115,10 +116,19 @@ export class MusicEngine {
     mutateState() {
         this.state.songIndex++;
         if (this.state.songIndex % 8 === 0) {
-            this.state.bpm = Math.floor(rnd() * 80) + 100;
+            if (this.profile && this.profile.bpmRange) {
+                const [min, max] = this.profile.bpmRange;
+                this.state.bpm = Math.floor(rnd() * (max - min)) + min;
+            } else {
+                this.state.bpm = Math.floor(rnd() * 80) + 100;
+            }
         }
         if (this.state.songIndex % 4 === 0) {
             let [newKey, newScale] = music.modulate(this.state.key, this.state.scale);
+            if (this.profile && this.profile.scales) {
+                const scaleName = choose(this.profile.scales);
+                newScale = music.scales[scaleName] || music.scales.minor;
+            }
             this.state.key = newKey;
             this.state.scale = newScale;
         }
@@ -131,12 +141,29 @@ export class MusicEngine {
 
     newPatterns() {
         seedRNG(this.state.seedCode);
+
+        const getGen = (type) => {
+            if (this.profile && this.profile.preferredGenerators) {
+                if (rnd() < 0.8) {
+                    const pref = choose(this.profile.preferredGenerators);
+                    if (Generators[pref]) return Generators[pref];
+                }
+            }
+
+            if (type === 'bass') return choose([Generators.bass, Generators.bass2, Generators.emptyNote]);
+            if (type === 'arp') return rnd() < 0.7 ? Generators.arp : Generators.emptyNote;
+            if (type === 'melody') return rnd() < 0.7 ? Generators.melody1 : Generators.emptyNote;
+            if (type === 'extra') return choose([Generators.emptyNote, Generators.arp, Generators.melody1]);
+            if (type === 'drum') return rnd() < 0.8 ? Generators.drum : Generators.emptyDrum;
+            return Generators.emptyNote;
+        };
+
         this.patterns = [
-            choose([Generators.bass, Generators.bass2, Generators.emptyNote])(this.state),
-            rnd() < 0.7 ? Generators.arp(this.state) : Generators.emptyNote(),
-            rnd() < 0.7 ? Generators.melody1(this.state) : Generators.emptyNote(),
-            choose([Generators.emptyNote, Generators.arp, Generators.melody1])(this.state),
-            rnd() < 0.8 ? Generators.drum() : Generators.emptyDrum(),
+            getGen('bass')(this.state),
+            getGen('arp')(this.state),
+            getGen('melody')(this.state),
+            getGen('extra')(this.state),
+            getGen('drum')(this.state),
         ];
     }
 

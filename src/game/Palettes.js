@@ -2,6 +2,7 @@
 export const PALETTES = {
     ElectricNeon: {
         name: "Electric Neon",
+        background: '#020617',
         brick: { base: '#ec255a', dark: '#9d174d', highlight: '#fbcfe8', mortar: '#67e8f9' },
         solid: { base: '#1e1b4b', dark: '#111827', highlight: '#4338ca' },
         question: { base: '#facc15', dark: '#a16207', highlight: '#fef3c7' },
@@ -12,10 +13,16 @@ export const PALETTES = {
             skin: '#f5d0a9', tunic: '#db2777', belt: '#22d3ee', hair: '#14b8a6', boots: '#f0abfc', outline: '#4c0519', highlight: '#f472b6', eyeWhite: '#ffffff'
         },
         coin: '#ffff00',
-        parcel: { body: '#e0f2fe', border: '#7dd3fc' }
+        parcel: { body: '#e0f2fe', border: '#7dd3fc' },
+        music: {
+            bpmRange: [120, 140],
+            scales: ['minor'],
+            preferredGenerators: ['arp', 'bass2', 'melody1']
+        }
     },
     EarthyForest: {
         name: "Earthy Forest",
+        background: '#064e3b',
         brick: { base: '#854d0e', dark: '#451a03', highlight: '#a8a29e', mortar: '#4ade80' },
         solid: { base: '#3f6212', dark: '#14532d', highlight: '#65a30d' },
         question: { base: '#d97706', dark: '#92400e', highlight: '#fcd34d' },
@@ -26,10 +33,16 @@ export const PALETTES = {
             skin: '#f5d0a9', tunic: '#166534', belt: '#854d0e', hair: '#57534e', boots: '#292524', outline: '#052e16', highlight: '#22c55e', eyeWhite: '#ffffff'
         },
         coin: '#fbbf24',
-        parcel: { body: '#ecfdf5', border: '#6ee7b7' }
+        parcel: { body: '#ecfdf5', border: '#6ee7b7' },
+        music: {
+            bpmRange: [90, 110],
+            scales: ['major', 'minor'],
+            preferredGenerators: ['bass', 'melody1']
+        }
     },
     GoldenOpulence: {
         name: "Golden Opulence",
+        background: '#450a0a',
         brick: { base: '#b91c1c', dark: '#7f1d1d', highlight: '#fecaca', mortar: '#fbbf24' },
         solid: { base: '#78350f', dark: '#451a03', highlight: '#d97706' },
         question: { base: '#fbbf24', dark: '#b45309', highlight: '#fef3c7' },
@@ -40,10 +53,16 @@ export const PALETTES = {
             skin: '#f5d0a9', tunic: '#991b1b', belt: '#f59e0b', hair: '#fcd34d', boots: '#78350f', outline: '#450a0a', highlight: '#ef4444', eyeWhite: '#ffffff'
         },
         coin: '#f59e0b',
-        parcel: { body: '#fffbeb', border: '#fcd34d' }
+        parcel: { body: '#fffbeb', border: '#fcd34d' },
+        music: {
+            bpmRange: [100, 120],
+            scales: ['minor'],
+            preferredGenerators: ['arp', 'bass']
+        }
     },
     PastelSerenity: {
         name: "Pastel Serenity",
+        background: '#f0f9ff',
         brick: { base: '#f9a8d4', dark: '#db2777', highlight: '#fbcfe8', mortar: '#cffafe' },
         solid: { base: '#93c5fd', dark: '#3b82f6', highlight: '#dbeafe' },
         question: { base: '#fcd34d', dark: '#f59e0b', highlight: '#fef3c7' },
@@ -54,10 +73,16 @@ export const PALETTES = {
             skin: '#f5d0a9', tunic: '#60a5fa', belt: '#f472b6', hair: '#fcd34d', boots: '#fbcfe8', outline: '#1e3a8a', highlight: '#93c5fd', eyeWhite: '#ffffff'
         },
         coin: '#fde047',
-        parcel: { body: '#f0f9ff', border: '#bae6fd' }
+        parcel: { body: '#f0f9ff', border: '#bae6fd' },
+        music: {
+            bpmRange: [70, 90],
+            scales: ['major'],
+            preferredGenerators: ['melody1']
+        }
     },
     GothicStained: {
         name: "Gothic Stained",
+        background: '#0f172a',
         brick: { base: '#4a044e', dark: '#2e0230', highlight: '#a21caf', mortar: '#1e293b' },
         solid: { base: '#1e1b4b', dark: '#0f0f2a', highlight: '#4338ca' },
         question: { base: '#b45309', dark: '#78350f', highlight: '#d97706' },
@@ -68,10 +93,16 @@ export const PALETTES = {
             skin: '#e5e5e5', tunic: '#312e81', belt: '#4c1d95', hair: '#171717', boots: '#000000', outline: '#000000', highlight: '#4338ca', eyeWhite: '#ef4444'
         },
         coin: '#94a3b8',
-        parcel: { body: '#f8fafc', border: '#475569' }
+        parcel: { body: '#f8fafc', border: '#475569' },
+        music: {
+            bpmRange: [60, 80],
+            scales: ['minor'],
+            preferredGenerators: ['bass', 'melody1']
+        }
     },
     IndustrialUrban: {
         name: "Industrial Urban",
+        background: '#1c1917',
         brick: { base: '#57534e', dark: '#292524', highlight: '#a8a29e', mortar: '#000000' },
         solid: { base: '#44403c', dark: '#1c1917', highlight: '#78716c' },
         question: { base: '#ea580c', dark: '#9a3412', highlight: '#fb923c' },
@@ -82,10 +113,16 @@ export const PALETTES = {
             skin: '#d6d3d1', tunic: '#ea580c', belt: '#57534e', hair: '#1c1917', boots: '#292524', outline: '#000000', highlight: '#f97316', eyeWhite: '#ffffff'
         },
         coin: '#fb923c',
-        parcel: { body: '#e5e5e5', border: '#525252' }
+        parcel: { body: '#e5e5e5', border: '#525252' },
+        music: {
+            bpmRange: [110, 130],
+            scales: ['minor'],
+            preferredGenerators: ['bass2', 'drum']
+        }
     },
     RetroPop: {
         name: "Retro Pop",
+        background: '#000000',
         brick: { base: '#3b82f6', dark: '#1d4ed8', highlight: '#93c5fd', mortar: '#f472b6' },
         solid: { base: '#f43f5e', dark: '#be123c', highlight: '#fda4af' },
         question: { base: '#eab308', dark: '#a16207', highlight: '#fef08a' },
@@ -96,10 +133,16 @@ export const PALETTES = {
             skin: '#f5d0a9', tunic: '#3b82f6', belt: '#f472b6', hair: '#fef08a', boots: '#ffffff', outline: '#000000', highlight: '#60a5fa', eyeWhite: '#ffffff'
         },
         coin: '#22d3ee',
-        parcel: { body: '#fff', border: '#f472b6' }
+        parcel: { body: '#fff', border: '#f472b6' },
+        music: {
+            bpmRange: [130, 150],
+            scales: ['major'],
+            preferredGenerators: ['arp', 'melody1', 'drum']
+        }
     },
     TwilightNoir: {
         name: "Twilight Noir",
+        background: '#020617',
         brick: { base: '#172554', dark: '#0f172a', highlight: '#3b82f6', mortar: '#000000' },
         solid: { base: '#0f172a', dark: '#020617', highlight: '#1e293b' },
         question: { base: '#64748b', dark: '#334155', highlight: '#94a3b8' },
@@ -110,6 +153,11 @@ export const PALETTES = {
             skin: '#e2e8f0', tunic: '#0f172a', belt: '#475569', hair: '#000000', boots: '#000000', outline: '#ffffff', highlight: '#334155', eyeWhite: '#ffffff'
         },
         coin: '#e2e8f0',
-        parcel: { body: '#f1f5f9', border: '#334155' }
+        parcel: { body: '#f1f5f9', border: '#334155' },
+        music: {
+            bpmRange: [70, 90],
+            scales: ['minor'],
+            preferredGenerators: ['bass', 'melody1']
+        }
     }
 };

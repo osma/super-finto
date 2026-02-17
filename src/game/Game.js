@@ -158,7 +158,7 @@ export class Game {
         this.level.setPalette(this.currentPalette);
 
         // Update Music Seed for the new level
-        this.musicEngine.init(conceptKey);
+        this.musicEngine.init(conceptKey, this.currentPalette.music);
 
         // Load Background (Custom jpg or fallback to sky)
         const conceptId = conceptKey.split('/').pop();
