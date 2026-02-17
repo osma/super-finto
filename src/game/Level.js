@@ -814,7 +814,7 @@ export class Level {
                 // Check collision with player
                 const hInset = 2; // Horizontal "mercy" inset
                 const vInset = 4; // Vertical "mercy" inset to prevent collisions between levels
-                if (!enemy.isDead && !this.game.transition.active &&
+                if (!enemy.isDead && !player.isDying && !this.game.transition.active &&
                     player.x + player.width - hInset > enemy.x + hInset &&
                     player.x + hInset < enemy.x + enemy.width - hInset &&
                     player.y + player.height - vInset > enemy.y + vInset &&
@@ -845,7 +845,7 @@ export class Level {
                         if (player.isBig) {
                             player.shrink();
                         } else {
-                            this.respawnPlayer();
+                            player.die();
                         }
                     }
                 }
@@ -859,16 +859,14 @@ export class Level {
         }
 
         // Check for player death (falling in gap)
-        if (player.y > this.game.height) {
-            this.respawnPlayer();
+        if (player.y > this.game.height && !player.isDying) {
+            player.die();
         }
     }
 
     respawnPlayer() {
-        // Drop from sky at start of concept (visible on screen)
-        this.game.player.reset();
-        this.game.player.y = 100;
-        this.game.player.x = 100;
+        // Reset player to the starting position of the level (bottom-left)
+        this.game.resetPlayerDefault();
     }
 
     drawBoundaryWalls(ctx) {
@@ -1020,6 +1018,7 @@ export class Level {
     }
 
     checkCollisions(player) {
+        if (player.isDying) return;
         player.grounded = false;
 
         // Check ground

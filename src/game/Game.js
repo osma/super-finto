@@ -31,6 +31,10 @@ export class Game {
 
         // Game State
         this.isGameOver = false;
+        this.deathOverlay = {
+            opacity: 0,
+            state: 'none' // 'none', 'fading_out', 'fading_in'
+        };
         this.transition = {
             active: false,
             state: 'none', // 'pipe_out', 'loading', 'pipe_in'
@@ -262,6 +266,7 @@ export class Game {
         this.player.reset();
         this.player.x = 100;
         this.player.y = this.height - this.player.height - 50;
+        this.player.invulnerableTimer = 3000; // 3 seconds of invincibility on restart
 
         this.camera.x = 0;
         this.camera.y = 0; // Default ground level
@@ -436,6 +441,29 @@ export class Game {
         const ceilingY = (this.level.minRow - 1) * this.level.tileSize;
         if (this.camera.y < ceilingY) this.camera.y = ceilingY;
         if (this.camera.y > 0) this.camera.y = 0;
+
+        // --- DEATH FADE LOGIC ---
+        if (this.player.isDying && this.deathOverlay.state === 'none') {
+            // Wait for player to fall below screen or enough time passes
+            if (this.player.dieTimer > 160 || this.player.y > this.height + 100) {
+                this.deathOverlay.state = 'fading_out';
+            }
+        }
+
+        if (this.deathOverlay.state === 'fading_out') {
+            this.deathOverlay.opacity += 0.01;
+            if (this.deathOverlay.opacity >= 1) {
+                this.deathOverlay.opacity = 1;
+                this.deathOverlay.state = 'fading_in';
+                this.level.respawnPlayer(); // Respawn while screen is black
+            }
+        } else if (this.deathOverlay.state === 'fading_in') {
+            this.deathOverlay.opacity -= 0.01;
+            if (this.deathOverlay.opacity <= 0) {
+                this.deathOverlay.opacity = 0;
+                this.deathOverlay.state = 'none';
+            }
+        }
     }
 
     draw() {
@@ -495,6 +523,12 @@ export class Game {
         this.level.drawBoundaryWalls(this.ctx);
 
         this.ctx.restore();
+
+        // --- DEATH FADE OVERLAY (Global Screen Space) ---
+        if (this.deathOverlay.opacity > 0) {
+            this.ctx.fillStyle = `rgba(0, 0, 0, ${this.deathOverlay.opacity})`;
+            this.ctx.fillRect(0, 0, this.width, this.height);
+        }
     }
 
     drawPipeOverlay() {

@@ -22,17 +22,32 @@ export class Player {
         this.color = '#f472b6'; // Pinkish accent
         this.isBig = false;
         this.isKneeling = false;
+        this.isDying = false;
+        this.dieTimer = 0;
     }
 
     reset() {
         this.isBig = false;
         this.isKneeling = false;
+        this.isDying = false;
+        this.dieTimer = 0;
         this.width = 30;
         this.height = 40;
         this.vx = 0;
         this.vy = 0;
         this.invulnerableTimer = 0;
         this.grounded = false;
+    }
+
+    die() {
+        if (this.isDying) return;
+        this.isDying = true;
+        this.dieTimer = 0;
+        this.vy = -5; // Half of previous -10
+        this.vx = 0;
+        this.isBig = false;
+        this.height = 40;
+        this.width = 30;
     }
 
     grow() {
@@ -52,6 +67,13 @@ export class Player {
     }
 
     update(input, deltaTime) {
+        if (this.isDying) {
+            this.dieTimer++;
+            this.vy += 0.0875; // Quarter of previous 0.35 to make it hang in air longer
+            this.y += this.vy;
+            return;
+        }
+
         if (this.invulnerableTimer > 0) {
             this.invulnerableTimer = Math.max(0, this.invulnerableTimer - deltaTime);
         }
@@ -238,7 +260,14 @@ export class Player {
 
         // Center visual sprite on hitbox
         const offsetX = this.x - (displayWidth - this.width) / 2;
-        const offsetY = this.y;
+        let offsetY = this.y;
+
+        if (this.isDying) {
+            // Flip vertically
+            ctx.translate(offsetX + displayWidth / 2, offsetY + this.height / 2);
+            ctx.scale(1, -1);
+            ctx.translate(-(offsetX + displayWidth / 2), -(offsetY + this.height / 2));
+        }
 
         frame.forEach((row, rowIndex) => {
             row.forEach((pixel, colIndex) => {
