@@ -206,7 +206,7 @@ export class Game {
                     // Spawn Left Wall, Moving Right
                     const pipeHeight = 80;
                     const gap = 40;
-                    const y = (groundY - 70) - (broaderIndex * (pipeHeight + gap));
+                    const y = (groundY - 80) - (broaderIndex * (pipeHeight + gap));
 
                     this.transition.state = 'pipe_in';
                     this.transition.pipeX = 0;
@@ -224,7 +224,7 @@ export class Game {
                     // Spawn Right Wall, Moving Left
                     const pipeHeight = 80;
                     const gap = 40;
-                    const y = (groundY - 70) - (narrowerIndex * (pipeHeight + gap));
+                    const y = (groundY - 80) - (narrowerIndex * (pipeHeight + gap));
 
                     this.transition.state = 'pipe_in';
                     this.transition.pipeX = this.levelWidth;

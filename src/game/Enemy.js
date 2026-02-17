@@ -111,7 +111,7 @@ export class Enemy {
             // Broader Pipes (Left Wall)
             if (level.game.concept.broader) {
                 level.game.concept.broader.forEach((broader, index) => {
-                    const py = (groundY - 70) - (index * (pipeHeight + gap));
+                    const py = (groundY - 80) - (index * (pipeHeight + gap));
                     const px = 0;
                     const pw = 80; // Monsters reverse at the mouth (80px)
                     const ph = pipeHeight;
@@ -142,7 +142,7 @@ export class Enemy {
             // Narrower Pipes (Right Wall)
             if (level.game.concept.narrower) {
                 level.game.concept.narrower.forEach((narrower, index) => {
-                    const py = (groundY - 70) - (index * (pipeHeight + gap));
+                    const py = (groundY - 80) - (index * (pipeHeight + gap));
                     const px = lw - 80; // Monsters reverse at the mouth
                     const pw = 80;
                     const ph = pipeHeight;

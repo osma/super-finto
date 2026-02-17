@@ -332,7 +332,7 @@ export class Level {
         if (broaderCount > 2) {
             const pipeHeight = 80;
             const gap = 40;
-            const highestPipeY = (this.game.height - 50 - 70) - ((broaderCount - 1) * (pipeHeight + gap));
+            const highestPipeY = (this.game.height - 40 - 80) - ((broaderCount - 1) * (pipeHeight + gap));
             const highestRow = Math.floor(highestPipeY / this.tileSize);
 
             // Alternating blocks in columns 3 and 4 (moved 2 positions away from wall)
@@ -355,7 +355,7 @@ export class Level {
         if (narrowerCount > 2) {
             const pipeHeight = 80;
             const gap = 40;
-            const highestPipeY = (this.game.height - 50 - 70) - ((narrowerCount - 1) * (pipeHeight + gap));
+            const highestPipeY = (this.game.height - 40 - 80) - ((narrowerCount - 1) * (pipeHeight + gap));
             const highestRow = Math.floor(highestPipeY / this.tileSize);
 
             // Alternating blocks in columns levelWidthTiles-5 and levelWidthTiles-4 (moved 2 positions away)
@@ -649,7 +649,7 @@ export class Level {
                 const pipeHeight = 80;
                 const gap = 40;
                 this.game.concept.broader.forEach((broader, index) => {
-                    const y = (groundY - 70) - (index * (pipeHeight + gap));
+                    const y = (groundY - 80) - (index * (pipeHeight + gap));
                     if (y + pipeHeight > cameraY - buffer && y < cameraY + viewportHeight + buffer) {
                         this.drawHorizontalPipe(ctx, 0, y, 'right', broader.label_fi);
                     }
@@ -663,7 +663,7 @@ export class Level {
                 const pipeHeight = 80;
                 const gap = 40;
                 this.game.concept.narrower.forEach((narrower, index) => {
-                    const y = (groundY - 70) - (index * (pipeHeight + gap));
+                    const y = (groundY - 80) - (index * (pipeHeight + gap));
                     if (y + pipeHeight > cameraY - buffer && y < cameraY + viewportHeight + buffer) {
                         this.drawHorizontalPipe(ctx, this.game.levelWidth, y, 'left', narrower.label_fi);
                     }
@@ -1064,7 +1064,7 @@ export class Level {
             const pipeHeight = 80;
             const gap = 40;
             this.game.concept.broader.forEach((broader, index) => {
-                const y = (groundY - 70) - (index * (pipeHeight + gap));
+                const y = (groundY - 80) - (index * (pipeHeight + gap));
 
                 // Culling: Only check if wall is near player
                 if (80 < player.x - buffer) return;
@@ -1122,7 +1122,7 @@ export class Level {
             const gap = 40;
             const lw = this.game.levelWidth;
             this.game.concept.narrower.forEach((narrower, index) => {
-                const y = (groundY - 70) - (index * (pipeHeight + gap));
+                const y = (groundY - 80) - (index * (pipeHeight + gap));
 
                 // Culling: Only check if wall is near player
                 if (lw - 80 > player.x + player.width + buffer) return;
