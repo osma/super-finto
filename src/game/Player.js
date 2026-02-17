@@ -120,109 +120,108 @@ export class Player {
 
         const isFacingRight = this.vx >= 0;
         const displayWidth = this.isBig ? 40 : 30;
-        const pSize = displayWidth / 10; // Based on max columns in frame
-        const pSizeY = this.height / (this.isBig ? 30 : 15); // Based on rows in frame
 
         ctx.save();
 
         let frame;
         if (this.isBig) {
-            // Pixel Art Grid Map (Big Slender Elf - Side Profile)
-            // Stretched to 30 rows
+            // Big Elf - Side Profile, 20 cols x 40 rows (2x2px pixels)
+            // Mario-like proportions: big head (~35%), body (~35%), legs (~30%)
+            // 0=transparent 1=skin 2=tunic 3=belt 4=hair 5=boots 6=eyeWhite 7=outline 8=tunicLight
             frame = [
-                [0, 0, 0, 4, 4, 4, 4, 0, 0], // Hair top
-                [0, 0, 0, 4, 4, 4, 4, 4, 0], // Hair main
-                [0, 0, 0, 4, 1, 1, 1, 1, 0], // Ear (back) / Forehead
-                [0, 0, 0, 4, 1, 1, 6, 1, 0], // Eye
-                [0, 0, 0, 4, 1, 1, 1, 1, 0], // Nose
-                [0, 0, 0, 1, 1, 1, 1, 0, 0], // Chin/Neck
-                [0, 0, 0, 2, 2, 2, 2, 0, 0], // Shoulders
-                [0, 0, 2, 2, 2, 2, 2, 1, 0], // Chest + Arm/Hand forward
-                [0, 0, 2, 2, 2, 2, 2, 0, 0], // Torso
-                [0, 0, 2, 2, 2, 2, 2, 0, 0], // Torso Extended
-                [0, 0, 2, 2, 2, 2, 2, 0, 0], // Torso Extended
-                [0, 0, 2, 3, 3, 3, 2, 0, 0], // Belt
-                [0, 0, 2, 2, 2, 2, 2, 0, 0], // Tunic Skirt
-                [0, 0, 2, 2, 2, 2, 2, 0, 0], // Tunic Skirt Extended
-                [0, 0, 2, 2, 2, 2, 2, 0, 0], // Tunic Skirt Extended
-                [0, 0, 2, 2, 0, 0, 2, 0, 0], // Leg stride front
-                [0, 0, 2, 2, 0, 0, 2, 0, 0], // Leg stride front Extended
-                [0, 0, 2, 2, 0, 0, 2, 0, 0], // Leg stride front Extended
-                [0, 0, 2, 2, 0, 5, 5, 0, 0], // Leg back / Boot front
-                [0, 0, 2, 2, 0, 5, 5, 0, 0], // Leg back / Boot front Extended
-                [0, 0, 2, 2, 0, 5, 5, 0, 0], // Leg back / Boot front Extended
-                [0, 5, 5, 0, 0, 5, 5, 0, 0], // Boots
-                [0, 5, 5, 0, 0, 5, 5, 0, 0]  // Boots bottom
-            ];
-            // Pad to 30 rows if needed or just let pSizeY handle the stretch.
-            // Let's rely on pSizeY calculation above. Ideally height 80 / 30 = 2.66 px per block.
-            // Our frame above is only 23 rows. Let's add more body/leg rows.
-            // Actually, let's just reuse the small frame but maybe double some rows, or keep it simple
-            // and just let pSizeY stretch it. However, the requirement is 40x80 size.
-            // Let's create a distinct tall frame with 30 rows.
-            frame = [
-                // Head (6 rows)
-                [0, 0, 0, 4, 4, 4, 4, 0, 0],
-                [0, 0, 0, 4, 4, 4, 4, 4, 0],
-                [0, 0, 0, 4, 1, 1, 1, 1, 0],
-                [0, 0, 0, 4, 1, 1, 6, 1, 0],
-                [0, 0, 0, 4, 1, 1, 1, 1, 0],
-                [0, 0, 0, 1, 1, 1, 1, 0, 0],
-                // Body (10 rows)
-                [0, 0, 0, 2, 2, 2, 2, 0, 0],
-                [0, 0, 0, 2, 2, 2, 2, 0, 0],
-                [0, 0, 2, 2, 2, 2, 2, 1, 0],
-                [0, 0, 2, 2, 2, 2, 2, 1, 0],
-                [0, 0, 2, 2, 2, 2, 2, 0, 0],
-                [0, 0, 2, 2, 2, 2, 2, 0, 0],
-                [0, 0, 2, 3, 3, 3, 2, 0, 0],
-                [0, 0, 2, 3, 3, 3, 2, 0, 0],
-                [0, 0, 2, 2, 2, 2, 2, 0, 0],
-                [0, 0, 2, 2, 2, 2, 2, 0, 0],
-                // Legs (14 rows)
-                [0, 0, 2, 2, 0, 0, 2, 0, 0],
-                [0, 0, 2, 2, 0, 0, 2, 0, 0],
-                [0, 0, 2, 2, 0, 0, 2, 0, 0],
-                [0, 0, 2, 2, 0, 0, 2, 0, 0],
-                [0, 0, 2, 2, 0, 0, 2, 0, 0],
-                [0, 0, 2, 2, 0, 5, 5, 0, 0],
-                [0, 0, 2, 2, 0, 5, 5, 0, 0],
-                [0, 0, 2, 2, 0, 5, 5, 0, 0],
-                [0, 0, 2, 2, 0, 5, 5, 0, 0],
-                [0, 0, 2, 2, 0, 5, 5, 0, 0],
-                [0, 5, 5, 0, 0, 5, 5, 0, 0],
-                [0, 5, 5, 0, 0, 5, 5, 0, 0],
-                [0, 5, 5, 0, 0, 5, 5, 0, 0],
-                [0, 5, 5, 0, 0, 5, 5, 0, 0]
+                // Hair (5 rows)
+                [0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 7, 4, 4, 4, 4, 4, 7, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 7, 4, 4, 4, 4, 4, 4, 4, 7, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 7, 4, 4, 4, 4, 4, 4, 4, 4, 4, 7, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 7, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 7, 0, 0, 0, 0],
+                // Face (8 rows)
+                [0, 0, 0, 0, 7, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7, 0, 0, 0, 0],
+                [0, 0, 7, 1, 7, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7, 0, 0, 0, 0],
+                [0, 7, 1, 1, 7, 1, 1, 1, 1, 6, 6, 7, 1, 1, 1, 1, 7, 0, 0, 0],
+                [7, 1, 1, 1, 7, 1, 1, 1, 1, 7, 7, 1, 1, 1, 1, 1, 7, 0, 0, 0],
+                [0, 7, 1, 0, 7, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7, 0, 0, 0, 0],
+                [0, 0, 0, 0, 7, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 7, 1, 1, 1, 1, 1, 1, 1, 7, 0, 0, 0, 0, 0, 0],
+                // Neck (1 row)
+                [0, 0, 0, 0, 0, 0, 7, 1, 1, 1, 1, 7, 0, 0, 0, 0, 0, 0, 0, 0],
+                // Shoulders/Chest (6 rows)
+                [0, 0, 0, 0, 0, 7, 2, 2, 2, 2, 2, 2, 7, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 7, 8, 2, 2, 2, 2, 2, 2, 2, 7, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 7, 8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 7, 0, 0, 0, 0, 0],
+                [0, 0, 1, 7, 8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 7, 1, 0, 0, 0, 0],
+                [0, 0, 1, 7, 8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 7, 1, 0, 0, 0, 0],
+                [0, 0, 0, 7, 8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 7, 0, 0, 0, 0, 0],
+                // Belt (2 rows)
+                [0, 0, 0, 7, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 7, 0, 0, 0, 0, 0],
+                [0, 0, 0, 7, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 7, 0, 0, 0, 0, 0],
+                // Tunic skirt (6 rows)
+                [0, 0, 0, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 7, 0, 0, 0, 0, 0],
+                [0, 0, 0, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 7, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 7, 2, 2, 2, 2, 2, 2, 2, 2, 7, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 7, 2, 2, 2, 2, 2, 2, 2, 2, 7, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 7, 2, 2, 2, 2, 2, 2, 7, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 7, 2, 2, 7, 7, 2, 2, 7, 0, 0, 0, 0, 0, 0, 0],
+                // Legs (6 rows)
+                [0, 0, 0, 0, 7, 1, 1, 1, 7, 0, 7, 1, 1, 7, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 7, 1, 1, 1, 7, 0, 7, 1, 1, 7, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 7, 1, 1, 1, 7, 0, 7, 1, 1, 7, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 7, 1, 1, 1, 7, 0, 7, 1, 1, 7, 0, 0, 0, 0, 0, 0],
+                // Boots (6 rows)
+                [0, 0, 0, 0, 7, 5, 5, 5, 7, 0, 7, 5, 5, 7, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 7, 5, 5, 5, 7, 0, 7, 5, 5, 7, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 7, 5, 5, 5, 5, 7, 0, 7, 5, 5, 5, 7, 0, 0, 0, 0, 0],
+                [0, 0, 0, 7, 5, 5, 5, 5, 7, 0, 7, 5, 5, 5, 7, 0, 0, 0, 0, 0],
+                [0, 0, 0, 7, 5, 5, 5, 5, 0, 0, 7, 5, 5, 5, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 7, 5, 5, 5, 5, 0, 0, 7, 5, 5, 5, 0, 0, 0, 0, 0, 0],
             ];
         } else {
-            // Pixel Art Grid Map (Slender Elf - Side Profile) - 15 rows
+            // Small Elf - Side Profile, 15 cols x 20 rows (2x2px pixels)
+            // Mario-like big head (~40%), body (~30%), legs (~30%)
+            // 0=transparent 1=skin 2=tunic 3=belt 4=hair 5=boots 6=eyeWhite 7=outline 8=tunicLight
             frame = [
-                [0, 0, 0, 4, 4, 4, 4, 0, 0], // Hair top
-                [0, 0, 0, 4, 4, 4, 4, 4, 0], // Hair main
-                [0, 0, 0, 4, 1, 1, 1, 1, 0], // Ear (back) / Forehead
-                [0, 0, 0, 4, 1, 1, 6, 1, 0], // Eye
-                [0, 0, 0, 4, 1, 1, 1, 1, 0], // Nose
-                [0, 0, 0, 1, 1, 1, 1, 0, 0], // Chin/Neck
-                [0, 0, 0, 2, 2, 2, 2, 0, 0], // Shoulders
-                [0, 0, 2, 2, 2, 2, 2, 1, 0], // Chest + Arm/Hand forward
-                [0, 0, 2, 2, 2, 2, 2, 0, 0], // Torso
-                [0, 0, 2, 3, 3, 3, 2, 0, 0], // Belt
-                [0, 0, 2, 2, 2, 2, 2, 0, 0], // Tunic Skirt
-                [0, 0, 2, 2, 0, 0, 2, 0, 0], // Leg stride front
-                [0, 0, 2, 2, 0, 5, 5, 0, 0], // Leg back / Boot front
-                [0, 5, 5, 0, 0, 5, 5, 0, 0], // Boots
-                [0, 5, 5, 0, 0, 5, 5, 0, 0]  // Boots bottom
+                // Hair (3 rows)
+                [0, 0, 0, 0, 0, 7, 7, 7, 7, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 7, 4, 4, 4, 4, 7, 0, 0, 0, 0, 0],
+                [0, 0, 0, 7, 4, 4, 4, 4, 4, 4, 7, 0, 0, 0, 0],
+                // Head/Face (5 rows)
+                [0, 0, 0, 7, 4, 4, 4, 4, 4, 4, 4, 7, 0, 0, 0],
+                [0, 7, 1, 7, 1, 1, 1, 1, 1, 1, 1, 7, 0, 0, 0],
+                [7, 1, 1, 7, 1, 1, 6, 7, 1, 1, 1, 1, 7, 0, 0],
+                [0, 7, 0, 7, 1, 1, 1, 1, 1, 1, 1, 7, 0, 0, 0],
+                [0, 0, 0, 0, 7, 1, 1, 1, 1, 7, 0, 0, 0, 0, 0],
+                // Body (6 rows)
+                [0, 0, 0, 0, 7, 2, 2, 2, 2, 7, 0, 0, 0, 0, 0],
+                [0, 0, 0, 7, 8, 2, 2, 2, 2, 2, 7, 0, 0, 0, 0],
+                [0, 0, 1, 7, 8, 2, 2, 2, 2, 2, 7, 1, 0, 0, 0],
+                [0, 0, 0, 7, 3, 3, 3, 3, 3, 3, 7, 0, 0, 0, 0],
+                [0, 0, 0, 7, 2, 2, 2, 2, 2, 2, 7, 0, 0, 0, 0],
+                [0, 0, 0, 0, 7, 2, 2, 2, 2, 7, 0, 0, 0, 0, 0],
+                // Legs (3 rows)
+                [0, 0, 0, 7, 1, 1, 7, 0, 7, 1, 1, 7, 0, 0, 0],
+                [0, 0, 0, 7, 1, 1, 7, 0, 7, 1, 1, 7, 0, 0, 0],
+                // Boots (3 rows)
+                [0, 0, 0, 7, 5, 5, 7, 0, 7, 5, 5, 7, 0, 0, 0],
+                [0, 0, 7, 5, 5, 5, 7, 0, 7, 5, 5, 5, 7, 0, 0],
+                [0, 0, 7, 5, 5, 5, 7, 0, 7, 5, 5, 5, 7, 0, 0],
+                [0, 0, 7, 5, 5, 5, 0, 0, 7, 5, 5, 5, 0, 0, 0],
             ];
         }
 
+        const cols = frame[0].length;
+        const rows = frame.length;
+        const pSize = displayWidth / cols;
+        const pSizeY = this.height / rows;
+
         const colors = {
-            1: '#ffe4c4', // Skin (Bisque)
+            1: '#f5d0a9', // Skin
             2: '#1e3a8a', // Tunic (Dark Blue)
-            3: '#eab308', // Trim/Belt (Gold)
-            4: '#facc15', // Hair (Blonde)
-            5: '#78350f', // Boots (Brown)
-            6: '#1e293b'  // Eye (Dark)
+            3: '#d4a017', // Belt (Gold)
+            4: '#c8a25c', // Hair (Dirty Blonde)
+            5: '#5a3a1a', // Boots (Dark Brown)
+            6: '#ffffff', // Eye white
+            7: '#0f172a', // Outline (Near-black)
+            8: '#2d4ea8', // Tunic highlight
         };
 
         // Center visual sprite on hitbox
@@ -233,9 +232,8 @@ export class Player {
             row.forEach((pixel, colIndex) => {
                 if (pixel > 0) {
                     ctx.fillStyle = colors[pixel];
-                    // Flip horizontal if facing left
                     const xPos = isFacingRight ? (colIndex * pSize) : (displayWidth - (colIndex + 1) * pSize);
-                    ctx.fillRect(Math.floor(offsetX + xPos), Math.floor(offsetY + (rowIndex * pSizeY)), pSize, pSizeY);
+                    ctx.fillRect(Math.floor(offsetX + xPos), Math.floor(offsetY + (rowIndex * pSizeY)), Math.ceil(pSize), Math.ceil(pSizeY));
                 }
             });
         });
