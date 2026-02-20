@@ -356,8 +356,9 @@ export class Level {
             }
         }
 
-        // Shuffle brickPositions using RNG and pick pipesCount bricks to replace
-        for (let i = 0; i < pipesCount && brickPositions.length > 0; i++) {
+        // Shuffle brickPositions using RNG and pick pipesCount bricks to replace with question blocks
+        const targetQuestionCount = pipesCount;
+        for (let i = 0; i < targetQuestionCount && brickPositions.length > 0; i++) {
             const randomIndex = Math.floor(rng.next() * brickPositions.length);
             const key = brickPositions.splice(randomIndex, 1)[0];
             this.tiles.set(key, 'question');
@@ -483,10 +484,11 @@ export class Level {
         // Generate Coins
         this.coins = [];
         const area = levelWidthTiles * (groundRow - this.minRow);
-        // Simple heuristic: roughly 1 coin per 400 tiles of area, clamped 1-5
-        const coinCount = Math.min(5, Math.max(1, Math.floor(area / 400)));
+        // Simple heuristic: roughly 1 coin per 100 tiles of area, clamped 5-30
+        // coinCount now represents "Clusters"
+        const clusterCount = Math.min(10, Math.max(3, Math.floor(area / 300)));
 
-        for (let i = 0; i < coinCount; i++) {
+        for (let i = 0; i < clusterCount; i++) {
             let cx, cy;
             let attempts = 0;
             let placed = false;
@@ -496,7 +498,6 @@ export class Level {
 
                 // 20% Chance: Try to place above existing destroyable brick
                 if (rng.next() < 0.2) {
-                    // Find valid bricks (above minRow, below ground)
                     const validBricks = [];
                     for (let [key, type] of this.tiles) {
                         if (type === 'brick') {
@@ -509,29 +510,37 @@ export class Level {
                     if (validBricks.length > 0) {
                         const targetBrick = validBricks[Math.floor(rng.next() * validBricks.length)];
                         cx = targetBrick.tx;
-                        cy = targetBrick.ty - 1; // Above it
+                        cy = targetBrick.ty - 1;
                     } else {
-                        // Fallback to random if no bricks
                         cx = Math.floor(rng.next() * (levelWidthTiles - 10)) + 5;
                         cy = Math.floor(rng.next() * (groundRow - 5 - this.minRow)) + this.minRow;
                     }
                 } else {
-                    // 80% Chance: Random position
                     cx = Math.floor(rng.next() * (levelWidthTiles - 10)) + 5;
                     cy = Math.floor(rng.next() * (groundRow - 5 - this.minRow)) + this.minRow;
                 }
 
-                // CHECK OVERLAP with Tiles
-                const overlap = this.tiles.has(`${cx},${cy}`);
+                // If valid seed point found, place a cluster
+                if (!this.tiles.has(`${cx},${cy}`)) {
+                    const clusterSize = Math.floor(rng.next() * 5) + 1;
+                    const isHorizontal = rng.next() > 0.5;
 
-                // Check overlap with other coins
-                // Coin pos is tile*size + 10
-                const cxPx = cx * this.tileSize + 10;
-                const cyPx = cy * this.tileSize + 10;
-                const coinOverlap = this.coins.some(c => Math.abs(c.x - cxPx) < 20 && Math.abs(c.y - cyPx) < 20);
+                    for (let j = 0; j < clusterSize; j++) {
+                        const ncx = isHorizontal ? cx + j : cx;
+                        const ncy = isHorizontal ? cy : cy - j;
 
-                if (!overlap && !coinOverlap) {
-                    this.coins.push(new Coin(cxPx, cyPx));
+                        // Check limits and tiles
+                        if (ncx > 0 && ncx < levelWidthTiles && ncy >= this.minRow && ncy < groundRow) {
+                            if (!this.tiles.has(`${ncx},${ncy}`)) {
+                                const cxPx = ncx * this.tileSize + 10;
+                                const cyPx = ncy * this.tileSize + 10;
+                                // Check for existing coins to avoid overlap
+                                if (!this.coins.some(c => Math.abs(c.x - cxPx) < 20 && Math.abs(c.y - cyPx) < 20)) {
+                                    this.coins.push(new Coin(cxPx, cyPx));
+                                }
+                            }
+                        }
+                    }
                     placed = true;
                 }
             }
