@@ -11,6 +11,7 @@ export class Level {
         this.parcels = [];
         this.parcelAssignments = new Map(); // "x,y" -> Wikidata ID
         this.enemies = [];
+        this.leaves = [];
         this.groundGaps = [];
 
         // Pre-render tile cache for performance
@@ -73,6 +74,36 @@ export class Level {
 
         // --- 4. Enemy ---
         this.drawEnemySprite(palette.enemy);
+
+        // --- 5. Leaf ---
+        this.drawLeafSprite(palette);
+    }
+
+    drawLeafSprite(palette) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 40;
+        canvas.height = 40;
+        const ctx = canvas.getContext('2d');
+
+        // Draw a golden leaf
+        ctx.fillStyle = '#facc15'; // Golden yellow
+        ctx.beginPath();
+        ctx.moveTo(20, 5);
+        ctx.quadraticCurveTo(35, 5, 35, 20);
+        ctx.quadraticCurveTo(35, 35, 20, 35);
+        ctx.quadraticCurveTo(5, 35, 5, 20);
+        ctx.quadraticCurveTo(5, 5, 20, 5);
+        ctx.fill();
+
+        // Leaf vein
+        ctx.strokeStyle = '#a16207';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(20, 35);
+        ctx.lineTo(20, 5);
+        ctx.stroke();
+
+        this.tileCache['leaf'] = canvas;
     }
 
     drawParcelSprite(style) {
@@ -238,6 +269,7 @@ export class Level {
         this.tiles.clear();
         this.coins = [];
         this.enemies = [];
+        this.leaves = [];
         this.groundGaps = [];
         if (!seedUri) return;
 
@@ -563,6 +595,15 @@ export class Level {
                 createdGaps++;
             }
         }
+        // --- SPAWN LEAF (For Leaf Node Levels) ---
+        if (narrowerCount === 0) {
+            const groundRow = Math.floor((this.game.height - 40) / this.tileSize);
+            const leafX = this.game.levelWidth - 100;
+            const leafY = (groundRow * this.tileSize) - 40;
+            this.leaves.push(new Leaf(leafX, leafY));
+            console.log("Leaf spawned at:", leafX, leafY);
+        }
+
         // Render static geometry to cache
         this.renderGeometryLayer();
     }
@@ -746,6 +787,11 @@ export class Level {
             parcel.draw(ctx, this.tileCache);
         });
 
+        // Draw Leaves
+        this.leaves.forEach(leaf => {
+            leaf.draw(ctx, this.tileCache);
+        });
+
         // Draw Enemies
         this.enemies.forEach(e => {
             if (e.x + e.width > cameraX - buffer && e.x < cameraX + viewportWidth + buffer &&
@@ -872,6 +918,21 @@ export class Level {
             // Remove if dead (after 30 frames of animation) OR fallen off world
             if ((enemy.isDead && enemy.deathTimer > 30) || enemy.y > this.game.height + 100) {
                 this.enemies.splice(i, 1);
+            }
+        }
+
+        // Update leaves and check collection
+        for (let i = this.leaves.length - 1; i >= 0; i--) {
+            const leaf = this.leaves[i];
+            if (!this.game.transition.active &&
+                player.x < leaf.x + 40 &&
+                player.x + player.width > leaf.x &&
+                player.y < leaf.y + 40 &&
+                player.y + player.height > leaf.y) {
+
+                // Collect!
+                this.game.addLeaf();
+                this.leaves.splice(i, 1);
             }
         }
 
@@ -1706,6 +1767,22 @@ class FloatingScore {
         ctx.fillText(this.points, textX, textY);
 
         ctx.restore();
+    }
+}
+
+export class Leaf {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.wobble = Math.random() * Math.PI * 2;
+    }
+
+    draw(ctx, tileCache) {
+        const sprite = tileCache['leaf'];
+        if (sprite) {
+            const yOffset = Math.sin(Date.now() / 200 + this.wobble) * 5;
+            ctx.drawImage(sprite, Math.floor(this.x), Math.floor(this.y + yOffset));
+        }
     }
 }
 

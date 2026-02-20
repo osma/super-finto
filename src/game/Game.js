@@ -3,6 +3,7 @@ import { Player } from './Player.js';
 import { Level } from './Level.js';
 import { PALETTES } from './Palettes.js';
 import { MusicEngine } from '../audio/MusicEngine.js';
+import { LifeTree } from './LifeTree.js';
 
 export class Game {
     constructor() {
@@ -21,6 +22,9 @@ export class Game {
         // Audio
         this.musicEngine = new MusicEngine();
         this.musicStarted = false;
+        this.lifeTree = new LifeTree(this);
+        this.leavesCollected = parseInt(localStorage.getItem('finto_leaves')) || 0;
+        this.lifeTree.setLeafCount(this.leavesCollected);
 
         this.camera = { x: 0, y: 0 };
         this.lastTime = 0;
@@ -94,10 +98,22 @@ export class Game {
         } else if (direction === 'left') {
             // Align Y center to pipe center (pipe height 80)
             this.player.y = pipeY + 80 / 2 - this.player.height / 2;
-        } else if (direction === 'right') {
-            // Align Y center to pipe center
-            this.player.y = pipeY + 80 / 2 - this.player.height / 2;
         }
+    }
+
+    transitionTo(targetUri, x, y) {
+        if (this.transition.active) return;
+
+        console.log("Transitioning to root concept:", targetUri);
+        this.transition = {
+            active: true,
+            state: 'pipe_out',
+            targetUri: targetUri,
+            direction: 'up', // Whirlwind return
+            timer: 0,
+            pipeX: x,
+            pipeY: y
+        };
     }
 
     loadConcept(conceptKey, sourceUri = null) {
@@ -400,6 +416,14 @@ export class Game {
                         this.transition.state = 'loading';
                         this.loadConcept(this.transition.targetUri, this.concept.uri);
                     }
+                } else if (this.transition.direction === 'up') {
+                    // Whirlwind Return
+                    this.player.y -= speed * 5;
+                    this.player.vy = -10;
+                    if (this.player.y < -200) {
+                        this.transition.state = 'loading';
+                        this.loadConcept(this.transition.targetUri, this.concept.uri);
+                    }
                 }
                 return; // SKIP normal update
             }
@@ -679,6 +703,15 @@ export class Game {
         }
 
         return modifiers;
+    }
+
+    addLeaf() {
+        this.leavesCollected++;
+        this.lifeTree.setLeafCount(this.leavesCollected);
+        console.log(`Leaf collected! Total: ${this.leavesCollected}`);
+
+        // Save progress (optional, but good for growth)
+        localStorage.setItem('finto_leaves', this.leavesCollected);
     }
 
     toggleMusic() {
