@@ -12,34 +12,36 @@
 </head>
 
 <body>
-    <div id="game-container">
-        <div id="ui-layer">
-            <div class="stat-box">
-                <span class="label">SCORE</span>
-                <span id="score">00000</span>
-            </div>
-            <div class="stat-box center-box">
-                <div id="concept-labels">
-                    <span id="label-fi">-</span>
-                    <span id="label-sv">-</span>
-                    <span id="label-en">-</span>
+    <div id="app-wrapper">
+        <div id="game-container">
+            <div id="ui-layer">
+                <div class="stat-box">
+                    <span class="label">SCORE</span>
+                    <span id="score">00000</span>
+                </div>
+                <div class="stat-box center-box">
+                    <div id="concept-labels">
+                        <span id="label-fi">-</span>
+                        <span id="label-sv">-</span>
+                        <span id="label-en">-</span>
+                    </div>
+                </div>
+                <div class="stat-box">
+                    <span class="label">CONCEPT</span>
+                    <span id="world">yso:-</span>
                 </div>
             </div>
-            <div class="stat-box">
-                <span class="label">CONCEPT</span>
-                <span id="world">yso:-</span>
+            <canvas id="game-canvas"></canvas>
+            <div id="overlay" class="hidden">
+                <div class="overlay-content">
+                    <h1 id="overlay-title">GAME OVER</h1>
+                    <p>Press <span class="key">SPACE</span> to Restart</p>
+                </div>
             </div>
         </div>
-        <canvas id="game-canvas"></canvas>
         <div id="tree-container">
             <canvas id="tree-canvas"></canvas>
             <div id="tree-label">LIFE TREE</div>
-        </div>
-        <div id="overlay" class="hidden">
-            <div class="overlay-content">
-                <h1 id="overlay-title">GAME OVER</h1>
-                <p>Press <span class="key">SPACE</span> to Restart</p>
-            </div>
         </div>
     </div>
     <script type="module" src="/src/audio/utils.js"></script>

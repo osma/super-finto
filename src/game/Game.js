@@ -187,6 +187,7 @@ export class Game {
         console.log("Physics Modifiers:", this.physicsModifiers);
 
         this.level.setPalette(this.currentPalette);
+        this.lifeTree.draw();
 
         // Update Music Seed for the new level
         // Complexity based on number of narrower concepts (0.0 to 1.0)

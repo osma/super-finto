@@ -4,8 +4,8 @@ export class LifeTree {
         this.canvas = document.getElementById('tree-canvas');
         if (this.canvas) {
             this.ctx = this.canvas.getContext('2d');
-            this.canvas.width = 120;
-            this.canvas.height = 140;
+            this.canvas.width = 140;
+            this.canvas.height = 160;
         }
 
         this.leafCount = 0;

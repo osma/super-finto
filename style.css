@@ -31,6 +31,13 @@ body {
     color: var(--text);
 }
 
+#app-wrapper {
+    display: flex;
+    align-items: flex-end;
+    /* Align to bottom like it was before? Or center? */
+    gap: 24px;
+}
+
 #game-container {
     position: relative;
     width: 800px;
@@ -144,4 +151,31 @@ body {
     padding: 4px 12px;
     border-radius: 8px;
     font-weight: 700;
+}
+
+#tree-container {
+    width: 160px;
+    height: 200px;
+    background: var(--glass);
+    backdrop-filter: blur(4px);
+    border-radius: 16px;
+    border: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+#tree-canvas {
+    width: 140px;
+    height: 160px;
+    image-rendering: pixelated;
+}
+
+#tree-label {
+    font-size: 0.6rem;
+    margin-top: 4px;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 0.05rem;
 }
