@@ -167,10 +167,15 @@ export class Game {
         this.currentPalette = PALETTES[paletteKey];
         console.log("Selected Palette:", this.currentPalette.name);
 
+        this.physicsModifiers = this.calculatePhysicsModifiers();
+        console.log("Physics Modifiers:", this.physicsModifiers);
+
         this.level.setPalette(this.currentPalette);
 
         // Update Music Seed for the new level
-        this.musicEngine.init(conceptKey, this.currentPalette.music);
+        // Complexity based on number of narrower concepts (0.0 to 1.0)
+        const complexity = Math.min(1.0, (this.concept.narrower?.length || 0) / 10);
+        this.musicEngine.init(conceptKey, this.currentPalette.music, complexity);
 
         // Load Background (Custom jpg or fallback to sky)
         const conceptId = conceptKey.split('/').pop();
@@ -628,6 +633,52 @@ export class Game {
             const y = (Math.cos(i * 234) * 0.5 + 0.5) * 1024;
             this.ctx.fillRect(x, y, 6, 6);
         }
+    }
+
+    calculatePhysicsModifiers() {
+        const modifiers = {
+            gravity: 1.0,
+            friction: 1.0,
+            speed: 1.0,
+            jump: 1.0
+        };
+
+        if (!this.concept) return modifiers;
+
+        const labels = [
+            this.concept.label_fi,
+            this.concept.label_sv,
+            this.concept.label_en,
+            ...this.concept.altLabels.map(l => l.label)
+        ].join(' ').toLowerCase();
+
+        // Low Gravity / Floatiness
+        const lowGravityKeywords = ["space", "moon", "cloud", "fly", "air", "light", "feather", "balloon", "sky", "lintu", "avaruus", "pilvi", "ilma", "höyhen"];
+        if (lowGravityKeywords.some(k => labels.includes(k))) {
+            modifiers.gravity = 0.5;
+            modifiers.jump = 0.8; // Compensate slightly to avoid jumping out of level too easily
+        }
+
+        // High Gravity / Heavy
+        const highGravityKeywords = ["heavy", "metal", "iron", "stone", "rock", "gold", "lead", "weight", "giant", "painava", "metalli", "rauta", "kivi", "kulta", "lyijy"];
+        if (highGravityKeywords.some(k => labels.includes(k))) {
+            modifiers.gravity = 1.5;
+            modifiers.jump = 1.2;
+        }
+
+        // Slippery
+        const slipperyKeywords = ["ice", "snow", "oil", "soap", "glass", "slide", "skate", "jää", "lumi", "öljy", "saippua", "lasi", "luistele"];
+        if (slipperyKeywords.some(k => labels.includes(k))) {
+            modifiers.friction = 0.2; // 1.0 is normal, lower is more slippery
+        }
+
+        // Fast
+        const fastKeywords = ["fast", "speed", "quick", "rocket", "sonic", "bolt", "dash", "athlete", "run", "nopea", "vauhti", "raketti", "juoksu"];
+        if (fastKeywords.some(k => labels.includes(k))) {
+            modifiers.speed = 1.4;
+        }
+
+        return modifiers;
     }
 
     toggleMusic() {

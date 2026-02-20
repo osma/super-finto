@@ -62,8 +62,9 @@ export class MusicEngine {
         this.masterGain = null;
     }
 
-    init(seed, profile = null) {
+    init(seed, profile = null, complexity = 0) {
         this.profile = profile;
+        this.complexity = complexity; // 0 to 1 normally, can be higher
         if (!this.ctx) {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             this.ctx = new AudioContext();
@@ -96,6 +97,9 @@ export class MusicEngine {
             const [min, max] = this.profile.bpmRange;
             bpm = Math.floor(rnd() * (max - min)) + min;
         }
+
+        // Apply complexity to BPM: +10% for full complexity
+        bpm = Math.floor(bpm * (1.0 + this.complexity * 0.2));
 
         let scale = music.scales.minor;
         if (this.profile && this.profile.scales) {
@@ -150,11 +154,14 @@ export class MusicEngine {
                 }
             }
 
+            // Complexity affects chance of a generator being non-empty
+            const baseChance = 0.6 + (this.complexity * 0.4);
+
             if (type === 'bass') return choose([Generators.bass, Generators.bass2, Generators.emptyNote]);
-            if (type === 'arp') return rnd() < 0.7 ? Generators.arp : Generators.emptyNote;
-            if (type === 'melody') return rnd() < 0.7 ? Generators.melody1 : Generators.emptyNote;
+            if (type === 'arp') return rnd() < baseChance ? Generators.arp : Generators.emptyNote;
+            if (type === 'melody') return rnd() < baseChance ? Generators.melody1 : Generators.emptyNote;
             if (type === 'extra') return choose([Generators.emptyNote, Generators.arp, Generators.melody1]);
-            if (type === 'drum') return rnd() < 0.8 ? Generators.drum : Generators.emptyDrum;
+            if (type === 'drum') return rnd() < (baseChance + 0.1) ? Generators.drum : Generators.emptyDrum;
             return Generators.emptyNote;
         };
 

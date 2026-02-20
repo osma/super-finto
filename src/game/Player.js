@@ -94,10 +94,14 @@ export class Player {
         }
 
         // Horizontal Movement with acceleration
-        // Make it slightly faster and snappier in the air for better control
-        const currentSpeed = this.isBig ? this.speed * 1.2 : this.speed;
-        const currentAccel = this.grounded ? this.acceleration : this.acceleration * 1.5;
-        const currentFriction = this.grounded ? this.friction : 0.98; // Less horizontal drag in air
+        const mods = this.game.physicsModifiers || { speed: 1, friction: 1, gravity: 1, jump: 1 };
+
+        const currentSpeed = (this.isBig ? this.speed * 1.2 : this.speed) * mods.speed;
+        const currentAccel = (this.grounded ? this.acceleration : this.acceleration * 1.5) * mods.speed;
+
+        // Friction: 1.0 - (0.1 * mods.friction) -> if mods.friction is 0.2 (slippery), friction becomes 0.98
+        const baseFriction = this.grounded ? this.friction : 0.98;
+        const currentFriction = 1.0 - (1.0 - baseFriction) * mods.friction;
 
         if (this.isKneeling) {
             this.vx = 0;
@@ -113,15 +117,16 @@ export class Player {
         // Vertical Movement (Jump)
         const jumpPressed = input.isJumping();
         if (!this.isKneeling && jumpPressed && !this.lastJumpPressed && this.grounded) {
-            this.vy = -(this.isBig ? this.jumpForce * 1.05 : this.jumpForce);
+            const force = (this.isBig ? this.jumpForce * 1.05 : this.jumpForce) * mods.jump;
+            this.vy = -force;
             this.grounded = false;
         }
         this.lastJumpPressed = jumpPressed;
 
         // Apply Gravity (Variable for jump control)
-        let currentWeight = this.weight;
+        let currentWeight = this.weight * mods.gravity;
         if (this.vy < 0 && !jumpPressed) {
-            currentWeight = this.weight * 8; // 8x gravity if button released early for 1-tile hop
+            currentWeight *= 8; // 8x gravity if button released early for 1-tile hop
         }
         this.vy = Math.min(this.vy + currentWeight, this.maxFallSpeed);
         this.y += this.vy;
