@@ -154,8 +154,8 @@ body {
 }
 
 #tree-container {
-    width: 160px;
-    height: 200px;
+    width: 440px;
+    height: 400px;
     background: var(--glass);
     backdrop-filter: blur(4px);
     border-radius: 16px;
@@ -168,8 +168,8 @@ body {
 }
 
 #tree-canvas {
-    width: 140px;
-    height: 160px;
+    width: 400px;
+    height: 350px;
     image-rendering: pixelated;
 }
 

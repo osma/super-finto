@@ -23,7 +23,7 @@ export class Game {
         this.musicEngine = new MusicEngine();
         this.musicStarted = false;
         this.lifeTree = new LifeTree(this);
-        this.leavesCollected = parseInt(localStorage.getItem('finto_leaves')) || 0;
+        this.leavesCollected = 0;
         this.lifeTree.setLeafCount(this.leavesCollected);
 
         this.camera = { x: 0, y: 0 };
@@ -710,9 +710,6 @@ export class Game {
         this.leavesCollected++;
         this.lifeTree.setLeafCount(this.leavesCollected);
         console.log(`Leaf collected! Total: ${this.leavesCollected}`);
-
-        // Save progress (optional, but good for growth)
-        localStorage.setItem('finto_leaves', this.leavesCollected);
     }
 
     toggleMusic() {
