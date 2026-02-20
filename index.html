@@ -16,8 +16,15 @@
         <div id="game-container">
             <div id="ui-layer">
                 <div class="stat-box">
-                    <span class="label">SCORE</span>
-                    <span id="score">00000</span>
+                    <div style="display: flex; gap: 10px; align-items: baseline; justify-content: center;">
+                        <span class="label" style="margin-bottom: 0;">SCORE</span>
+                        <span id="score">00000</span>
+                    </div>
+                    <div
+                        style="display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 2px;">
+                        <span id="coin-symbol" style="color: #ffeb3b; font-size: 0.8rem;">●</span>
+                        <span id="coins-counter" class="label" style="margin-bottom: 0;">x 0</span>
+                    </div>
                     <span id="lives-counter" class="label" style="margin-top: 5px; color: white;">FINTO x 3</span>
                 </div>
                 <div class="stat-box center-box">

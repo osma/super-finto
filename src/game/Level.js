@@ -1393,7 +1393,7 @@ export class Level {
                                         const brickCenterX = px + this.tileSize / 2;
                                         if (Math.abs(coinCenterX - brickCenterX) < 20 &&
                                             Math.abs(coin.y + coin.size - py) < 10) {
-                                            this.game.addScore(200);
+                                            this.game.addCoin();
                                             if (this.game.sfxEngine) this.game.sfxEngine.playCoin();
                                             this.coins.splice(c, 1);
                                         }
@@ -1425,7 +1425,7 @@ export class Level {
                                 } else {
                                     // Spawning Floating Coin Animation
                                     this.particles.push(new FloatingCoin(px + 10, py - 10));
-                                    this.game.addScore(200);
+                                    this.game.addCoin();
                                     if (this.game.sfxEngine) this.game.sfxEngine.playCoin();
                                 }
 
@@ -1484,7 +1484,7 @@ export class Level {
                 player.y + player.height > coin.y) {
 
                 // Collect!
-                this.game.addScore(200);
+                this.game.addCoin();
                 if (this.game.sfxEngine) this.game.sfxEngine.playCoin();
                 this.coins.splice(i, 1);
             }

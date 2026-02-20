@@ -32,6 +32,7 @@ export class Game {
         this.camera = { x: 0, y: 0 };
         this.lastTime = 0;
         this.score = 0;
+        this.coins = 0;
         this.world = "yso:-";
         this.concept = null;
         this.levelWidth = 800;
@@ -348,10 +349,21 @@ export class Game {
         if (svEl) svEl.textContent = `SV: ${this.concept.label_sv || '-'}`;
         if (enEl) enEl.textContent = `EN: ${this.concept.label_en || '-'}`;
 
+        const coinsEl = document.getElementById('coins-counter');
+        if (coinsEl) {
+            coinsEl.textContent = `x ${this.coins}`;
+        }
+
         const livesEl = document.getElementById('lives-counter');
         if (livesEl) {
             livesEl.textContent = `FINTO x ${this.lives}`;
         }
+    }
+
+    addCoin() {
+        this.coins++;
+        this.addScore(200);
+        this.updateHUD();
     }
 
     addScore(points) {
@@ -670,6 +682,7 @@ export class Game {
             if (this.input.isJumping() || this.input.isPressed('Enter')) {
                 this.lives = 3;
                 this.score = 0;
+                this.coins = 0;
                 this.leavesCollected = 0;
                 this.collectedLeafUris.clear();
                 this.lifeTree.setLeafCount(this.leavesCollected);
