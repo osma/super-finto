@@ -1377,6 +1377,7 @@ export class Level {
                                     enemy.deathType = 'flip';
                                     enemy.vy = -5; // Pop up animation
                                     this.game.addScore(400);
+                                    if (this.game.sfxEngine) this.game.sfxEngine.playStomp();
                                 }
                             });
 
