@@ -596,12 +596,14 @@ export class Level {
             }
         }
         // --- SPAWN LEAF (For Leaf Node Levels) ---
-        if (narrowerCount === 0) {
+        if (narrowerCount === 0 && this.game.concept && !this.game.collectedLeafUris.has(this.game.concept.uri)) {
             const groundRow = Math.floor((this.game.height - 40) / this.tileSize);
             const leafX = this.game.levelWidth - 100;
             const leafY = (groundRow * this.tileSize) - 40;
             this.leaves.push(new Leaf(leafX, leafY));
             console.log("Leaf spawned at:", leafX, leafY);
+        } else if (narrowerCount === 0) {
+            console.log("Leaf already collected for this concept.");
         }
 
         // Render static geometry to cache

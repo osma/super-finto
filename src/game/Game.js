@@ -24,6 +24,7 @@ export class Game {
         this.musicStarted = false;
         this.lifeTree = new LifeTree(this);
         this.leavesCollected = 0;
+        this.collectedLeafUris = new Set();
         this.lifeTree.setLeafCount(this.leavesCollected);
 
         this.camera = { x: 0, y: 0 };
@@ -707,6 +708,9 @@ export class Game {
     }
 
     addLeaf() {
+        if (this.concept && this.concept.uri) {
+            this.collectedLeafUris.add(this.concept.uri);
+        }
         this.leavesCollected++;
         this.lifeTree.setLeafCount(this.leavesCollected);
         console.log(`Leaf collected! Total: ${this.leavesCollected}`);
