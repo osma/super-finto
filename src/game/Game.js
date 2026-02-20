@@ -3,6 +3,7 @@ import { Player } from './Player.js';
 import { Level } from './Level.js';
 import { PALETTES } from './Palettes.js';
 import { MusicEngine } from '../audio/MusicEngine.js';
+import { SFXEngine } from '../audio/SFXEngine.js';
 import { LifeTree } from './LifeTree.js';
 
 export class Game {
@@ -21,6 +22,7 @@ export class Game {
 
         // Audio
         this.musicEngine = new MusicEngine();
+        this.sfxEngine = new SFXEngine();
         this.musicStarted = false;
         this.lifeTree = new LifeTree(this);
         this.leavesCollected = 0;
@@ -95,6 +97,8 @@ export class Game {
             pipeY: pipeY
         };
 
+        this.sfxEngine.playPipe();
+
         // Align player on pipe for the animation
         if (direction === 'down') {
             this.player.x = pipeX + 80 / 2 - this.player.width / 2;
@@ -117,6 +121,7 @@ export class Game {
             pipeX: x,
             pipeY: y
         };
+        this.sfxEngine.playPipe();
     }
 
     loadConcept(conceptKey, sourceUri = null) {
@@ -254,6 +259,7 @@ export class Game {
                     this.transition.pipeX = pipeX;
                     this.transition.pipeY = groundY - 40;
                     this.transition.direction = 'down';
+                    this.sfxEngine.playPipe();
 
                     // Start DEEP inside pipe
                     this.player.x = pipeX + pipeWidth / 2 - this.player.width / 2;
@@ -272,6 +278,7 @@ export class Game {
                     this.transition.pipeX = 0;
                     this.transition.pipeY = y;
                     this.transition.direction = 'right';
+                    this.sfxEngine.playPipe();
 
                     // Start DEEP inside pipe (Left of 0)
                     this.player.x = -this.player.width;
@@ -290,6 +297,7 @@ export class Game {
                     this.transition.pipeX = this.levelWidth;
                     this.transition.pipeY = y;
                     this.transition.direction = 'left';
+                    this.sfxEngine.playPipe();
 
                     // Start DEEP inside pipe (Right of Width)
                     this.player.x = this.levelWidth;
@@ -535,6 +543,7 @@ export class Game {
                     if (this.musicStarted) {
                         this.musicEngine.stop();
                     }
+                    this.sfxEngine.playGameOver();
                 } else {
                     this.level.respawnPlayer(); // Respawn while screen is black
                 }
@@ -769,6 +778,9 @@ export class Game {
     }
 
     toggleMusic() {
+        // Initialize SFX audio context on first user interaction as well
+        this.sfxEngine.init();
+
         if (!this.musicStarted) {
             this.musicEngine.start();
             this.musicStarted = true;

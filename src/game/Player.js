@@ -55,6 +55,8 @@ export class Player {
         this.isBig = false;
         this.height = 40;
         this.width = 30;
+
+        if (this.game.sfxEngine) this.game.sfxEngine.playDeath();
     }
 
     grow() {
@@ -62,6 +64,8 @@ export class Player {
 
         this.isBig = true;
         this.width = 40;
+
+        if (this.game.sfxEngine) this.game.sfxEngine.playGrow();
 
         // If already kneeling, grow to half of big height
         if (this.isKneeling) {
@@ -134,6 +138,7 @@ export class Player {
             this.vy = -force;
             this.grounded = false;
             this.canGlide = true; // Allow gliding after jumping
+            if (this.game.sfxEngine) this.game.sfxEngine.playJump();
         }
 
         // --- GLIDE LOGIC ---
@@ -149,6 +154,12 @@ export class Player {
             } else {
                 this.glideTimer -= deltaTime;
                 this.vy = 0; // Hold position in air
+
+                // Play glide SFX roughly every 100ms
+                if (!this.lastGlideSfx || Date.now() - this.lastGlideSfx > 100) {
+                    if (this.game.sfxEngine) this.game.sfxEngine.playGlide();
+                    this.lastGlideSfx = Date.now();
+                }
             }
         }
 
@@ -180,6 +191,8 @@ export class Player {
         const oldHeight = this.height;
         this.width = 30; // Reset to small hitbox width
         this.height = 40; // Reset to small hitbox height
+
+        if (this.game.sfxEngine) this.game.sfxEngine.playShrink();
 
         // Correct position so feet stay grounded
         // If big and NOT kneeling, height was 80. (80-40) = 40.

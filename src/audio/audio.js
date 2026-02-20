@@ -43,9 +43,9 @@ function Audio(ctx) {
     }
 
     function SquareSynth(pan = 0) {
-        const set = (a, v) => { a.cancelScheduledValues(ctx.currentTime); a.setValueAtTime(v, ctx.currentTime); };
-        const towards = (a, v, t) => { a.setTargetAtTime(t, ctx.currentTime, t); };
-        const slide = (a, v, t) => { a.cancelScheduledValues(ctx.currentTime); a.setTargetAtTime(v, ctx.currentTime, t); };
+        const set = (a, v) => { a.cancelScheduledValues(ctx.currentTime); a.setValueAtTime(isFinite(v) ? v : 0, ctx.currentTime); };
+        const towards = (a, v, t) => { a.setTargetAtTime(isFinite(v) ? v : 0, ctx.currentTime, Math.max(0.01, isFinite(t) ? t : 0.01)); };
+        const slide = (a, v, t) => { a.cancelScheduledValues(ctx.currentTime); a.setTargetAtTime(isFinite(v) ? v : 0, ctx.currentTime, Math.max(0.01, isFinite(t) ? t : 0.01)); };
 
         const wavetableTrigger = oscillatorNode("sawtooth");
         const pulseWavetable = waveShaperNode(new Float32Array(256).fill(-1, 0, 128).fill(1, 128, 256));

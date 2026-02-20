@@ -7,6 +7,11 @@ export class InputHandler {
         this.game = game;
 
         window.addEventListener('keydown', (e) => {
+            if (this.game && this.game.sfxEngine) {
+                // Initialize SFX audio context on user gesture
+                this.game.sfxEngine.init();
+            }
+
             this.keys.add(e.key.toLowerCase());
 
             if (e.key.toLowerCase() === 'm' && this.game) {

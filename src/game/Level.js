@@ -928,6 +928,7 @@ export class Level {
                         enemy.isDead = true;
                         enemy.deathType = 'squash';
                         this.game.addScore(400);
+                        if (this.game.sfxEngine) this.game.sfxEngine.playStomp();
                         player.vy = -8; // Small bounce
                         player.grounded = false;
                     } else if (player.invulnerableTimer <= 0) {
@@ -960,6 +961,7 @@ export class Level {
 
                 // Collect!
                 this.game.addLeaf();
+                if (this.game.sfxEngine) this.game.sfxEngine.playLeaf();
                 this.leaves.splice(i, 1);
             }
         }
@@ -1391,6 +1393,7 @@ export class Level {
                                         if (Math.abs(coinCenterX - brickCenterX) < 20 &&
                                             Math.abs(coin.y + coin.size - py) < 10) {
                                             this.game.addScore(200);
+                                            if (this.game.sfxEngine) this.game.sfxEngine.playCoin();
                                             this.coins.splice(c, 1);
                                         }
                                     }
@@ -1422,6 +1425,7 @@ export class Level {
                                     // Spawning Floating Coin Animation
                                     this.particles.push(new FloatingCoin(px + 10, py - 10));
                                     this.game.addScore(200);
+                                    if (this.game.sfxEngine) this.game.sfxEngine.playCoin();
                                 }
 
                                 // Trigger Bump Animation with the new sprite
@@ -1480,6 +1484,7 @@ export class Level {
 
                 // Collect!
                 this.game.addScore(200);
+                if (this.game.sfxEngine) this.game.sfxEngine.playCoin();
                 this.coins.splice(i, 1);
             }
         }
