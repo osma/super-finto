@@ -85,23 +85,47 @@ export class Level {
         canvas.height = 40;
         const ctx = canvas.getContext('2d');
 
-        // Draw a golden leaf
-        ctx.fillStyle = '#facc15'; // Golden yellow
-        ctx.beginPath();
-        ctx.moveTo(20, 5);
-        ctx.quadraticCurveTo(35, 5, 35, 20);
-        ctx.quadraticCurveTo(35, 35, 20, 35);
-        ctx.quadraticCurveTo(5, 35, 5, 20);
-        ctx.quadraticCurveTo(5, 5, 20, 5);
-        ctx.fill();
+        // 16-bit style retro green leaf, tilted
+        const pixelSize = 2; // 16x16 scaled by 2 is 32x32
 
-        // Leaf vein
-        ctx.strokeStyle = '#a16207';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(20, 35);
-        ctx.lineTo(20, 5);
-        ctx.stroke();
+        const leafPixels = [
+            "              0 ",
+            "             010",
+            "            0110",
+            "          001210",
+            "         0111100",
+            "       0011x1110",
+            "      0111xx110 ",
+            "    00111xx11100",
+            "   01111xx111110",
+            " 00111xxx111100 ",
+            "01111xx1111110  ",
+            "0111xx1111100   ",
+            "01111111100     ",
+            " 00111100       ",
+            "   0000         ",
+            "  00            ",
+        ];
+
+        const colors = {
+            '0': '#064e3b', // Dark green outline
+            '1': '#22c55e', // Main bright green
+            '2': '#86efac', // Pale green highlight
+            'x': '#15803d'  // Darker green vein
+        };
+
+        const offsetX = 4;
+        const offsetY = 4;
+
+        for (let y = 0; y < leafPixels.length; y++) {
+            for (let x = 0; x < leafPixels[y].length; x++) {
+                const char = leafPixels[y][x];
+                if (colors[char]) {
+                    ctx.fillStyle = colors[char];
+                    ctx.fillRect(offsetX + x * pixelSize, offsetY + y * pixelSize, pixelSize, pixelSize);
+                }
+            }
+        }
 
         this.tileCache['leaf'] = canvas;
     }
