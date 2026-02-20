@@ -314,25 +314,6 @@ export class Game {
         if (fiEl) fiEl.textContent = `FI: ${this.concept.label_fi || '-'}`;
         if (svEl) svEl.textContent = `SV: ${this.concept.label_sv || '-'}`;
         if (enEl) enEl.textContent = `EN: ${this.concept.label_en || '-'}`;
-
-        // Palette Display
-        let paletteEl = document.getElementById('palette-display');
-        if (!paletteEl) {
-            const scoreEl = document.getElementById('score');
-            if (scoreEl && scoreEl.parentNode) {
-                paletteEl = document.createElement('div');
-                paletteEl.id = 'palette-display';
-                paletteEl.style.fontSize = '14px';
-                paletteEl.style.color = '#ccc'; // Default
-                paletteEl.style.marginTop = '5px';
-                paletteEl.style.textAlign = 'center';
-                scoreEl.parentNode.insertBefore(paletteEl, scoreEl.nextSibling);
-            }
-        }
-        if (paletteEl && this.currentPalette) {
-            paletteEl.textContent = this.currentPalette.name;
-            paletteEl.style.color = this.currentPalette.player.tunic; // Match player tunic
-        }
     }
 
     addScore(points) {
