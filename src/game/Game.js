@@ -53,8 +53,9 @@ export class Game {
         };
         this.transition = {
             active: false,
-            state: 'none', // 'pipe_out', 'loading', 'pipe_in'
+            state: 'none', // 'pipe_out', 'transition_screen', 'pipe_in'
             targetUri: null,
+            targetConcept: null, // Store data before loading
             timer: 0,
             pipeX: 0,
             pipeY: 0
@@ -137,9 +138,9 @@ export class Game {
         this.concept = {
             id: conceptKey.split('/').pop(),
             uri: conceptKey,
-            label_fi: conceptData.label_fi,
-            label_sv: conceptData.label_sv,
-            label_en: conceptData.label_en,
+            label_fi: conceptData.label_fi || '-',
+            label_sv: conceptData.label_sv || '-',
+            label_en: conceptData.label_en || '-',
             related: (conceptData.related || []).map(uri => {
                 const relatedConcept = this.allConcepts[uri];
                 return {
@@ -421,38 +422,72 @@ export class Game {
             const speed = 2; // Pixel per frame movement for animation
 
             if (this.transition.state === 'pipe_out') {
+                let readyToTransition = false;
                 if (this.transition.direction === 'down') {
                     // Moving Down
                     this.player.y += speed;
 
                     const groundY = this.height - 40; // Align with Level.js
                     if (this.player.y > groundY) {
-                        this.transition.state = 'loading';
-                        this.loadConcept(this.transition.targetUri, this.concept.uri);
+                        readyToTransition = true;
                     }
                 } else if (this.transition.direction === 'left') {
                     // Moving Left
                     this.player.x -= speed;
                     if (this.player.x < 20) {
-                        this.transition.state = 'loading';
-                        this.loadConcept(this.transition.targetUri, this.concept.uri);
+                        readyToTransition = true;
                     }
                 } else if (this.transition.direction === 'right') {
                     // Moving Right
                     this.player.x += speed;
                     const lw = this.levelWidth;
                     if (this.player.x > lw - 60) {
-                        this.transition.state = 'loading';
-                        this.loadConcept(this.transition.targetUri, this.concept.uri);
+                        readyToTransition = true;
                     }
                 } else if (this.transition.direction === 'up') {
                     // Whirlwind Return
                     this.player.y -= speed * 5;
                     this.player.vy = -10;
                     if (this.player.y < -200) {
-                        this.transition.state = 'loading';
-                        this.loadConcept(this.transition.targetUri, this.concept.uri);
+                        readyToTransition = true;
                     }
+                }
+
+                if (readyToTransition) {
+                    this.transition.state = 'transition_screen';
+                    this.transition.timer = 2000; // 2 seconds
+
+                    // Prepare Overlay text
+                    const targetData = this.allConcepts[this.transition.targetUri];
+                    const targetId = this.transition.targetUri.split('/').pop();
+                    const targetLabel = targetData ? (targetData.label_en || targetData.label_fi || targetData.label_sv || 'Unknown') : 'Unknown';
+
+                    const titleEl = document.getElementById('transition-title');
+                    const subtitleEl = document.getElementById('transition-subtitle');
+                    const livesEl = document.getElementById('transition-lives');
+
+                    if (titleEl) titleEl.textContent = `yso:${targetId}`;
+                    if (subtitleEl) subtitleEl.textContent = targetLabel;
+                    if (livesEl) livesEl.textContent = `FINTO x ${this.lives}`;
+
+                    const overlayEl = document.getElementById('transition-overlay');
+                    if (overlayEl) overlayEl.classList.remove('hidden');
+
+                    if (this.musicStarted) {
+                        this.musicEngine.stop();
+                    }
+                }
+                return; // SKIP normal update
+            }
+            else if (this.transition.state === 'transition_screen') {
+                this.transition.timer -= deltaTime;
+                if (this.transition.timer <= 0) {
+                    const overlayEl = document.getElementById('transition-overlay');
+                    if (overlayEl) overlayEl.classList.add('hidden');
+
+                    // Actually load the level geometry now
+                    this.loadConcept(this.transition.targetUri, this.concept.uri);
+                    // loadConcept sets transition.state to 'pipe_in', so we continue
                 }
                 return; // SKIP normal update
             }

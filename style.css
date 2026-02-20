@@ -145,6 +145,36 @@ body {
     -webkit-text-fill-color: transparent;
 }
 
+#transition-overlay {
+    position: absolute;
+    inset: 0;
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 20;
+    transition: opacity 0.5s ease;
+}
+
+#transition-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.transition-content {
+    text-align: center;
+    color: white;
+}
+
+#transition-title,
+#transition-subtitle,
+#transition-lives {
+    font-size: 1.5rem;
+    /* Ensure all text is the same size per request */
+    margin: 15px 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
 .key {
     background: var(--text);
     color: var(--bg-dark);
