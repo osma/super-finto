@@ -42,6 +42,8 @@ export class Game {
 
         // Game State
         this.isGameOver = false;
+        this.lives = 3;
+
         this.deathOverlay = {
             opacity: 0,
             state: 'none' // 'none', 'fading_out', 'fading_in'
@@ -337,6 +339,11 @@ export class Game {
         if (fiEl) fiEl.textContent = `FI: ${this.concept.label_fi || '-'}`;
         if (svEl) svEl.textContent = `SV: ${this.concept.label_sv || '-'}`;
         if (enEl) enEl.textContent = `EN: ${this.concept.label_en || '-'}`;
+
+        const livesEl = document.getElementById('lives-counter');
+        if (livesEl) {
+            livesEl.textContent = `FINTO x ${this.lives}`;
+        }
     }
 
     addScore(points) {
@@ -516,7 +523,19 @@ export class Game {
             if (this.deathOverlay.opacity >= 1) {
                 this.deathOverlay.opacity = 1;
                 this.deathOverlay.state = 'fading_in';
-                this.level.respawnPlayer(); // Respawn while screen is black
+
+                // Decrement life and check for game over
+                this.lives--;
+                this.updateHUD();
+
+                if (this.lives === 0) {
+                    this.isGameOver = true;
+                    document.getElementById('overlay').classList.remove('hidden');
+                    // Stop music
+                    this.musicEngine.setParam(this.musicEngine.volumeNode.gain, 0.0);
+                } else {
+                    this.level.respawnPlayer(); // Respawn while screen is black
+                }
             }
         } else if (this.deathOverlay.state === 'fading_in') {
             this.deathOverlay.opacity -= 0.01;
@@ -635,12 +654,40 @@ export class Game {
         const deltaTime = timeStamp - this.lastTime;
         this.lastTime = timeStamp;
 
-        this.update(deltaTime);
+        if (this.isGameOver) {
+            // Handle restart input
+            if (this.input.isJumping() || this.input.isPressed('Enter')) {
+                this.lives = 3;
+                this.score = 0;
+                this.leavesCollected = 0;
+                this.collectedLeafUris.clear();
+                this.lifeTree.setLeafCount(this.leavesCollected);
+                this.isGameOver = false;
+                this.deathOverlay.state = 'none';
+                this.deathOverlay.opacity = 0;
+                document.getElementById('overlay').classList.add('hidden');
+                this.updateHUD(); // Reset lives/score display
+
+                // Reset score HUD specifically (since updateHUD doesn't update score)
+                const scoreEl = document.getElementById('score');
+                if (scoreEl) scoreEl.textContent = '00000';
+
+                // Pick a random starting concept again
+                const keys = Object.keys(this.allConcepts);
+                const startKey = keys[Math.floor(Math.random() * keys.length)];
+                this.loadConcept(startKey);
+
+                if (this.musicStarted) {
+                    this.musicEngine.setParam(this.musicEngine.volumeNode.gain, 0.5);
+                }
+            }
+        } else {
+            this.update(deltaTime);
+        }
+
         this.draw();
 
-        if (!this.isGameOver) {
-            requestAnimationFrame(this.animate);
-        }
+        requestAnimationFrame(this.animate);
     }
 
     drawDefaultBackground(ctx) {
