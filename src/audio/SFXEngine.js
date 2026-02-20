@@ -235,4 +235,11 @@ export class SFXEngine {
             osc.stop(t + (i + 1) * 0.4 + 0.2);
         });
     }
+
+    playCrush() {
+        // Short crunchy noise for breaking bricks - making it more prominent
+        if (!this.ctx) return;
+        this._playNoise(0.15, 'short'); // High snap
+        this._playTone(200, 'square', 0.1, 50); // Low thud
+    }
 }

@@ -1393,6 +1393,7 @@ export class Level {
                             if (type === 'brick') {
                                 if (player.isBig) {
                                     this.game.addScore(50);
+                                    if (this.game.sfxEngine) this.game.sfxEngine.playCrush();
                                     this.createExplosion(px, py);
 
                                     // Check for Coin ABOVE this brick
