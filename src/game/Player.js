@@ -17,6 +17,10 @@ export class Player {
         this.grounded = false;
         this.lastJumpPressed = false;
         this.invulnerableTimer = 0;
+        this.glideTimer = 0;
+        this.maxGlideTime = 300; // 0.3 seconds
+        this.isGliding = false;
+        this.canGlide = false;
 
         // Visual properties
         this.color = '#f472b6'; // Pinkish accent
@@ -37,6 +41,9 @@ export class Player {
         this.vy = 0;
         this.invulnerableTimer = 0;
         this.grounded = false;
+        this.glideTimer = 0;
+        this.isGliding = false;
+        this.canGlide = false;
     }
 
     die() {
@@ -96,8 +103,14 @@ export class Player {
         // Horizontal Movement with acceleration
         const mods = this.game.physicsModifiers || { speed: 1, friction: 1, gravity: 1, jump: 1 };
 
-        const currentSpeed = (this.isBig ? this.speed * 1.2 : this.speed) * mods.speed;
-        const currentAccel = (this.grounded ? this.acceleration : this.acceleration * 1.5) * mods.speed;
+        let currentSpeed = (this.isBig ? this.speed * 1.2 : this.speed) * mods.speed;
+        let currentAccel = (this.grounded ? this.acceleration : this.acceleration * 1.5) * mods.speed;
+
+        // Boost speed and accel during glide to ensure 4-tile gap can be crossed
+        if (this.isGliding) {
+            currentSpeed *= 1.5; // Boost from 2.0 to 3.0 (+ modifiers)
+            currentAccel *= 2.0;
+        }
 
         // Friction: 1.0 - (0.1 * mods.friction) -> if mods.friction is 0.2 (slippery), friction becomes 0.98
         const baseFriction = this.grounded ? this.friction : 0.98;
@@ -120,16 +133,42 @@ export class Player {
             const force = (this.isBig ? this.jumpForce * 1.05 : this.jumpForce) * mods.jump;
             this.vy = -force;
             this.grounded = false;
+            this.canGlide = true; // Allow gliding after jumping
         }
+
+        // --- GLIDE LOGIC ---
+        if (!this.grounded && jumpPressed && this.canGlide && this.vy >= -1) {
+            this.isGliding = true;
+            this.canGlide = false; // Only one glide per jump
+            this.glideTimer = this.maxGlideTime;
+        }
+
+        if (this.isGliding) {
+            if (!jumpPressed || this.glideTimer <= 0) {
+                this.isGliding = false;
+            } else {
+                this.glideTimer -= deltaTime;
+                this.vy = 0; // Hold position in air
+            }
+        }
+
         this.lastJumpPressed = jumpPressed;
 
         // Apply Gravity (Variable for jump control)
-        let currentWeight = this.weight * mods.gravity;
-        if (this.vy < 0 && !jumpPressed) {
-            currentWeight *= 8; // 8x gravity if button released early for 1-tile hop
+        if (!this.isGliding) {
+            let currentWeight = this.weight * mods.gravity;
+            if (this.vy < 0 && !jumpPressed) {
+                currentWeight *= 8; // 8x gravity if button released early for 1-tile hop
+            }
+            this.vy = Math.min(this.vy + currentWeight, this.maxFallSpeed);
         }
-        this.vy = Math.min(this.vy + currentWeight, this.maxFallSpeed);
+
         this.y += this.vy;
+
+        if (this.grounded) {
+            this.isGliding = false;
+            this.canGlide = false;
+        }
 
         // Screen Boundaries
         if (this.x < 0) this.x = 0;
