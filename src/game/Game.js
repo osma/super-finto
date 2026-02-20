@@ -532,7 +532,9 @@ export class Game {
                     this.isGameOver = true;
                     document.getElementById('overlay').classList.remove('hidden');
                     // Stop music
-                    this.musicEngine.setParam(this.musicEngine.volumeNode.gain, 0.0);
+                    if (this.musicStarted) {
+                        this.musicEngine.stop();
+                    }
                 } else {
                     this.level.respawnPlayer(); // Respawn while screen is black
                 }
@@ -665,6 +667,9 @@ export class Game {
                 this.isGameOver = false;
                 this.deathOverlay.state = 'none';
                 this.deathOverlay.opacity = 0;
+                this.player.reset(); // Stop player from dying
+                this.player.vy = 0;
+                this.player.vx = 0;
                 document.getElementById('overlay').classList.add('hidden');
                 this.updateHUD(); // Reset lives/score display
 
@@ -678,7 +683,7 @@ export class Game {
                 this.loadConcept(startKey);
 
                 if (this.musicStarted) {
-                    this.musicEngine.setParam(this.musicEngine.volumeNode.gain, 0.5);
+                    this.musicEngine.start();
                 }
             }
         } else {
