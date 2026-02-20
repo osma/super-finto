@@ -571,7 +571,7 @@ export class Game {
             const totalHeight = this.height - y;
             const capHeight = 15;
 
-            this.ctx.fillStyle = '#16a34a'; // Green
+            this.ctx.fillStyle = this.currentPalette.pipe.dark; // Match palette
             this.ctx.fillRect(x, y + capHeight, pipeWidth, totalHeight - capHeight);
 
             // Borders
