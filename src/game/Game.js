@@ -56,8 +56,13 @@ export class Game {
 
     async init() {
         try {
-            const response = await fetch('/src/assets/data/yso.json');
-            this.allConcepts = await response.json();
+            const [ysoRes, paletteRes] = await Promise.all([
+                fetch('/src/assets/data/yso.json'),
+                fetch('/src/assets/data/palettes.json')
+            ]);
+
+            this.allConcepts = await ysoRes.json();
+            this.paletteMapping = await paletteRes.json();
 
             // Pick a random starting concept
             const keys = Object.keys(this.allConcepts);
@@ -65,7 +70,7 @@ export class Game {
 
             this.loadConcept(startKey);
         } catch (error) {
-            console.error("Failed to load YSO concepts:", error);
+            console.error("Failed to load game data:", error);
         }
     }
 
@@ -149,10 +154,17 @@ export class Game {
             wikidata: conceptData.wikidata || []
         };
 
-        // Select Random Palette
-        const paletteKeys = Object.keys(PALETTES);
-        const randomKey = paletteKeys[Math.floor(Math.random() * paletteKeys.length)];
-        this.currentPalette = PALETTES[randomKey];
+        // Select Palette from mapping
+        let paletteKey = this.paletteMapping ? this.paletteMapping[this.concept.id] : null;
+
+        // Fallback to random if mapping is missing or doesn't exist
+        if (!paletteKey || !PALETTES[paletteKey]) {
+            const paletteKeys = Object.keys(PALETTES);
+            paletteKey = paletteKeys[Math.floor(Math.random() * paletteKeys.length)];
+            console.log("No mapping found for concept, chose random palette:", paletteKey);
+        }
+
+        this.currentPalette = PALETTES[paletteKey];
         console.log("Selected Palette:", this.currentPalette.name);
 
         this.level.setPalette(this.currentPalette);
