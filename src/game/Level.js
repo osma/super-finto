@@ -294,6 +294,8 @@ export class Level {
         this.coins = [];
         this.enemies = [];
         this.leaves = [];
+        this.parcels = [];
+        this.parcelAssignments.clear();
         this.groundGaps = [];
         if (!seedUri) return;
 
