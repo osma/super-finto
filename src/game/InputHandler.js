@@ -22,6 +22,10 @@ export class InputHandler {
             if (e.key.toLowerCase() === 'p' && this.game) {
                 this.game.togglePause();
             }
+
+            if (e.key.toLowerCase() === 'q' && this.game) {
+                this.game.goToStartupScreen();
+            }
         });
 
         window.addEventListener('keyup', (e) => {

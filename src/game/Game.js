@@ -868,8 +868,12 @@ export class Game {
             this.musicEngine.stop();
         }
 
+        // Hide overlays
         const startupEl = document.getElementById('startup-overlay');
+        const deathOverlayEl = document.getElementById('overlay');
         if (startupEl) startupEl.classList.remove('hidden');
+        if (deathOverlayEl) deathOverlayEl.classList.add('hidden');
+
         // main.js will handle re-creating StartupScreen and re-starting the game
         // Dispatch a custom event so main.js can pick it up
         window.dispatchEvent(new CustomEvent('superfinto:returnToStartup'));
