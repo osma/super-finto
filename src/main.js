@@ -19,6 +19,9 @@ function showStartupScreen() {
         // Create and start game
         activeGame = new Game(lang);
         activeGame.start();
+        // The language-select gesture (Enter/Space) already unlocked the AudioContext,
+        // so we can start music immediately.
+        activeGame.startMusicAutoplay();
     });
 }
 

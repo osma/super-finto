@@ -212,6 +212,11 @@ export class Game {
         // Complexity based on number of narrower concepts (0.0 to 1.0)
         const complexity = Math.min(1.0, (this.concept.narrower?.length || 0) / 10);
         this.musicEngine.init(conceptKey, this.currentPalette.music, complexity);
+        // Start music (or restart for a new level). The first call is a no-op if
+        // the AudioContext hasn't been unlocked yet by a user gesture.
+        if (this.musicStarted) {
+            this.musicEngine.start();
+        }
 
         // Load Background (Custom jpg or fallback to sky)
         const conceptId = conceptKey.split('/').pop();
@@ -495,7 +500,7 @@ export class Game {
                     if (overlayEl) overlayEl.classList.remove('hidden');
 
                     if (this.musicStarted) {
-                        this.musicEngine.stop();
+                        this.musicEngine.fadeOut(1.5);
                     }
                 }
                 return; // SKIP normal update
@@ -833,6 +838,12 @@ export class Game {
     goToStartupScreen() {
         // Stop the animation loop by flagging — and show startup overlay
         cancelAnimationFrame(this._animFrameId);
+
+        // Stop music
+        if (this.musicStarted) {
+            this.musicEngine.stop();
+        }
+
         const startupEl = document.getElementById('startup-overlay');
         if (startupEl) startupEl.classList.remove('hidden');
         // main.js will handle re-creating StartupScreen and re-starting the game
@@ -841,14 +852,26 @@ export class Game {
     }
 
     toggleMusic() {
-        // Initialize SFX audio context on first user interaction as well
+        // Initialize SFX audio context on first user interaction
         this.sfxEngine.init();
 
         if (!this.musicStarted) {
+            // First M press: unlock and start music
             this.musicEngine.start();
             this.musicStarted = true;
-            return false; // Not muted
+            return false; // not muted
         }
         return this.musicEngine.toggleMute();
+    }
+
+    /**
+     * Called once after the startup screen's language-select gesture unlocks audio.
+     * Starts music immediately without waiting for M press.
+     */
+    startMusicAutoplay() {
+        if (this.musicStarted) return;
+        this.sfxEngine.init();
+        this.musicEngine.start();
+        this.musicStarted = true;
     }
 }

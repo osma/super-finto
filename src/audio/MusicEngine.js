@@ -74,7 +74,7 @@ export class MusicEngine {
             this.masterGain.gain.value = 0.5; // Default volume
             this.masterGain.connect(this.ctx.destination);
 
-            this.au = Audio(this.ctx);
+            this.au = Audio(this.ctx, this.masterGain);
             this.synths = [
                 this.au.SquareSynth(),
                 this.au.SquareSynth(-0.5),
@@ -193,30 +193,74 @@ export class MusicEngine {
     }
 
     start() {
-        if (this.ctx && this.ctx.state === 'suspended') {
+        if (!this.ctx) return;
+        if (this.ctx.state === 'suspended') {
             this.ctx.resume();
+        }
+
+        // Cancel any pending fade-out stops
+        if (this._fadeTimeout) {
+            clearTimeout(this._fadeTimeout);
+            this._fadeTimeout = null;
+        }
+
+        // Restore gain (un-mute if muted, undo any fade)
+        if (!this.isMuted) {
+            this.masterGain.gain.cancelScheduledValues(this.ctx.currentTime);
+            this.masterGain.gain.setTargetAtTime(0.5, this.ctx.currentTime, 0.1);
         }
         if (!this.isPlaying) {
             this.isPlaying = true;
+            this.clock.set(this.state.bpm, (f) => this.frame(f));
+        } else {
+            // Already playing — restart clock with fresh patterns for new level
+            this.clock.stop();
             this.clock.set(this.state.bpm, (f) => this.frame(f));
         }
     }
 
     stop() {
+        // Stops the clock and silences gain but does NOT suspend the AudioContext.
+        // This avoids the stuck-note bug caused by interleaving suspend() and resume().
         this.isPlaying = false;
         this.clock.stop();
-        if (this.ctx) {
-            this.ctx.suspend();
+        if (this.ctx && this.masterGain) {
+            this.masterGain.gain.cancelScheduledValues(this.ctx.currentTime);
+            this.masterGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.05);
         }
+    }
+
+    /**
+     * Fade the music out over `duration` seconds, then stop the clock.
+     * Used during level transitions so the old track fades gracefully.
+     */
+    fadeOut(duration = 1.0) {
+        if (!this.ctx || !this.masterGain) return;
+        const t = this.ctx.currentTime;
+        this.masterGain.gain.cancelScheduledValues(t);
+        this.masterGain.gain.setTargetAtTime(0, t, duration / 4);
+
+        // Cancel any existing fade timeout
+        if (this._fadeTimeout) clearTimeout(this._fadeTimeout);
+
+        // Stop the clock after the fade completes
+        this._fadeTimeout = setTimeout(() => {
+            this.isPlaying = false;
+            this.clock.stop();
+            this._fadeTimeout = null;
+        }, duration * 1000);
     }
 
     toggleMute() {
         this.isMuted = !this.isMuted;
-        if (this.ctx) {
+        if (this.ctx && this.masterGain) {
+            const t = this.ctx.currentTime;
+            this.masterGain.gain.cancelScheduledValues(t);
+            this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, t);
             if (this.isMuted) {
-                this.ctx.suspend();
+                this.masterGain.gain.linearRampToValueAtTime(0, t + 0.15);
             } else {
-                this.ctx.resume();
+                this.masterGain.gain.linearRampToValueAtTime(0.5, t + 0.15);
             }
         }
         return this.isMuted;

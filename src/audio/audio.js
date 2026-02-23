@@ -8,7 +8,7 @@ import { fill, rnd } from './utils.js';
 const A3Frequency = 440;
 const A0Frequency = A3Frequency / 8;
 
-function Audio(ctx) {
+function Audio(ctx, destination = ctx.destination) {
     function oscillatorNode(type, freq = 440) {
         const node = ctx.createOscillator();
         node.type = type;
@@ -61,7 +61,7 @@ function Audio(ctx) {
         wavetableOffsetGain.connect(pulseWavetable);
         pulseWavetable.connect(pulseOutputGain);
         pulseOutputGain.connect(outputPanner);
-        outputPanner.connect(ctx.destination);
+        outputPanner.connect(destination);
 
         const freq = wavetableTrigger.frequency;
         const width = wavetableOffsetGain.gain;
@@ -106,12 +106,12 @@ function Audio(ctx) {
         noiseWavetableTrigger.start();
 
         toneOscillator.connect(toneGain);
-        toneGain.connect(ctx.destination);
+        toneGain.connect(destination);
 
         noiseWavetableTrigger.connect(noiseWavetable);
         noiseWavetable.connect(noiseGain);
         noiseGain.connect(noisePan);
-        noisePan.connect(ctx.destination);
+        noisePan.connect(destination);
 
         function play(slot) {
             const vel = slot.vel ? slot.vel : 1;
