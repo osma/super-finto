@@ -122,7 +122,7 @@ export const PALETTES = {
     },
     RetroPop: {
         name: "Retro Pop",
-        background: '#000000',
+        background: '#1e1b4b',
         brick: { base: '#3b82f6', dark: '#1d4ed8', highlight: '#93c5fd', mortar: '#f472b6' },
         solid: { base: '#f43f5e', dark: '#be123c', highlight: '#fda4af' },
         question: { base: '#eab308', dark: '#a16207', highlight: '#fef08a' },
