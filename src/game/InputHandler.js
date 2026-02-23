@@ -18,6 +18,10 @@ export class InputHandler {
                 const isMuted = this.game.toggleMusic();
                 console.log(isMuted ? "Music Muted" : "Music Playing");
             }
+
+            if (e.key.toLowerCase() === 'p' && this.game) {
+                this.game.togglePause();
+            }
         });
 
         window.addEventListener('keyup', (e) => {

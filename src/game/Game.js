@@ -49,6 +49,8 @@ export class Game {
 
         // Game State
         this.isGameOver = false;
+        this.isPaused = false;
+        this.pauseTimer = 0;
         this.lives = 3;
 
         this.deathOverlay = {
@@ -698,6 +700,26 @@ export class Game {
             this.ctx.fillStyle = `rgba(0, 0, 0, ${this.deathOverlay.opacity})`;
             this.ctx.fillRect(0, 0, this.width, this.height);
         }
+
+        // --- PAUSE OVERLAY ---
+        if (this.isPaused) {
+            // Suble dim background
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            this.ctx.fillRect(0, 0, this.width, this.height);
+
+            // Blinking Text
+            if (Math.floor(this.pauseTimer / 500) % 2 === 0) {
+                const strings = getLang(this.language);
+                this.ctx.fillStyle = 'white';
+                this.ctx.font = '32px SuperMario';
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.strokeStyle = 'black';
+                this.ctx.lineWidth = 4;
+                this.ctx.strokeText(strings.paused, this.width / 2, this.height / 2);
+                this.ctx.fillText(strings.paused, this.width / 2, this.height / 2);
+            }
+        }
     }
 
     drawPipeOverlay() {
@@ -750,6 +772,8 @@ export class Game {
                 this.goToStartupScreen();
                 return;
             }
+        } else if (this.isPaused) {
+            this.pauseTimer += deltaTime;
         } else {
             this.update(deltaTime);
         }
@@ -873,5 +897,16 @@ export class Game {
         this.sfxEngine.init();
         this.musicEngine.start();
         this.musicStarted = true;
+    }
+
+    togglePause() {
+        if (this.isGameOver) return;
+        this.isPaused = !this.isPaused;
+        if (this.isPaused) {
+            this.musicEngine.fadeOut(0.5);
+            this.pauseTimer = 0;
+        } else {
+            this.musicEngine.start();
+        }
     }
 }

@@ -12,6 +12,7 @@ const STRINGS = {
         gameOver: 'GAME OVER',
         pressRestart: 'Press SPACE to Restart',
         transitionLives: (n) => `FINTO x ${n}`,
+        paused: 'PAUSED',
     },
     fi: {
         score: 'PISTEET',
@@ -21,6 +22,7 @@ const STRINGS = {
         gameOver: 'PELI OHI',
         pressRestart: 'Paina VÄLILYÖNTIÄ',
         transitionLives: (n) => `FINTO x ${n}`,
+        paused: 'TAUKO',
     },
     sv: {
         score: 'POÄNG',
@@ -30,6 +32,7 @@ const STRINGS = {
         gameOver: 'SPEL SLUT',
         pressRestart: 'Tryck MELLANSLAG',
         transitionLives: (n) => `FINTO x ${n}`,
+        paused: 'PAUS',
     },
     se: {
         score: 'ČOAKKÁ',
@@ -39,6 +42,7 @@ const STRINGS = {
         gameOver: 'SPEALLU NOHKÁ',
         pressRestart: 'Bija GASKABÁIKI',
         transitionLives: (n) => `FINTO x ${n}`,
+        paused: 'PÁVSSA',
     },
 };
 
