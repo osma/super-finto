@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
+    base: '/super-finto/',
     server: {
         watch: {
             // Ignore the backgrounds directory to prevent performance issues
