@@ -17,7 +17,7 @@
             <div id="ui-layer">
                 <div class="stat-box">
                     <div style="display: flex; gap: 10px; align-items: baseline; justify-content: center;">
-                        <span class="label" style="margin-bottom: 0;">SCORE</span>
+                        <span class="label" id="hud-score-label" style="margin-bottom: 0;">SCORE</span>
                         <span id="score">00000</span>
                     </div>
                     <div
@@ -29,13 +29,14 @@
                 </div>
                 <div class="stat-box center-box">
                     <div id="concept-labels">
-                        <span id="label-fi">-</span>
-                        <span id="label-sv">-</span>
-                        <span id="label-en">-</span>
+                        <span id="label-primary">-</span>
+                        <span id="label-2">-</span>
+                        <span id="label-3">-</span>
+                        <span id="label-4">-</span>
                     </div>
                 </div>
                 <div class="stat-box">
-                    <span class="label">CONCEPT</span>
+                    <span class="label" id="hud-concept-label">CONCEPT</span>
                     <span id="world">yso:-</span>
                 </div>
             </div>
@@ -43,7 +44,7 @@
             <div id="overlay" class="hidden">
                 <div class="overlay-content">
                     <h1 id="overlay-title">GAME OVER</h1>
-                    <p>Press <span class="key">SPACE</span> to Restart</p>
+                    <p id="overlay-restart">Press <span class="key">SPACE</span> to Restart</p>
                 </div>
             </div>
             <div id="transition-overlay" class="hidden">
@@ -58,6 +59,9 @@
             <canvas id="tree-canvas"></canvas>
             <div id="tree-label">LEAVES: 0</div>
         </div>
+    </div>
+    <div id="startup-overlay">
+        <canvas id="startup-canvas"></canvas>
     </div>
     <script type="module" src="/src/audio/utils.js"></script>
     <script type="module" src="/src/audio/theory.js"></script>

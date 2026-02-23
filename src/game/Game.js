@@ -5,12 +5,16 @@ import { PALETTES } from './Palettes.js';
 import { MusicEngine } from '../audio/MusicEngine.js';
 import { SFXEngine } from '../audio/SFXEngine.js';
 import { LifeTree } from './LifeTree.js';
+import { getLang, getLabel, getConceptLabel } from './i18n.js';
 
 export class Game {
-    constructor() {
+    constructor(language = 'en') {
         this.canvas = document.getElementById('game-canvas');
         this.ctx = this.canvas.getContext('2d');
         this.input = new InputHandler(this);
+
+        // Localization
+        this.language = language;
 
         this.width = 800;
         this.height = 600;
@@ -75,9 +79,10 @@ export class Game {
             this.allConcepts = await ysoRes.json();
             this.paletteMapping = await paletteRes.json();
 
-            // Pick a random starting concept
-            const keys = Object.keys(this.allConcepts);
-            const startKey = keys[Math.floor(Math.random() * keys.length)];
+            // Always start at YSO root concept scheme
+            const rootUri = 'http://www.yso.fi/onto/yso/';
+            const startKey = this.allConcepts[rootUri] ? rootUri
+                : Object.keys(this.allConcepts)[0];
 
             this.loadConcept(startKey);
         } catch (error) {
@@ -141,6 +146,7 @@ export class Game {
             label_fi: conceptData.label_fi || '-',
             label_sv: conceptData.label_sv || '-',
             label_en: conceptData.label_en || '-',
+            label_se: conceptData.label_se || '-',
             related: (conceptData.related || []).map(uri => {
                 const relatedConcept = this.allConcepts[uri];
                 return {
@@ -148,7 +154,8 @@ export class Game {
                     uri: uri,
                     label_fi: relatedConcept ? relatedConcept.label_fi : uri,
                     label_sv: relatedConcept ? relatedConcept.label_sv : '',
-                    label_en: relatedConcept ? relatedConcept.label_en : ''
+                    label_en: relatedConcept ? relatedConcept.label_en : '',
+                    label_se: relatedConcept ? (relatedConcept.label_se || '') : ''
                 };
             }),
             broader: (conceptData.broader || []).map(uri => {
@@ -158,7 +165,8 @@ export class Game {
                     uri: uri,
                     label_fi: c ? c.label_fi : uri,
                     label_sv: c ? c.label_sv : '',
-                    label_en: c ? c.label_en : ''
+                    label_en: c ? c.label_en : '',
+                    label_se: c ? (c.label_se || '') : ''
                 };
             }),
             narrower: (conceptData.narrower || []).map(uri => {
@@ -168,7 +176,8 @@ export class Game {
                     uri: uri,
                     label_fi: c ? c.label_fi : uri,
                     label_sv: c ? c.label_sv : '',
-                    label_en: c ? c.label_en : ''
+                    label_en: c ? c.label_en : '',
+                    label_se: c ? (c.label_se || '') : ''
                 };
             }),
             altLabels: [
@@ -340,25 +349,36 @@ export class Game {
 
     updateHUD() {
         if (!this.concept) return;
-        const worldEl = document.getElementById('world');
-        const fiEl = document.getElementById('label-fi');
-        const svEl = document.getElementById('label-sv');
-        const enEl = document.getElementById('label-en');
+        const strings = getLang(this.language);
 
+        const worldEl = document.getElementById('world');
         if (worldEl) worldEl.textContent = `yso:${this.concept.id}`;
-        if (fiEl) fiEl.textContent = `FI: ${this.concept.label_fi || '-'}`;
-        if (svEl) svEl.textContent = `SV: ${this.concept.label_sv || '-'}`;
-        if (enEl) enEl.textContent = `EN: ${this.concept.label_en || '-'}`;
+
+        // Show all 4 language labels; selected language first, then the rest
+        const allLangs = ['en', 'fi', 'sv', 'se'];
+        const orderedLangs = [this.language, ...allLangs.filter(l => l !== this.language)];
+        const langKeys = { en: 'label_en', fi: 'label_fi', sv: 'label_sv', se: 'label_se' };
+        const langPrefixes = { en: 'EN', fi: 'FI', sv: 'SV', se: 'SE' };
+        const labelIds = ['label-primary', 'label-2', 'label-3', 'label-4'];
+        orderedLangs.forEach((lang, i) => {
+            const el = document.getElementById(labelIds[i]);
+            if (el) {
+                const val = this.concept[langKeys[lang]] || '-';
+                el.textContent = `${langPrefixes[lang]}: ${val}`;
+            }
+        });
 
         const coinsEl = document.getElementById('coins-counter');
-        if (coinsEl) {
-            coinsEl.textContent = `x ${this.coins}`;
-        }
+        if (coinsEl) coinsEl.textContent = `x ${this.coins}`;
 
         const livesEl = document.getElementById('lives-counter');
-        if (livesEl) {
-            livesEl.textContent = `FINTO x ${this.lives}`;
-        }
+        if (livesEl) livesEl.textContent = strings.lives(this.lives);
+
+        const scoreLabel = document.getElementById('hud-score-label');
+        if (scoreLabel) scoreLabel.textContent = strings.score;
+
+        const conceptLabel = document.getElementById('hud-concept-label');
+        if (conceptLabel) conceptLabel.textContent = strings.concept;
     }
 
     addCoin() {
@@ -411,7 +431,7 @@ export class Game {
 
     start() {
         this.lastTime = performance.now();
-        requestAnimationFrame(this.animate);
+        this._animFrameId = requestAnimationFrame(this.animate);
     }
 
     update(deltaTime) {
@@ -460,15 +480,16 @@ export class Game {
                     // Prepare Overlay text
                     const targetData = this.allConcepts[this.transition.targetUri];
                     const targetId = this.transition.targetUri.split('/').pop();
-                    const targetLabel = targetData ? (targetData.label_en || targetData.label_fi || targetData.label_sv || 'Unknown') : 'Unknown';
+                    const targetLabel = targetData ? getLabel(targetData, this.language) : 'Unknown';
 
                     const titleEl = document.getElementById('transition-title');
                     const subtitleEl = document.getElementById('transition-subtitle');
                     const livesEl = document.getElementById('transition-lives');
 
+                    const strings = getLang(this.language);
                     if (titleEl) titleEl.textContent = `yso:${targetId}`;
                     if (subtitleEl) subtitleEl.textContent = targetLabel;
-                    if (livesEl) livesEl.textContent = `FINTO x ${this.lives}`;
+                    if (livesEl) livesEl.textContent = strings.transitionLives(this.lives);
 
                     const overlayEl = document.getElementById('transition-overlay');
                     if (overlayEl) overlayEl.classList.remove('hidden');
@@ -585,6 +606,11 @@ export class Game {
 
                 if (this.lives === 0) {
                     this.isGameOver = true;
+                    const strings = getLang(this.language);
+                    const titleEl = document.getElementById('overlay-title');
+                    if (titleEl) titleEl.textContent = strings.gameOver;
+                    const restartEl = document.getElementById('overlay-restart');
+                    if (restartEl) restartEl.innerHTML = strings.pressRestart;
                     document.getElementById('overlay').classList.remove('hidden');
                     // Stop music
                     if (this.musicStarted) {
@@ -713,35 +739,11 @@ export class Game {
         this.lastTime = timeStamp;
 
         if (this.isGameOver) {
-            // Handle restart input
+            // Handle restart input — go back to startup screen
             if (this.input.isJumping() || this.input.isPressed('Enter')) {
-                this.lives = 3;
-                this.score = 0;
-                this.coins = 0;
-                this.leavesCollected = 0;
-                this.collectedLeafUris.clear();
-                this.lifeTree.setLeafCount(this.leavesCollected);
-                this.isGameOver = false;
-                this.deathOverlay.state = 'none';
-                this.deathOverlay.opacity = 0;
-                this.player.reset(); // Stop player from dying
-                this.player.vy = 0;
-                this.player.vx = 0;
                 document.getElementById('overlay').classList.add('hidden');
-                this.updateHUD(); // Reset lives/score display
-
-                // Reset score HUD specifically (since updateHUD doesn't update score)
-                const scoreEl = document.getElementById('score');
-                if (scoreEl) scoreEl.textContent = '00000';
-
-                // Pick a random starting concept again
-                const keys = Object.keys(this.allConcepts);
-                const startKey = keys[Math.floor(Math.random() * keys.length)];
-                this.loadConcept(startKey);
-
-                if (this.musicStarted) {
-                    this.musicEngine.start();
-                }
+                this.goToStartupScreen();
+                return;
             }
         } else {
             this.update(deltaTime);
@@ -749,7 +751,7 @@ export class Game {
 
         this.draw();
 
-        requestAnimationFrame(this.animate);
+        this._animFrameId = requestAnimationFrame(this.animate);
     }
 
     drawDefaultBackground(ctx) {
@@ -822,7 +824,20 @@ export class Game {
         }
         this.leavesCollected++;
         this.lifeTree.setLeafCount(this.leavesCollected);
+        const strings = getLang(this.language);
+        const treeLabelEl = document.getElementById('tree-label');
+        if (treeLabelEl) treeLabelEl.textContent = strings.leaves(this.leavesCollected);
         console.log(`Leaf collected! Total: ${this.leavesCollected}`);
+    }
+
+    goToStartupScreen() {
+        // Stop the animation loop by flagging — and show startup overlay
+        cancelAnimationFrame(this._animFrameId);
+        const startupEl = document.getElementById('startup-overlay');
+        if (startupEl) startupEl.classList.remove('hidden');
+        // main.js will handle re-creating StartupScreen and re-starting the game
+        // Dispatch a custom event so main.js can pick it up
+        window.dispatchEvent(new CustomEvent('superfinto:returnToStartup'));
     }
 
     toggleMusic() {

@@ -104,9 +104,10 @@ body {
     color: white;
 }
 
-#label-fi,
-#label-sv,
-#label-en {
+#label-primary,
+#label-2,
+#label-3,
+#label-4 {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -208,4 +209,26 @@ body {
     margin-top: 4px;
     color: rgba(255, 255, 255, 0.7);
     letter-spacing: 0.05rem;
+}
+
+/* ── Startup Screen ──────────────────────────────────────────── */
+#startup-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #0f172a;
+    z-index: 100;
+}
+
+#startup-overlay.hidden {
+    display: none;
+}
+
+#startup-canvas {
+    display: block;
+    image-rendering: pixelated;
+    border-radius: 24px;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.6), 0 0 0 4px rgba(255, 255, 255, 0.15);
 }
