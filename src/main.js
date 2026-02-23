@@ -16,6 +16,13 @@ function showStartupScreen() {
         // Hide startup overlay
         overlay.classList.add('hidden');
 
+        // Go full screen on start
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.warn(`Error attempting to enable full-screen mode: ${err.message}`);
+            });
+        }
+
         // Create and start game
         activeGame = new Game(lang);
         activeGame.start();
@@ -34,6 +41,14 @@ window.addEventListener('load', () => {
             // Cancel any lingering rAF  
             activeGame = null;
         }
+
+        // Exit full screen when returning to startup
+        if (document.fullscreenElement) {
+            document.exitFullscreen().catch(err => {
+                console.warn(`Error attempting to exit full-screen mode: ${err.message}`);
+            });
+        }
+
         showStartupScreen();
     });
 });
