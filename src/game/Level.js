@@ -1,4 +1,5 @@
 import { Enemy } from './Enemy.js';
+import { getConceptLabel } from './i18n.js';
 
 export class Level {
     constructor(game) {
@@ -774,7 +775,7 @@ export class Level {
                 if (x + 80 > cameraX - buffer && x < cameraX + viewportWidth + buffer) {
                     // Vertical Culling: Is pipe within viewport? (Pipes go from pipeTop down to game.height)
                     if (this.game.height > cameraY - buffer && pipeTop < cameraY + viewportHeight + buffer) {
-                        this.drawPipe(ctx, x, pipeTop, rel.label_fi);
+                        this.drawPipe(ctx, x, pipeTop, getConceptLabel(rel, this.game.language));
                     }
                 }
             });
@@ -788,7 +789,7 @@ export class Level {
                 this.game.concept.broader.forEach((broader, index) => {
                     const y = (groundY - 80) - (index * (pipeHeight + gap));
                     if (y + pipeHeight > cameraY - buffer && y < cameraY + viewportHeight + buffer) {
-                        this.drawHorizontalPipe(ctx, 0, y, 'right', broader.label_fi);
+                        this.drawHorizontalPipe(ctx, 0, y, 'right', getConceptLabel(broader, this.game.language));
                     }
                 });
             }
@@ -802,7 +803,7 @@ export class Level {
                 this.game.concept.narrower.forEach((narrower, index) => {
                     const y = (groundY - 80) - (index * (pipeHeight + gap));
                     if (y + pipeHeight > cameraY - buffer && y < cameraY + viewportHeight + buffer) {
-                        this.drawHorizontalPipe(ctx, this.game.levelWidth, y, 'left', narrower.label_fi);
+                        this.drawHorizontalPipe(ctx, this.game.levelWidth, y, 'left', getConceptLabel(narrower, this.game.language));
                     }
                 });
             }
