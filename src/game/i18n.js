@@ -13,6 +13,11 @@ const STRINGS = {
         pressRestart: 'Press SPACE to Restart',
         transitionLives: (n) => `FINTO x ${n}`,
         paused: 'PAUSED',
+        move: 'MOVE',
+        jump: 'JUMP',
+        music: 'MUSIC',
+        pause: 'PAUSE',
+        quit: 'QUIT',
     },
     fi: {
         score: 'PISTEET',
@@ -23,6 +28,11 @@ const STRINGS = {
         pressRestart: 'Paina VÄLILYÖNTIÄ',
         transitionLives: (n) => `FINTO x ${n}`,
         paused: 'TAUKO',
+        move: 'LIIKU',
+        jump: 'HYPPÄÄ',
+        music: 'MUSIIKKI',
+        pause: 'TAUKO',
+        quit: 'LOPETA',
     },
     sv: {
         score: 'POÄNG',
@@ -33,6 +43,11 @@ const STRINGS = {
         pressRestart: 'Tryck MELLANSLAG',
         transitionLives: (n) => `FINTO x ${n}`,
         paused: 'PAUS',
+        move: 'RÖRELSE',
+        jump: 'HOPPA',
+        music: 'MUSIK',
+        pause: 'PAUS',
+        quit: 'AVSLUTA',
     },
     se: {
         score: 'ČOAKKÁ',
@@ -43,6 +58,11 @@ const STRINGS = {
         pressRestart: 'Bija GASKABÁIKI',
         transitionLives: (n) => `FINTO x ${n}`,
         paused: 'PÁVSSA',
+        move: 'SIRDIT',
+        jump: 'NJOIKUT',
+        music: 'MUSIHKKA',
+        pause: 'PÁVSSA',
+        quit: 'HEAITTIT',
     },
 };
 

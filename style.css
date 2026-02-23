@@ -184,9 +184,21 @@ body {
     font-weight: 700;
 }
 
-#tree-container {
+#side-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 15px;
+    height: 600px;
+    /* Match #game-container */
     width: 440px;
-    height: 400px;
+}
+
+#tree-container {
+    width: 100%;
+    /* Match side-panel width */
+    flex: 1;
+    /* Stretch to fill side-panel height and align bottom */
     background: var(--glass);
     backdrop-filter: blur(4px);
     border-radius: 16px;
@@ -194,6 +206,8 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    /* Center tree and label vertically in the taller box */
     padding: 15px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
@@ -209,6 +223,39 @@ body {
     margin-top: 4px;
     color: rgba(255, 255, 255, 0.7);
     letter-spacing: 0.05rem;
+}
+
+#controls-legend {
+    width: 100%;
+    margin-bottom: 0;
+    padding: 15px;
+    background: var(--glass);
+    backdrop-filter: blur(4px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    font-size: 0.9rem;
+    color: white;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    font-family: 'SuperMario', sans-serif;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.legend-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.legend-key {
+    color: var(--primary);
+    margin-right: 5px;
+}
+
+.legend-label {
+    text-align: right;
+    white-space: nowrap;
 }
 
 /* ── Startup Screen ──────────────────────────────────────────── */

@@ -87,6 +87,7 @@ export class Game {
                 : Object.keys(this.allConcepts)[0];
 
             this.loadConcept(startKey);
+            this.updateLegend();
         } catch (error) {
             console.error("Failed to load game data:", error);
         }
@@ -912,5 +913,26 @@ export class Game {
         } else {
             this.musicEngine.start();
         }
+    }
+
+    updateLegend() {
+        const legendEl = document.getElementById('controls-legend');
+        if (!legendEl) return;
+
+        const strings = getLang(this.language);
+        const controls = [
+            { key: '←→↑↓', label: strings.move },
+            { key: 'Space', label: strings.jump },
+            { key: 'M', label: strings.music },
+            { key: 'P', label: strings.pause },
+            { key: 'Q', label: strings.quit }
+        ];
+
+        legendEl.innerHTML = controls.map(c => `
+            <div class="legend-item">
+                <span class="legend-key">${c.key}</span>
+                <span class="legend-label">${c.label}</span>
+            </div>
+        `).join('');
     }
 }
