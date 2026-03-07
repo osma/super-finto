@@ -42,8 +42,17 @@ export class StartupScreen {
             { x: 680, y: 530, r: 70 },
         ];
 
+        this.githubUrl = 'https://github.com/osma/super-finto';
+        this.githubRect = { x: 0, y: 0, w: 0, h: 0 };
+        this.isHoveringGithub = false;
+
         this._handleKey = this._handleKey.bind(this);
+        this._handleMouseDown = this._handleMouseDown.bind(this);
+        this._handleMouseMove = this._handleMouseMove.bind(this);
+
         window.addEventListener('keydown', this._handleKey);
+        this.canvas.addEventListener('mousedown', this._handleMouseDown);
+        this.canvas.addEventListener('mousemove', this._handleMouseMove);
 
         this._tick = this._tick.bind(this);
         this.animFrame = requestAnimationFrame(this._tick);
@@ -57,6 +66,39 @@ export class StartupScreen {
             this.selectedIndex = (this.selectedIndex - 1 + this.languages.length) % this.languages.length;
         } else if (key === 'Enter' || key === ' ') {
             this._confirm();
+        }
+    }
+
+    _handleMouseDown(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+
+        if (x >= this.githubRect.x && x <= this.githubRect.x + this.githubRect.w &&
+            y >= this.githubRect.y && y <= this.githubRect.y + this.githubRect.h) {
+            window.open(this.githubUrl, '_blank');
+        }
+    }
+
+    _handleMouseMove(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+
+        const wasHovering = this.isHoveringGithub;
+        this.isHoveringGithub = (
+            x >= this.githubRect.x && x <= this.githubRect.x + this.githubRect.w &&
+            y >= this.githubRect.y && y <= this.githubRect.y + this.githubRect.h
+        );
+
+        if (this.isHoveringGithub) {
+            this.canvas.style.cursor = 'pointer';
+        } else if (wasHovering) {
+            this.canvas.style.cursor = 'default';
         }
     }
 
@@ -140,6 +182,9 @@ export class StartupScreen {
 
         // ── Ground strip ─────────────────────────────────────────────
         this._drawGround(ctx, W, H);
+
+        // ── GitHub Link ──────────────────────────────────────────────
+        this._drawGitHubLink(ctx, W, H);
     }
 
     _drawBrickPanel(ctx, x, y, w, h) {
@@ -368,8 +413,58 @@ export class StartupScreen {
         ctx.restore();
     }
 
+    _drawGitHubLink(ctx, W, H) {
+        const codeText = '</>';
+        const githubText = ' @ GITHUB';
+        
+        ctx.font = 'bold 20px monospace';
+        const codeWidth = ctx.measureText(codeText).width;
+        ctx.font = '14px SuperMario, monospace';
+        const githubWidth = ctx.measureText(githubText).width;
+        
+        const totalW = codeWidth + githubWidth;
+        const x = W - totalW - 25;
+        const y = H - 21; 
+        
+        this.githubRect = {
+            x: x - 15,
+            y: y - 15,
+            w: totalW + 30,
+            h: 30
+        };
+
+        ctx.save();
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+
+        // Hover effect
+        if (this.isHoveringGithub) {
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = '#ffffff';
+            ctx.shadowBlur = 8;
+        } else {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+            ctx.shadowBlur = 2;
+        }
+
+        // 1. Draw Code Symbol
+        ctx.font = 'bold 20px monospace';
+        ctx.fillText(codeText, x, y);
+
+        // 2. Draw @ GITHUB
+        ctx.font = '14px SuperMario, monospace';
+        ctx.fillText(githubText, x + codeWidth, y);
+        
+        ctx.restore();
+    }
+
+
     destroy() {
         cancelAnimationFrame(this.animFrame);
         window.removeEventListener('keydown', this._handleKey);
+        this.canvas.removeEventListener('mousedown', this._handleMouseDown);
+        this.canvas.removeEventListener('mousemove', this._handleMouseMove);
+        this.canvas.style.cursor = 'default';
     }
 }
