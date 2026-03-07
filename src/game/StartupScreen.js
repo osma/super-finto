@@ -17,9 +17,9 @@ export class StartupScreen {
         this.canvas.height = 600;
 
         this.languages = [
-            { code: 'en', label: 'ENGLISH' },
             { code: 'fi', label: 'SUOMI' },
             { code: 'sv', label: 'SVENSKA' },
+            { code: 'en', label: 'ENGLISH' },
             { code: 'se', label: 'SÁMEGILLII' },
         ];
         this.selectedIndex = 0;
