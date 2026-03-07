@@ -84,10 +84,9 @@ Super Finto is a product of **"Vibe Coding"**, built using modern AI-assisted de
 
 - **Engine:** Pure JavaScript/HTML5 Canvas.
 - **Code Generation:** Developed using **Google Antigravity** (Gemini and Claude models).
-- **Asset Generation:** 
-  - **Backgrounds:** Unique images for all ~32,000 concepts generated via a pipeline using **Gemma3** (text-to-prompt) and **Poltergeist Mix v5.5** (Stable Diffusion 1.5).
-  - **Music:** Audio engine based on **AutoTracker** by Vitling.
-- **Data:** Powered by the **YSO (General Finnish Ontology)** via the Finto API.
+- **Backgrounds:** Unique images for all ~32,000 concepts generated via a pipeline using **Gemma3** (concept data to prompt) and **[Poltergeist Mix v5.5](https://civitai.com/models/1299236/poltergeist-mix-v55)** (community fine-tune of Stable Diffusion 1.5).
+- **Music:** Chiptune audio engine based on **[AutoTracker](https://github.com/vitling/autotracker)** by Vitling.
+- **Data:** Powered by the **[YSO](https://finto.fi/yso/fi/) (General Finnish Ontology)** .
 
 ---
 
@@ -95,10 +94,10 @@ Super Finto is a product of **"Vibe Coding"**, built using modern AI-assisted de
 
 **Developed by: [Osma Suominen](https://github.com/osma)**
 
-- **Game Code & Images:** Released under **CC0 (Creative Commons Zero)**. This project is a tribute to the public domain and the possibilities of AI-generative art.
+- **Game Code & Images:** Released under **CC0 (Creative Commons Zero)**.
 - **YSO Content:** The General Finnish Ontology (YSO) content is licensed under **[CC BY 4.0 International](https://creativecommons.org/licenses/by/4.0/)**.
-- **Music:** **AutoTracker** by [Vitling](https://github.com/vitling/autotracker), licensed under **[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)**.
-- **Fonts:** Respective licenses apply.
+- **Music:** **AutoTracker** by Vitling, licensed under **[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)**.
+- **Fonts:** _Super Mario Bros. NES_ and _Outfit_ fonts licensed under [SIL Open Font License](https://openfontlicense.org/).
 
 ---
 *Created with ❤️ for the world of Linked Data.*
