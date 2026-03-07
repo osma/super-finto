@@ -80,7 +80,7 @@ Super Finto is built with **Vite**. The project uses **Bun** as the primary pack
 
 ## 🔧 Technical Implementation
 
-Super Finto is a product of **"Vibe Coding"**, built using modern AI-assisted development tools and workflows.
+Super Finto is built using AI-assisted development tools and workflows.
 
 - **Engine:** Pure JavaScript/HTML5 Canvas.
 - **Code Generation:** Developed using **Google Antigravity** (Gemini and Claude models).
@@ -94,7 +94,7 @@ Super Finto is a product of **"Vibe Coding"**, built using modern AI-assisted de
 
 **Developed by: [Osma Suominen](https://github.com/osma)**
 
-- **Game Code & Images:** Released under **CC0 (Creative Commons Zero)**.
+- **Game Code:** Released under **[CC0](LICENSE.txt) (Creative Commons Zero)**.
 - **YSO Content:** The General Finnish Ontology (YSO) content is licensed under **[CC BY 4.0 International](https://creativecommons.org/licenses/by/4.0/)**.
 - **Music:** **AutoTracker** by Vitling, licensed under **[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)**.
 - **Fonts:** _Super Mario Bros. NES_ and _Outfit_ fonts licensed under [SIL Open Font License](https://openfontlicense.org/).
