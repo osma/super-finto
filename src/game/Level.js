@@ -42,7 +42,7 @@ export class Level {
         // Load Wikidata Logo for Parcels if not loaded
         if (!this.wikidataLogo) {
             const wikidataLogo = new Image();
-            wikidataLogo.src = '/src/assets/images/Wikidata-logo.svg';
+            wikidataLogo.src = 'src/assets/images/Wikidata-logo.svg';
             wikidataLogo.onload = () => {
                 this.wikidataLogo = wikidataLogo;
                 this.drawParcelSprite(palette.parcel); // Redraw parcel with logo

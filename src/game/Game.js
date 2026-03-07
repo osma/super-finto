@@ -74,8 +74,8 @@ export class Game {
     async init() {
         try {
             const [ysoRes, paletteRes] = await Promise.all([
-                fetch('/src/assets/data/yso.json'),
-                fetch('/src/assets/data/palettes.json')
+                fetch('src/assets/data/yso.json'),
+                fetch('src/assets/data/palettes.json')
             ]);
 
             this.allConcepts = await ysoRes.json();
@@ -224,7 +224,7 @@ export class Game {
         // Load Background (Custom jpg or fallback to sky)
         const conceptId = conceptKey.split('/').pop();
         this.latestBGConceptId = conceptId; // Track current request
-        const bgPath = `/src/assets/images/backgrounds/${conceptId}.jpg`;
+        const bgPath = `src/assets/images/backgrounds/${conceptId}.jpg`;
         const bgImg = new Image();
         bgImg.onload = () => {
             // Only draw if this is still the latest requested concept
