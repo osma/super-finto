@@ -77,12 +77,9 @@ export class StartupScreen {
             if (c.x > 900) c.x = -c.w - 40;
         }
 
-        // Blink cursor every 500ms
-        this.blinkTimer += dt;
-        if (this.blinkTimer >= 500) {
-            this.blinkTimer -= 500;
-            this.blinkVisible = !this.blinkVisible;
-        }
+        // Robust blinking: ON for 500ms, OFF for 500ms (1s total cycle)
+        this.blinkTimer = (this.blinkTimer + dt) % 1000;
+        this.blinkVisible = this.blinkTimer < 500;
 
         this._draw();
         this.animFrame = requestAnimationFrame(this._tick);
