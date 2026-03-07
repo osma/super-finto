@@ -1779,7 +1779,7 @@ class FloatingScore {
     draw(ctx) {
         ctx.save();
         ctx.globalAlpha = this.opacity;
-        ctx.font = 'bold 16px monospace';
+        ctx.font = '14px SuperMario, monospace';
         ctx.textAlign = 'center';
 
         const textX = Math.floor(this.x);

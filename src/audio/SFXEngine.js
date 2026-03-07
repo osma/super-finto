@@ -242,4 +242,27 @@ export class SFXEngine {
         this._playNoise(0.15, 'short'); // High snap
         this._playTone(200, 'square', 0.1, 50); // Low thud
     }
+
+    playExtraLife() {
+        // Happy ascending melody: C5-E5-G5-C6 (slower and longer)
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const freqs = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+
+        freqs.forEach((freq, i) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'square';
+            osc.frequency.value = freq;
+
+            gain.gain.setValueAtTime(0.5, t + i * 0.15); // Slower tempo
+            gain.gain.exponentialRampToValueAtTime(0.01, t + i * 0.15 + 0.3); // Longer decay
+
+            osc.connect(gain);
+            gain.connect(this.masterGain);
+
+            osc.start(t + i * 0.15);
+            osc.stop(t + i * 0.15 + 0.3);
+        });
+    }
 }

@@ -391,6 +391,20 @@ export class Game {
 
     addCoin() {
         this.coins++;
+        if (this.coins >= 100) {
+            this.coins = 0;
+            this.lives++;
+            if (this.sfxEngine) this.sfxEngine.playExtraLife();
+            
+            // Show floating "1UP" text
+            if (this.level && this.player) {
+                this.level.spawnFloatingScore(
+                    this.player.x + this.player.width / 2,
+                    this.player.y - 40,
+                    "1UP"
+                );
+            }
+        }
         this.addScore(200);
         this.updateHUD();
     }
