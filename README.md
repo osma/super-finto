@@ -96,7 +96,8 @@ Super Finto is a product of **"Vibe Coding"**, built using modern AI-assisted de
 **Developed by: [Osma Suominen](https://github.com/osma)**
 
 - **Game Code & Images:** Released under **CC0 (Creative Commons Zero)**. This project is a tribute to the public domain and the possibilities of AI-generative art.
-- **Music:** **AutoTracker** by [Vitling](https://github.com/vitling/autotracker), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- **YSO Content:** The General Finnish Ontology (YSO) content is licensed under **[CC BY 4.0 International](https://creativecommons.org/licenses/by/4.0/)**.
+- **Music:** **AutoTracker** by [Vitling](https://github.com/vitling/autotracker), licensed under **[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)**.
 - **Fonts:** Respective licenses apply.
 
 ---
