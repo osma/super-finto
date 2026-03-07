@@ -111,8 +111,8 @@ export class StartupScreen {
         this._drawRetroText(ctx, 'FINTO', W / 2, panelY + 190, '#f8b888', '#7a2800');
 
         // ── Language menu ────────────────────────────────────────────────
-        const menuStartY = 340;
-        const lineH = 50;
+        const menuStartY = 350;
+        const lineH = 45;
         ctx.font = '24px SuperMario, monospace';
         ctx.textAlign = 'left';
 
@@ -132,12 +132,8 @@ export class StartupScreen {
             ctx.shadowBlur = 0;
         }
 
-        // ── Select hint ───────────────────────────────────────────────────
-        ctx.font = '14px SuperMario, monospace';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = 'rgba(255,255,255,0.75)';
-        // Keep hint above the ground strip (ground starts at H-42)
-        ctx.fillText('Arrow keys  +  Enter or Space', W / 2, H - 52);
+        // ── Select hint (symbolic) ────────────────────────────────────────
+        this._drawControlsHint(ctx, W, H);
 
         // ── Hills (drawn before ground so ground overlaps the base) ────
         this._drawHills(ctx, H);
@@ -282,6 +278,94 @@ export class StartupScreen {
             ctx.beginPath(); ctx.arc(h.x - h.r * 0.35, cy - h.r * 0.4, h.r * 0.12, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(h.x + h.r * 0.3, cy - h.r * 0.55, h.r * 0.1, 0, Math.PI * 2); ctx.fill();
         }
+    }
+
+    /**
+     * Renders language-independent control hints (symbols for Up, Down, Enter, Space).
+     */
+    _drawControlsHint(ctx, W, H) {
+        const x = W / 2;
+        const groundTop = H - 42;
+        const y = groundTop - 34; // Give a bit more breathing room for the menu above
+        const keyH = 26;
+        const midY = y + keyH / 2;
+
+        ctx.save();
+
+        const drawKey = (kx, kw, symbol, fontSize = 18, isSpace = false) => {
+            // Key shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(kx + 2, y + 2, kw, keyH);
+            // Key cap
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(kx, y, kw, keyH);
+            // Key border
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(kx, y, kw, keyH);
+
+            if (isSpace) {
+                // Manually draw spacebar bracket |_|
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 2;
+                const sw = kw * 0.5;
+                const sh = 6;
+                const sx = kx + (kw - sw) / 2;
+                const sy = midY - 3;
+                ctx.beginPath();
+                ctx.moveTo(sx, sy);
+                ctx.lineTo(sx, sy + sh);
+                ctx.lineTo(sx + sw, sy + sh);
+                ctx.lineTo(sx + sw, sy);
+                ctx.stroke();
+            } else {
+                // Symbol
+                ctx.fillStyle = '#000000';
+                ctx.font = `bold ${fontSize}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(symbol, kx + kw / 2, midY + 1);
+            }
+        };
+
+        const wArrow = 24;
+        const wEnter = 44;
+        const wSpace = 72;
+        const gap = 12;
+        const opW = 20;
+
+        // Calculate total width to center properly
+        const totalW = (wArrow * 2 + 4) + (gap + opW + gap) + wEnter + (gap + opW + gap) + wSpace;
+        let curX = x - totalW / 2;
+
+        // Arrows group
+        drawKey(curX, wArrow, '↑');
+        curX += wArrow + 4;
+        drawKey(curX, wArrow, '↓');
+        curX += wArrow + gap;
+
+        // +
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('+', curX + opW / 2, midY);
+        curX += opW + gap;
+
+        // Enter
+        drawKey(curX, wEnter, '↵', 20);
+        curX += wEnter + gap;
+
+        // /
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillText('/', curX + opW / 2, midY);
+        curX += opW + gap;
+
+        // Space
+        drawKey(curX, wSpace, '', 0, true);
+
+        ctx.restore();
     }
 
     destroy() {
