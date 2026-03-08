@@ -46,7 +46,7 @@ Bumping into **Question Mark Blocks** reveals either coins or **Wikidata Parcels
 
 ## 🛠️ Development Setup
 
-Super Finto is built with **Vite**. The project uses **Bun** as the primary package manager, but is also compatible with **npm**.
+Super Finto is a pure static web project that doesn't require a build step or any package managers. You can serve it directly with any basic HTTP server.
 
 ### Quick Start
 1. **Clone the repository:**
@@ -55,26 +55,18 @@ Super Finto is built with **Vite**. The project uses **Bun** as the primary pack
    cd super-finto
    ```
 
-2. **Install dependencies:**
+2. **Run a local server:**
+   Use any simple static server, for example with Python:
    ```bash
-   bun install
-   # OR
-   npm install
+   python3 -m http.server 8080
+   ```
+   Or with Node.js `http-server` (if you have it installed globally):
+   ```bash
+   npx http-server
    ```
 
-3. **Run the development server:**
-   ```bash
-   bun run dev
-   # OR
-   npm run dev
-   ```
-
-4. **Build for production:**
-   ```bash
-   bun run build
-   # OR
-   npm run build
-   ```
+3. **Play:**
+   Open `http://localhost:8080` in your web browser.
 
 ---
 
