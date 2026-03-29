@@ -1,3 +1,5 @@
+import { getLang } from './i18n.js';
+
 export class LifeTree {
     constructor(game) {
         this.game = game;
@@ -18,7 +20,8 @@ export class LifeTree {
         this.leafCount = count;
         const label = document.getElementById('tree-label');
         if (label) {
-            label.textContent = `LEAVES: ${count}`;
+            const strings = getLang(this.game.language);
+            label.textContent = strings.leaves(count);
         }
         this.draw();
     }

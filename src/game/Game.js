@@ -899,9 +899,6 @@ export class Game {
         }
         this.leavesCollected++;
         this.lifeTree.setLeafCount(this.leavesCollected);
-        const strings = getLang(this.language);
-        const treeLabelEl = document.getElementById('tree-label');
-        if (treeLabelEl) treeLabelEl.textContent = strings.leaves(this.leavesCollected);
         console.log(`Leaf collected! Total: ${this.leavesCollected}`);
     }
 
