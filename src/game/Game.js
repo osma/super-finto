@@ -224,7 +224,8 @@ export class Game {
         // Load Background (Custom jpg or fallback to sky)
         const conceptId = conceptKey.split('/').pop();
         this.latestBGConceptId = conceptId; // Track current request
-        const bgPath = `src/assets/images/backgrounds/${conceptId}.jpg`;
+        const bgId = conceptId === "" ? "p22929" : conceptId;
+        const bgPath = `src/assets/images/backgrounds/${bgId}.jpg`;
         const bgImg = new Image();
         bgImg.onload = () => {
             // Only draw if this is still the latest requested concept
