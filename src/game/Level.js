@@ -688,7 +688,7 @@ export class Level {
         }
 
         // Draw Ground and Walls to Foreground Grid
-        const soilColor = '#92450e';
+        const soilColor = this.currentPalette.soil || '#92450e';
         const soilDepth = 600; // Extra depth for vertical scrolling
         const levelWidthTiles = Math.ceil(this.game.levelWidth / this.tileSize);
 
@@ -1061,17 +1061,22 @@ export class Level {
         ctx.fillRect(x, y, w, h);
 
         if (type === 'ground') {
-            // Ground specific: Grass top?
-            // User requested palette.ground.base and dark.
-            // If it's pure color, maybe no grass?
-            // Previous code had green grass at top.
-            // Let's create a separation using darker color.
-            ctx.fillStyle = style.dark; // Or dedicated trim color
-            ctx.fillRect(x, y, w, 6); // Top trim
+            // style.base is the tile body, style.dark is the surface/grass layer
+            ctx.fillStyle = style.base;
+            ctx.fillRect(x, y, w, h);
 
+            ctx.fillStyle = style.dark;
+            ctx.fillRect(x, y, w, 10); // 10px surface top
+
+            // Top highlight for the surface
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillRect(x, y, w, 2);
+
+            // Dirt speckles for texture
             ctx.fillStyle = 'rgba(0,0,0,0.1)';
             ctx.fillRect(x + 5, y + 20, 4, 4);
             ctx.fillRect(x + 25, y + 35, 4, 4);
+            ctx.fillRect(x + 15, y + 25, 3, 3);
         } else if (type === 'solid' || type === 'empty') {
             // Solid Block (Metal/Stone look with rivets)
             // Use style.highlight or derived outline
