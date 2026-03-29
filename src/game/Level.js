@@ -21,8 +21,8 @@ export class Level {
 
 
         // Layer caching for static geometry (2D Grid Chunking for massive levels)
-        this.chunkWidth = 2000;
-        this.chunkHeight = 2000;
+        this.chunkWidth = 800; // Must be a multiple of tileSize (40)
+        this.chunkHeight = 600; // Must be a multiple of tileSize (40)
         this.tilesGrid = new Map(); // "gx,gy" -> canvas
         this.foregroundGrid = new Map(); // "gx,gy" -> canvas
         this.geometryNeedsRedraw = true;

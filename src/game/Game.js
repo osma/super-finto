@@ -454,8 +454,11 @@ export class Game {
 
     start() {
         this.lastTime = performance.now();
+        this.lastFpsTime = this.lastTime;
+        this.frameCount = 0;
+        this.fps = 0;
         this.accumulator = 0;
-        this.timeStep = 1000 / 60; // Fixed 60 FPS update logic
+        this.timeStep = 1000 / 144; // Fixed 144 Hz update logic (matches original fast development speed)
         this._animFrameId = requestAnimationFrame(this.animate);
     }
 
@@ -788,6 +791,9 @@ export class Game {
             deltaTime = 250;
         }
 
+        const startUpdate = performance.now();
+        let ticks = 0;
+
         if (this.isGameOver) {
             // Handle restart input — go back to startup screen
             if (this.input.isJumping() || this.input.isPressed('Enter')) {
@@ -802,12 +808,25 @@ export class Game {
             while (this.accumulator >= this.timeStep) {
                 this.update(this.timeStep);
                 this.accumulator -= this.timeStep;
+                ticks++;
             }
         }
+        const endUpdate = performance.now();
 
+        const startDraw = performance.now();
         this.draw();
+        const endDraw = performance.now();
 
         this._animFrameId = requestAnimationFrame(this.animate);
+
+        // --- PERFORMANCE DEBUGGING ---
+        this.frameCount++;
+        if (timeStamp - this.lastFpsTime >= 1000) {
+            this.fps = this.frameCount;
+            this.frameCount = 0;
+            this.lastFpsTime = timeStamp;
+            console.log(`[PERF DEBUG] FPS: ${this.fps} | dt (real): ${(deltaTime).toFixed(1)}ms | Logic Ticks: ${ticks} | Logic CPU: ${(endUpdate - startUpdate).toFixed(2)}ms | Draw CPU: ${(endDraw - startDraw).toFixed(2)}ms`);
+        }
     }
 
     drawDefaultBackground(ctx) {

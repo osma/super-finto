@@ -120,12 +120,18 @@ function Audio(ctx, destination = ctx.destination) {
                 toneOscillator.detune.setValueAtTime(3000, ctx.currentTime);
                 toneOscillator.detune.setTargetAtTime(0, ctx.currentTime, 0.07);
                 toneGain.gain.cancelScheduledValues(ctx.currentTime);
+                if (toneGain.gain.cancelAndHoldAtTime) toneGain.gain.cancelAndHoldAtTime(ctx.currentTime);
                 toneGain.gain.setValueAtTime(0.2 * vel, ctx.currentTime);
-                toneGain.gain.setValueCurveAtTime(new Float32Array([0.2 * vel, 0.2 * vel, 0.13 * vel, 0.05 * vel, 0.0]), ctx.currentTime, 0.10);
+                toneGain.gain.linearRampToValueAtTime(0.2 * vel, ctx.currentTime + 0.025);
+                toneGain.gain.linearRampToValueAtTime(0.13 * vel, ctx.currentTime + 0.050);
+                toneGain.gain.linearRampToValueAtTime(0.05 * vel, ctx.currentTime + 0.075);
+                toneGain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + 0.10);
             } else if (slot.drum === 'NSS') {
                 noiseGain.gain.cancelScheduledValues(ctx.currentTime);
+                if (noiseGain.gain.cancelAndHoldAtTime) noiseGain.gain.cancelAndHoldAtTime(ctx.currentTime);
                 noiseGain.gain.setValueAtTime(0.1 * vel, ctx.currentTime);
-                noiseGain.gain.setValueCurveAtTime(new Float32Array([0.1 * vel, 0.04 * vel, 0.0]), ctx.currentTime, 0.08);
+                noiseGain.gain.linearRampToValueAtTime(0.04 * vel, ctx.currentTime + 0.04);
+                noiseGain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + 0.08);
 
                 // Ugly workaround for safari being a bitch
                 if ("pan" in noisePan) {
@@ -137,11 +143,16 @@ function Audio(ctx, destination = ctx.destination) {
                 toneOscillator.detune.setValueAtTime(2400, ctx.currentTime);
                 toneOscillator.detune.setTargetAtTime(600, ctx.currentTime, 0.04);
                 toneGain.gain.cancelScheduledValues(ctx.currentTime);
+                if (toneGain.gain.cancelAndHoldAtTime) toneGain.gain.cancelAndHoldAtTime(ctx.currentTime);
                 toneGain.gain.setValueAtTime(0.15 * vel, ctx.currentTime);
-                toneGain.gain.setValueCurveAtTime(new Float32Array([0.15 * vel, 0.05 * vel, 0.01 * vel, 0]), ctx.currentTime, 0.10);
+                toneGain.gain.linearRampToValueAtTime(0.05 * vel, ctx.currentTime + 0.033);
+                toneGain.gain.linearRampToValueAtTime(0.01 * vel, ctx.currentTime + 0.066);
+                toneGain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + 0.10);
                 noiseGain.gain.cancelScheduledValues(ctx.currentTime);
+                if (noiseGain.gain.cancelAndHoldAtTime) noiseGain.gain.cancelAndHoldAtTime(ctx.currentTime);
                 noiseGain.gain.setValueAtTime(0.2 * vel, ctx.currentTime);
-                noiseGain.gain.setValueCurveAtTime(new Float32Array([0.2 * vel, 0.15 * vel, 0.0]), ctx.currentTime, 0.15);
+                noiseGain.gain.linearRampToValueAtTime(0.15 * vel, ctx.currentTime + 0.075);
+                noiseGain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + 0.15);
             }
         }
 
