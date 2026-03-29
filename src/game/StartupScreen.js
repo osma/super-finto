@@ -55,7 +55,38 @@ export class StartupScreen {
         this.canvas.addEventListener('mousemove', this._handleMouseMove);
 
         this._tick = this._tick.bind(this);
+        
+        // Cache static foreground to slash CPU usage
+        this._prerenderForeground();
+        
         this.animFrame = requestAnimationFrame(this._tick);
+    }
+
+    _prerenderForeground() {
+        this.fgCanvas = document.createElement('canvas');
+        this.fgCanvas.width = this.canvas.width;
+        this.fgCanvas.height = this.canvas.height;
+        const ctx = this.fgCanvas.getContext('2d');
+        const W = this.canvas.width;
+        const H = this.canvas.height;
+
+        // Brick Panel
+        const panelX = 60, panelY = 55, panelW = W - 120, panelH = 230;
+        this._drawBrickPanel(ctx, panelX, panelY, panelW, panelH);
+
+        // SUPER FINTO text
+        ctx.font = 'bold 64px SuperMario, monospace';
+        ctx.textAlign = 'center';
+        this._drawRetroText(ctx, 'SUPER', W / 2, panelY + 90, '#f8b888', '#7a2800');
+        ctx.font = 'bold 80px SuperMario, monospace';
+        this._drawRetroText(ctx, 'FINTO', W / 2, panelY + 190, '#f8b888', '#7a2800');
+
+        // Controls Hint
+        this._drawControlsHint(ctx, W, H);
+
+        // Hills & Ground
+        this._drawHills(ctx, H);
+        this._drawGround(ctx, W, H);
     }
 
     _handleKey(e) {
@@ -110,8 +141,17 @@ export class StartupScreen {
     }
 
     _tick(ts) {
+        if (!this.lastDrawTime) this.lastDrawTime = ts;
+        
+        const drawDt = ts - this.lastDrawTime;
+        if (drawDt < 33.3) {
+            this.animFrame = requestAnimationFrame(this._tick);
+            return; // Skip this frame, throttle to ~30 FPS
+        }
+
         const dt = ts - this.lastTime;
         this.lastTime = ts;
+        this.lastDrawTime = ts - (drawDt % 33.3);
 
         // Animate clouds
         for (const c of this.clouds) {
@@ -139,18 +179,8 @@ export class StartupScreen {
         // ── Clouds ──────────────────────────────────────────────────────
         this._drawClouds(ctx);
 
-        // ── Title panel (brown brick rectangle) ─────────────────────────
-        const panelX = 60, panelY = 55, panelW = W - 120, panelH = 230;
-        this._drawBrickPanel(ctx, panelX, panelY, panelW, panelH);
-
-        // ── "SUPER" text ─────────────────────────────────────────────────
-        ctx.font = 'bold 64px SuperMario, monospace';
-        ctx.textAlign = 'center';
-        this._drawRetroText(ctx, 'SUPER', W / 2, panelY + 90, '#f8b888', '#7a2800');
-
-        // ── "FINTO" text ─────────────────────────────────────────────────
-        ctx.font = 'bold 80px SuperMario, monospace';
-        this._drawRetroText(ctx, 'FINTO', W / 2, panelY + 190, '#f8b888', '#7a2800');
+        // ── Cached Static Foreground ────────────────────────────────────
+        ctx.drawImage(this.fgCanvas, 0, 0);
 
         // ── Language menu ────────────────────────────────────────────────
         const menuStartY = 350;
@@ -167,21 +197,12 @@ export class StartupScreen {
                 this._drawMushroom(ctx, 255, y - 20);
             }
 
+            // Fast retro shadow instead of expensive shadowBlur
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillText(this.languages[i].label, 290 + 3, y + 3);
             ctx.fillStyle = isSelected ? '#ffffff' : '#aaccff';
-            ctx.shadowColor = 'rgba(0,0,0,0.6)';
-            ctx.shadowBlur = 4;
             ctx.fillText(this.languages[i].label, 290, y);
-            ctx.shadowBlur = 0;
         }
-
-        // ── Select hint (symbolic) ────────────────────────────────────────
-        this._drawControlsHint(ctx, W, H);
-
-        // ── Hills (drawn before ground so ground overlaps the base) ────
-        this._drawHills(ctx, H);
-
-        // ── Ground strip ─────────────────────────────────────────────
-        this._drawGround(ctx, W, H);
 
         // ── GitHub Link ──────────────────────────────────────────────
         this._drawGitHubLink(ctx, W, H);
@@ -437,22 +458,32 @@ export class StartupScreen {
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
 
-        // Hover effect
+        const fgColor = this.isHoveringGithub ? '#ffffff' : 'rgba(255, 255, 255, 0.8)';
+        const shadowColor = this.isHoveringGithub ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)';
+        const offset = this.isHoveringGithub ? 0 : 2; 
+
+        // Draw shadow/glow first
         if (this.isHoveringGithub) {
-            ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = '#ffffff';
-            ctx.shadowBlur = 8;
+            // Cheap faux glow via stroke instead of heavy blur
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = shadowColor;
+            ctx.font = 'bold 20px monospace';
+            ctx.strokeText(codeText, x, y);
+            ctx.font = '14px SuperMario, monospace';
+            ctx.strokeText(githubText, x + codeWidth, y);
         } else {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-            ctx.shadowBlur = 2;
+            // Cheap retro shadow
+            ctx.fillStyle = shadowColor;
+            ctx.font = 'bold 20px monospace';
+            ctx.fillText(codeText, x + offset, y + offset);
+            ctx.font = '14px SuperMario, monospace';
+            ctx.fillText(githubText, x + codeWidth + offset, y + offset);
         }
 
-        // 1. Draw Code Symbol
+        // Draw Foreground
+        ctx.fillStyle = fgColor;
         ctx.font = 'bold 20px monospace';
         ctx.fillText(codeText, x, y);
-
-        // 2. Draw @ GITHUB
         ctx.font = '14px SuperMario, monospace';
         ctx.fillText(githubText, x + codeWidth, y);
         
