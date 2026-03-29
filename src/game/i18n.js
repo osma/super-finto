@@ -18,6 +18,7 @@ const STRINGS = {
         music: 'MUSIC',
         pause: 'PAUSE',
         quit: 'QUIT',
+        intro: "Explore the hierarchy of knowledge.\nTravel through pipes to move up and down.\nCollect leaves to grow the Tree of Knowledge.",
     },
     fi: {
         score: 'PISTEET',
@@ -33,6 +34,7 @@ const STRINGS = {
         music: 'MUSIIKKI',
         pause: 'TAUKO',
         quit: 'LOPETA',
+        intro: "Tutki tiedon hierarkiaa.\nLiiku putkien kautta ylös ja alas.\nKerää lehtiä kasvattaaksesi Tiedon puuta.",
     },
     sv: {
         score: 'POÄNG',
@@ -48,6 +50,7 @@ const STRINGS = {
         music: 'MUSIK',
         pause: 'PAUS',
         quit: 'AVSLUTA',
+        intro: "Utforska kunskapens hierarki.\nRes genom rör för att flytta upp och ner.\nSamla löv för att få Kunskapens Träd att växa.",
     },
     se: {
         score: 'ČOAKKÁ',
@@ -63,6 +66,7 @@ const STRINGS = {
         music: 'MUSIHKKA',
         pause: 'PÁVSSA',
         quit: 'HEAITTIT',
+        intro: "Mieská máhtu struktuvrra.\nSirdásit bohcciid mielde bajás ja vulos.\nČuokkel lasttaid vai Máhtu muorra šaddá.",
     },
 };
 
