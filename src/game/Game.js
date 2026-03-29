@@ -454,6 +454,8 @@ export class Game {
 
     start() {
         this.lastTime = performance.now();
+        this.accumulator = 0;
+        this.timeStep = 1000 / 60; // Fixed 60 FPS update logic
         this._animFrameId = requestAnimationFrame(this.animate);
     }
 
@@ -778,8 +780,13 @@ export class Game {
 
 
     animate(timeStamp) {
-        const deltaTime = timeStamp - this.lastTime;
+        let deltaTime = timeStamp - this.lastTime;
         this.lastTime = timeStamp;
+
+        // Prevent spiral of death on long freezes
+        if (deltaTime > 250) {
+            deltaTime = 250;
+        }
 
         if (this.isGameOver) {
             // Handle restart input — go back to startup screen
@@ -791,7 +798,11 @@ export class Game {
         } else if (this.isPaused) {
             this.pauseTimer += deltaTime;
         } else {
-            this.update(deltaTime);
+            this.accumulator += deltaTime;
+            while (this.accumulator >= this.timeStep) {
+                this.update(this.timeStep);
+                this.accumulator -= this.timeStep;
+            }
         }
 
         this.draw();
