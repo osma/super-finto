@@ -218,8 +218,24 @@ export class Game {
 
         // Update Music Seed for the new level
         // Complexity based on number of narrower concepts (0.0 to 1.0)
-        const complexity = Math.min(1.0, (this.concept.narrower?.length || 0) / 10);
-        this.musicEngine.init(conceptKey, this.currentPalette.music, complexity);
+        let musicComplexity = Math.min(1.0, (this.concept.narrower?.length || 0) / 10);
+        let musicProfile = this.currentPalette.music;
+        let musicSeed = conceptKey;
+
+        // --- SPECIAL CASE: ROOT LEVEL MUSIC ---
+        // Ensure the very first level ("yso:") has a more welcoming first impression.
+        // We use a fixed seed, lower BPM, and force the major scale (which is 'minor' in theory.js).
+        if (this.concept.id === "") {
+            musicSeed = "SUPER_FINTO_ROOT";
+            musicComplexity = 0.5;
+            musicProfile = {
+                bpmRange: [110, 115],
+                scales: ['minor'], // Maps to major scale in our theory.js implementation
+                preferredGenerators: ['bass', 'melody1', 'arp']
+            };
+        }
+
+        this.musicEngine.init(musicSeed, musicProfile, musicComplexity);
         // Start music (or restart for a new level). The first call is a no-op if
         // the AudioContext hasn't been unlocked yet by a user gesture.
         if (this.musicStarted) {
@@ -401,7 +417,7 @@ export class Game {
             this.coins = 0;
             this.lives++;
             if (this.sfxEngine) this.sfxEngine.playExtraLife();
-            
+
             // Show floating "1UP" text
             if (this.level && this.player) {
                 this.level.spawnFloatingScore(
