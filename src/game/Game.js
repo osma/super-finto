@@ -8,7 +8,7 @@ import { LifeTree } from './LifeTree.js';
 import { getLang, getLabel, getConceptLabel } from './i18n.js';
 
 export class Game {
-    constructor(language = 'en') {
+    constructor(language = 'en', assets = null) {
         this.canvas = document.getElementById('game-canvas');
         this.ctx = this.canvas.getContext('2d');
         this.input = new InputHandler(this);
@@ -68,18 +68,23 @@ export class Game {
         };
 
         this.animate = this.animate.bind(this);
-        this.init();
+        this.init(assets);
     }
 
-    async init() {
+    async init(assets = null) {
         try {
-            const [ysoRes, paletteRes] = await Promise.all([
-                fetch('src/assets/data/yso.json'),
-                fetch('src/assets/data/palettes.json')
-            ]);
+            if (assets) {
+                this.allConcepts = assets.yso;
+                this.paletteMapping = assets.palettes;
+            } else {
+                const [ysoRes, paletteRes] = await Promise.all([
+                    fetch('src/assets/data/yso.json'),
+                    fetch('src/assets/data/palettes.json')
+                ]);
 
-            this.allConcepts = await ysoRes.json();
-            this.paletteMapping = await paletteRes.json();
+                this.allConcepts = await ysoRes.json();
+                this.paletteMapping = await paletteRes.json();
+            }
 
             // Always start at YSO root concept scheme
             const rootUri = 'http://www.yso.fi/onto/yso/';
