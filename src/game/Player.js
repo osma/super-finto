@@ -63,7 +63,7 @@ export class Player {
         if (this.isBig) return;
 
         this.isBig = true;
-        this.width = 40;
+        this.width = 38;
 
         if (this.game.sfxEngine) this.game.sfxEngine.playGrow();
 
