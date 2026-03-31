@@ -435,7 +435,7 @@ export class StartupScreen {
     }
 
     _drawGitHubLink(ctx, W, H) {
-        const codeText = '</>';
+        const codeText = 'CODE';
         const githubText = ' @ GITHUB';
         
         ctx.font = 'bold 20px monospace';
