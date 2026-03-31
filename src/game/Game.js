@@ -1008,7 +1008,7 @@ export class Game {
 
         const strings = getLang(this.language);
         const controls = [
-            { key: '←→↑↓', label: strings.move },
+            { key: 'WASD / ←→↑↓', label: strings.move },
             { key: 'Space', label: strings.jump },
             { key: 'M', label: strings.music },
             { key: 'P', label: strings.pause },

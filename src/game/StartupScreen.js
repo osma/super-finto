@@ -90,12 +90,12 @@ export class StartupScreen {
     }
 
     _handleKey(e) {
-        const key = e.key;
-        if (key === 'ArrowDown') {
+        const key = e.key.toLowerCase();
+        if (key === 'arrowdown' || key === 's') {
             this.selectedIndex = (this.selectedIndex + 1) % this.languages.length;
-        } else if (key === 'ArrowUp') {
+        } else if (key === 'arrowup' || key === 'w') {
             this.selectedIndex = (this.selectedIndex - 1 + this.languages.length) % this.languages.length;
-        } else if (key === 'Enter' || key === ' ') {
+        } else if (key === 'enter' || key === ' ' || key === 'space') {
             this._confirm();
         }
     }
