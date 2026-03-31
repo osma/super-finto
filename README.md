@@ -2,7 +2,7 @@
 ### *Semantic Platform Adventure*
 [**Play Super Finto Live!**](https://osma.github.io/super-finto/)
 
-![Super Finto Gameplay Placeholder](path/to/gameplay_screenshot.png)
+![Super Finto Gameplay Screenshot](src/assets/images/super-finto-preview.png)
 
 **Super Finto** is an experimental platformer that reimagines the **General Finnish Ontology (YSO)** as a multilingual game world. Drawing inspiration from the legendary *Super Mario Bros. (NES)* and the golden era of 8-bit and 16-bit gaming, it transforms a complex conceptual vocabulary into an interactive journey through nearly 32,000 unique levels.
 
