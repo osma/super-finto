@@ -18,16 +18,16 @@ The game begins at the **root level of YSO**. Each level represents a specific c
 - **End Pipes:** Descend deeper into the sub-concepts of the hierarchy.
 - **Bottom Pipes:** Warp to related concepts or horizontal associations.
 
-### The Tree of Knowledge
-As you explore "leaf concepts" (the most specific terms in the ontology), you can collect **Leaves**. Picking these up contributes to the growth of the **Tree** displayed on the side panel—a living visualization of your progress through the semantic landscape.
-
 ### Semantic Monsters
 The enemies you encounter aren't just random creatures; they represent **Alternate Labels**—synonyms, obsolete terms, or hidden labels that shouldn't be used for indexing.
 - **Defeat them:** Jump on their heads or bump them from below to clear the conceptual space of redundant data.
 
 ### Wikidata Parcels
 Bumping into **Question Mark Blocks** reveals either coins or **Wikidata Parcels**. These parcels represent persistent identifiers (Wikidata QIDs).
-- **Pro Tip:** Finto loves persistent identifiers! Collecting a parcel makes Finto grow bigger and stronger.
+- **Pro Tip:** Finto loves persistent identifiers! Collecting a parcel turns Finto into Super Finto, who is bigger and stronger.
+
+### The Tree of Knowledge
+As you explore "leaf concepts" (the most specific terms in the ontology), you can collect **Leaves**. Picking these up contributes to the growth of the **Tree** displayed on the side panel—a living visualization of your progress through the semantic landscape.
 
 ---
 
