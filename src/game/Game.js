@@ -682,10 +682,17 @@ export class Game {
                         }
                     }
 
-                    const restartEl = document.getElementById('overlay-restart');
-                    if (restartEl) restartEl.innerHTML = strings.pressRestart;
-                    document.getElementById('overlay').classList.remove('hidden');
-                    // Stop music
+                     const restartEl = document.getElementById('overlay-restart');
+                     if (restartEl) restartEl.innerHTML = strings.pressRestart;
+                     document.getElementById('overlay').classList.remove('hidden');
+
+                     // Hide sidebar and HUD during Game Over
+                     const sidePanel = document.getElementById('side-panel');
+                     const uiLayer = document.getElementById('ui-layer');
+                     if (sidePanel) sidePanel.classList.add('hidden-layout');
+                     if (uiLayer) uiLayer.classList.add('hidden-layout');
+
+                     // Stop music
                     if (this.musicStarted) {
                         this.musicEngine.stop();
                     }
@@ -961,6 +968,12 @@ export class Game {
         const deathOverlayEl = document.getElementById('overlay');
         if (startupEl) startupEl.classList.remove('hidden');
         if (deathOverlayEl) deathOverlayEl.classList.add('hidden');
+
+        // Restore sidebar and HUD
+        const sidePanel = document.getElementById('side-panel');
+        const uiLayer = document.getElementById('ui-layer');
+        if (sidePanel) sidePanel.classList.remove('hidden-layout');
+        if (uiLayer) uiLayer.classList.remove('hidden-layout');
 
         // main.js will handle re-creating StartupScreen and re-starting the game
         // Dispatch a custom event so main.js can pick it up

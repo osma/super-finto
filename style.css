@@ -146,6 +146,10 @@ body {
     pointer-events: none;
 }
 
+.hidden-layout {
+    display: none !important;
+}
+
 .overlay-content {
     text-align: center;
 }
