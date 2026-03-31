@@ -149,18 +149,18 @@ export const PALETTES = {
     },
     TwilightNoir: {
         name: "Twilight Noir",
-        background: '#020617',
-        brick: { base: '#172554', dark: '#0f172a', highlight: '#3b82f6', mortar: '#000000' },
+        background: '#0f172a',
+        brick: { base: '#1e293b', dark: '#020617', highlight: '#3b82f6', mortar: '#000000' },
         solid: { base: '#0f172a', dark: '#020617', highlight: '#1e293b' },
-        question: { base: '#64748b', dark: '#334155', highlight: '#94a3b8' },
-        pipe: { base: '#334155', dark: '#1e293b', highlight: '#64748b' },
-        ground: { base: '#1e293b', dark: '#cbd5e1' },
+        question: { base: '#475569', dark: '#1e293b', highlight: '#94a3b8' },
+        pipe: { base: '#334155', dark: '#0f172a', highlight: '#64748b' },
+        ground: { base: '#1e293b', dark: '#3b82f6' },
         soil: '#020617',
         enemy: { body: '#475569', feet: '#1e293b', eyes: '#bae6fd', brows: '#000000' },
         player: {
-            skin: '#e2e8f0', tunic: '#0f172a', belt: '#475569', hair: '#000000', boots: '#000000', outline: '#ffffff', highlight: '#334155', eyeWhite: '#ffffff'
+            skin: '#cbd5e1', tunic: '#312e81', belt: '#475569', hair: '#020617', boots: '#000000', outline: '#000000', highlight: '#3b82f6', eyeWhite: '#ffffff'
         },
-        coin: '#e2e8f0',
+        coin: '#94a3b8',
         parcel: { body: '#f1f5f9', border: '#334155' },
         music: {
             bpmRange: [70, 90],
