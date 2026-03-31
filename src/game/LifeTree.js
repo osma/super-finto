@@ -32,16 +32,20 @@ export class LifeTree {
         return this.seed / 233280;
     }
 
-    draw() {
+    draw(targetCtx = null) {
+        const originalCtx = this.ctx;
+        if (targetCtx) this.ctx = targetCtx;
         if (!this.ctx) return;
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        const canvas = this.ctx.canvas;
+        this.ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         this.seed = 42; // Reset seed for deterministic growth
         this.leavesDrawn = 0;
         this.tipsVisited = 0;
 
-        const startX = this.canvas.width / 2;
-        const startY = this.canvas.height - 15;
+        const startX = canvas.width / 2;
+        const startY = canvas.height - 15;
 
         // Draw ground level
         this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
@@ -66,6 +70,8 @@ export class LifeTree {
         this.totalTips = Math.pow(2, maxDepth);
 
         this.drawBranch(startX, startY, this.baseAngle, trunkLength, trunkWidth, 0, maxDepth);
+
+        if (targetCtx) this.ctx = originalCtx;
     }
 
     drawBranch(x, y, angle, length, width, depth, maxDepth) {

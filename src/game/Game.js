@@ -642,6 +642,30 @@ export class Game {
                     const strings = getLang(this.language);
                     const titleEl = document.getElementById('overlay-title');
                     if (titleEl) titleEl.textContent = strings.gameOver;
+
+                    // Update final stats in overlay
+                    const finalScoreLabel = document.getElementById('overlay-score-label');
+                    if (finalScoreLabel) {
+                        finalScoreLabel.textContent = strings.score;
+                    }
+                    const finalScoreEl = document.getElementById('overlay-score-value');
+                    if (finalScoreEl) {
+                        finalScoreEl.textContent = this.score.toString().padStart(5, '0');
+                    }
+
+                    const treeCanvas = document.getElementById('overlay-tree-canvas');
+                    if (treeCanvas) {
+                        treeCanvas.width = 400; // Match sidebar resolution
+                        treeCanvas.height = 350;
+                        const ctx = treeCanvas.getContext('2d');
+                        this.lifeTree.draw(ctx);
+
+                        const leafLabel = document.getElementById('overlay-tree-label');
+                        if (leafLabel) {
+                            leafLabel.textContent = strings.leaves(this.leavesCollected);
+                        }
+                    }
+
                     const restartEl = document.getElementById('overlay-restart');
                     if (restartEl) restartEl.innerHTML = strings.pressRestart;
                     document.getElementById('overlay').classList.remove('hidden');
