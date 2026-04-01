@@ -8,7 +8,8 @@ export class Enemy {
         this.label = label;
         this.vx = -0.6; // Reduced walking speed
         this.vy = 0;
-        this.weight = 0.15; // Lighter weight for slower falling
+        this.weight = 0.05; // Light weight for slower falling acceleration
+        this.terminalVelocity = 2; // Capped for much slower falling
         this.grounded = false;
         this.isDead = false;
         this.deathTimer = 0;
@@ -27,7 +28,7 @@ export class Enemy {
         }
 
         // Apply Gravity
-        this.vy = Math.min(this.vy + this.weight, 6); // Capped at 6 for slower falling
+        this.vy = Math.min(this.vy + this.weight, this.terminalVelocity);
         this.y += this.vy;
 
         // Check for other enemies to prevent overlap
