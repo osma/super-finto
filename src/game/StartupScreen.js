@@ -42,7 +42,7 @@ export class StartupScreen {
             { x: 680, y: 530, r: 70 },
         ];
 
-        this.githubUrl = 'https://github.com/osma/super-finto';
+        this.githubUrl = 'https://github.com/osma/super-finto/blob/main/README.md';
         this.githubRect = { x: 0, y: 0, w: 0, h: 0 };
         this.isHoveringGithub = false;
 
@@ -435,22 +435,18 @@ export class StartupScreen {
     }
 
     _drawGitHubLink(ctx, W, H) {
-        const codeText = 'CODE';
-        const githubText = ' @ GITHUB';
+        const linkText = 'INFO & CODE @ GITHUB';
         
-        ctx.font = 'bold 20px monospace';
-        const codeWidth = ctx.measureText(codeText).width;
         ctx.font = '14px SuperMario, monospace';
-        const githubWidth = ctx.measureText(githubText).width;
+        const textWidth = ctx.measureText(linkText).width;
         
-        const totalW = codeWidth + githubWidth;
-        const x = W - totalW - 25;
+        const x = W - textWidth - 25;
         const y = H - 21; 
         
         this.githubRect = {
             x: x - 15,
             y: y - 15,
-            w: totalW + 30,
+            w: textWidth + 30,
             h: 30
         };
 
@@ -467,25 +463,16 @@ export class StartupScreen {
             // Cheap faux glow via stroke instead of heavy blur
             ctx.lineWidth = 4;
             ctx.strokeStyle = shadowColor;
-            ctx.font = 'bold 20px monospace';
-            ctx.strokeText(codeText, x, y);
-            ctx.font = '14px SuperMario, monospace';
-            ctx.strokeText(githubText, x + codeWidth, y);
+            ctx.strokeText(linkText, x, y);
         } else {
             // Cheap retro shadow
             ctx.fillStyle = shadowColor;
-            ctx.font = 'bold 20px monospace';
-            ctx.fillText(codeText, x + offset, y + offset);
-            ctx.font = '14px SuperMario, monospace';
-            ctx.fillText(githubText, x + codeWidth + offset, y + offset);
+            ctx.fillText(linkText, x + offset, y + offset);
         }
 
         // Draw Foreground
         ctx.fillStyle = fgColor;
-        ctx.font = 'bold 20px monospace';
-        ctx.fillText(codeText, x, y);
-        ctx.font = '14px SuperMario, monospace';
-        ctx.fillText(githubText, x + codeWidth, y);
+        ctx.fillText(linkText, x, y);
         
         ctx.restore();
     }
