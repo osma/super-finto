@@ -381,8 +381,9 @@ export class Game {
         if (!this.concept) return;
         const strings = getLang(this.language);
 
+        const isRoot = this.concept.id === "";
         const worldEl = document.getElementById('world');
-        if (worldEl) worldEl.textContent = `yso:${this.concept.id}`;
+        if (worldEl) worldEl.textContent = isRoot ? "" : `yso:${this.concept.id}`;
 
         // Show all 4 language labels; selected language first, then the rest
         const allLangs = ['en', 'fi', 'sv', 'se'];
@@ -408,7 +409,7 @@ export class Game {
         if (scoreLabel) scoreLabel.textContent = strings.score;
 
         const conceptLabel = document.getElementById('hud-concept-label');
-        if (conceptLabel) conceptLabel.textContent = strings.concept;
+        if (conceptLabel) conceptLabel.textContent = isRoot ? "" : strings.concept;
     }
 
     addCoin() {
@@ -536,7 +537,7 @@ export class Game {
                     const livesEl = document.getElementById('transition-lives');
 
                     const strings = getLang(this.language);
-                    if (titleEl) titleEl.textContent = `yso:${targetId}`;
+                    if (titleEl) titleEl.textContent = targetId === "" ? "" : `yso:${targetId}`;
                     if (subtitleEl) subtitleEl.textContent = targetLabel;
                     if (livesEl) livesEl.textContent = strings.transitionLives(this.lives);
 
